@@ -41,6 +41,17 @@
 
 ---
 
+> **📦 Minimal Edition**
+>
+> Due to the high cost of RAM, this is a minimal version of the [original template](https://github.com/davidgaribay-dev/agentic-ai-template) designed to reduce the compute footprint. External services like Langfuse (LLM observability), Infisical (secrets management), and OpenSearch (log aggregation) have been replaced with built-in alternatives:
+> - **Secrets** → Encrypted PostgreSQL storage (Fernet/AES-128-CBC)
+> - **Audit Logs** → PostgreSQL tables + JSON file backup
+> - **LLM Tracing** → Removed (agents work without it)
+>
+> This reduces memory usage from ~8GB to ~2GB while maintaining all core functionality.
+
+---
+
 ## Overview
 
 A production-ready full-stack AI agent template built for teams and enterprises. Features real-time streaming chat with LangGraph agents, MCP (Model Context Protocol) tool integration, semantic memory with pgvector, hierarchical multi-tenancy (Organizations → Teams → Users), and enterprise integrations for secrets management, audit logging, and LLM observability.
