@@ -67,7 +67,12 @@ export interface AuditLogQuery {
   query?: string;
   skip?: number;
   limit?: number;
-  sort_field?: "timestamp" | "action" | "outcome" | "actor_email" | "duration_ms";
+  sort_field?:
+    | "timestamp"
+    | "action"
+    | "outcome"
+    | "actor_email"
+    | "duration_ms";
   sort_order?: "asc" | "desc";
 }
 
@@ -119,10 +124,7 @@ export const auditApi = {
   /**
    * Export audit logs as CSV
    */
-  async exportLogs(
-    orgId: string,
-    params: AuditLogExportParams,
-  ): Promise<Blob> {
+  async exportLogs(orgId: string, params: AuditLogExportParams): Promise<Blob> {
     const searchParams = new URLSearchParams();
 
     searchParams.set("start_time", params.start_time);
@@ -144,7 +146,9 @@ export const auditApi = {
     });
 
     if (!response.ok) {
-      throw new Error(`Export failed: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Export failed: ${response.status} ${response.statusText}`,
+      );
     }
 
     return response.blob();

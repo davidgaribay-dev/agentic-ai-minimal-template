@@ -271,9 +271,7 @@ function OrgSettingsPage() {
     <div className="bg-background min-h-screen">
       <div className="mx-auto max-w-5xl px-4 md:px-6 py-4 md:py-8">
         <div className="mb-4 md:mb-6">
-          <h1 className="text-lg font-semibold">
-            {t("org_settings_title")}
-          </h1>
+          <h1 className="text-lg font-semibold">{t("org_settings_title")}</h1>
         </div>
         <Tabs
           value={currentTab}
@@ -1488,7 +1486,7 @@ function AuditLogsSection({ orgId }: { orgId: string }) {
   const [outcomeFilter, setOutcomeFilter] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [startDate, setStartDate] = useState(
-    format(subDays(new Date(), 7), "yyyy-MM-dd")
+    format(subDays(new Date(), 7), "yyyy-MM-dd"),
   );
   const [endDate, setEndDate] = useState(format(new Date(), "yyyy-MM-dd"));
 
@@ -1518,7 +1516,15 @@ function AuditLogsSection({ orgId }: { orgId: string }) {
     }
 
     return params;
-  }, [page, limit, startDate, endDate, actionFilter, outcomeFilter, searchQuery]);
+  }, [
+    page,
+    limit,
+    startDate,
+    endDate,
+    actionFilter,
+    outcomeFilter,
+    searchQuery,
+  ]);
 
   // Fetch audit logs
   const {
@@ -1564,7 +1570,7 @@ function AuditLogsSection({ orgId }: { orgId: string }) {
       if (updates.startDate !== undefined) setStartDate(updates.startDate);
       if (updates.endDate !== undefined) setEndDate(updates.endDate);
     },
-    []
+    [],
   );
 
   const handleExport = async () => {
@@ -1677,7 +1683,10 @@ function AuditLogsSection({ orgId }: { orgId: string }) {
                     className="h-7 text-xs"
                     onClick={() =>
                       updateFilters({
-                        startDate: format(subDays(new Date(), 30), "yyyy-MM-dd"),
+                        startDate: format(
+                          subDays(new Date(), 30),
+                          "yyyy-MM-dd",
+                        ),
                         endDate: format(new Date(), "yyyy-MM-dd"),
                         page: 1,
                       })
@@ -1724,8 +1733,12 @@ function AuditLogsSection({ orgId }: { orgId: string }) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t("audit_all_outcomes")}</SelectItem>
-            <SelectItem value="success">{t("audit_outcome_success")}</SelectItem>
-            <SelectItem value="failure">{t("audit_outcome_failure")}</SelectItem>
+            <SelectItem value="success">
+              {t("audit_outcome_success")}
+            </SelectItem>
+            <SelectItem value="failure">
+              {t("audit_outcome_failure")}
+            </SelectItem>
           </SelectContent>
         </Select>
 
@@ -2132,7 +2145,8 @@ function AuditEventDialog({
             </div>
             {event.request_id && (
               <div>
-                Request ID: <span className="font-mono">{event.request_id}</span>
+                Request ID:{" "}
+                <span className="font-mono">{event.request_id}</span>
               </div>
             )}
           </div>
