@@ -1,12 +1,28 @@
-from typing import Literal
+"""Secrets management service using encrypted database storage.
 
-from infisical_sdk import InfisicalSDKClient
-import structlog
+Provides secure storage for API keys and other secrets using Fernet
+symmetric encryption with the secret stored in PostgreSQL.
+
+Uses the application's SECRET_KEY for encryption key derivation via PBKDF2.
+"""
+
+from datetime import UTC, datetime
+from typing import Literal, cast
+
+from cryptography.fernet import InvalidToken
+from sqlmodel import Session, select
 
 from backend.core.cache import secrets_cache
 from backend.core.config import settings
+from backend.core.db import engine
+from backend.core.encrypted_secrets import (
+    EncryptedSecret,
+    decrypt_value,
+    encrypt_value,
+)
+from backend.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger(__name__)
 
 # Cache TTL for secrets (5 minutes)
 SECRETS_CACHE_TTL_SECONDS = 300
@@ -17,7 +33,7 @@ SUPPORTED_PROVIDERS: list[LLMProvider] = ["openai", "anthropic", "google"]
 
 
 class SecretsService:
-    """Service for managing LLM API keys via Infisical.
+    """Service for managing LLM API keys via encrypted database storage.
 
     Provides secure storage for API keys with team-level scoping
     and organization-level fallback for enterprise cost tracking.
@@ -26,265 +42,194 @@ class SecretsService:
     1. Team-level key (highest priority)
     2. Org-level key
     3. Environment variable (backward compatible)
+
+    All secrets are encrypted using Fernet symmetric encryption with
+    a key derived from the application's SECRET_KEY.
     """
 
     def __init__(self) -> None:
-        self._client = None
         self._initialized = False
 
     def _ensure_initialized(self) -> bool:
+        """Initialize the secrets service.
+
+        Returns True when ready (always, since we use database storage).
+        """
         if self._initialized:
-            return self._client is not None
-
-        self._initialized = True
-
-        if not settings.infisical_enabled:
-            logger.info(
-                "infisical_disabled",
-                message="Infisical not configured, using environment fallback only",
-            )
-            return False
-
-        try:
-            self._client = InfisicalSDKClient(host=settings.INFISICAL_URL)
-            self._client.auth.universal_auth.login(
-                settings.INFISICAL_CLIENT_ID,
-                settings.INFISICAL_CLIENT_SECRET,
-            )
-            logger.info(
-                "infisical_initialized",
-                url=settings.INFISICAL_URL,
-                project_id=settings.INFISICAL_PROJECT_ID,
-            )
-        except Exception as e:
-            logger.exception(
-                "infisical_init_failed",
-                error=str(e),
-                message="Falling back to environment variables",
-            )
-            self._client = None
-            return False
-        else:
             return True
 
+        self._initialized = True
+        logger.info("secrets_service_initialized", storage="encrypted_database")
+        return True
+
     def _get_secret_path(self, org_id: str, team_id: str | None = None) -> str:
+        """Build path for LLM API key secrets."""
         if team_id:
             return f"/organizations/{org_id}/teams/{team_id}"
         return f"/organizations/{org_id}"
-
-    def _ensure_folder_exists(self, path: str) -> bool:
-        """Ensure the folder path exists in Infisical, creating it if necessary.
-
-        Creates folders recursively from root to the target path.
-        For example, path="/organizations/abc/teams/xyz" will create:
-        1. /organizations
-        2. /organizations/abc
-        3. /organizations/abc/teams
-        4. /organizations/abc/teams/xyz
-        """
-        if not self._ensure_initialized() or self._client is None:
-            logger.error("infisical_not_initialized_for_folder_creation")
-            return False
-
-        # Split path into components (skip empty strings from leading /)
-        parts = [p for p in path.split("/") if p]
-        if not parts:
-            return True  # Root path always exists
-
-        logger.debug("infisical_ensuring_folders", path=path, parts=parts)
-
-        current_path = "/"
-        for folder_name in parts:
-            parent_path = current_path
-            if current_path == "/":
-                current_path = f"/{folder_name}"
-            else:
-                current_path = f"{current_path}/{folder_name}"
-
-            logger.debug(
-                "infisical_checking_folder",
-                folder_name=folder_name,
-                parent_path=parent_path,
-                current_path=current_path,
-            )
-
-            # Try to create the folder - Infisical will return an error if it exists
-            try:
-                self._client.folders.create_folder(
-                    name=folder_name,
-                    project_id=settings.INFISICAL_PROJECT_ID,
-                    environment_slug=settings.INFISICAL_ENVIRONMENT,
-                    path=parent_path,
-                )
-                logger.info(
-                    "infisical_folder_created",
-                    folder_name=folder_name,
-                    parent_path=parent_path,
-                )
-            except Exception as e:
-                error_str = str(e).lower()
-                if "already exists" in error_str or "duplicate" in error_str:
-                    logger.debug(
-                        "infisical_folder_already_exists",
-                        folder_name=folder_name,
-                        parent_path=parent_path,
-                    )
-                    continue
-                logger.exception(
-                    "infisical_folder_create_failed",
-                    folder_name=folder_name,
-                    parent_path=parent_path,
-                    error=str(e),
-                )
-                return False
-
-        logger.info("infisical_folders_ensured", path=path)
-        return True
 
     def _get_cache_key(self, secret_name: str, path: str) -> str:
         """Generate a cache key for a secret."""
         return f"secret:{path}:{secret_name}"
 
     def _get_secret(self, secret_name: str, path: str) -> str | None:
-        """Get a secret from Infisical by name and path.
+        """Get a secret from database by name and path.
 
-        Uses TTL cache to avoid hitting Infisical API on every call.
+        Uses TTL cache to avoid hitting database on every call.
         """
-        if not self._ensure_initialized() or self._client is None:
-            return None
+        self._ensure_initialized()
+
+        # Build full path
+        full_path = f"{path}/{secret_name}"
 
         # Check cache first
         cache_key = self._get_cache_key(secret_name, path)
-        cached_value = secrets_cache.get(cache_key)
+        cached_value: str | None = secrets_cache.get(cache_key)
         if cached_value is not None:
             logger.debug(
-                "infisical_cache_hit",
+                "secrets_cache_hit",
                 secret_name=secret_name,
                 path=path,
             )
             return cached_value
 
         try:
-            secret = self._client.secrets.get_secret_by_name(
-                secret_name=secret_name,
-                project_id=settings.INFISICAL_PROJECT_ID,
-                environment_slug=settings.INFISICAL_ENVIRONMENT,
-                secret_path=path,
-            )
+            with Session(engine) as session:
+                statement = select(EncryptedSecret).where(
+                    EncryptedSecret.path == full_path
+                )
+                secret = session.exec(statement).first()
+
+                if not secret:
+                    return None
+
+                # Decrypt the value
+                try:
+                    decrypted_value = decrypt_value(secret.encrypted_value)
+                except InvalidToken:
+                    # Use error, not exception - don't expose crypto details in logs
+                    logger.error(  # noqa: TRY400
+                        "secrets_decryption_failed",
+                        path=full_path,
+                        message="Secret may have been encrypted with different key",
+                    )
+                    return None
+
+                # Cache the decrypted value
+                secrets_cache.set(cache_key, decrypted_value, SECRETS_CACHE_TTL_SECONDS)
+                logger.debug(
+                    "secrets_cache_set",
+                    secret_name=secret_name,
+                    path=path,
+                )
+                return decrypted_value
+
         except Exception as e:
-            # Secret not found is expected for unconfigured keys
-            logger.debug(
-                "infisical_get_secret_failed",
+            logger.exception(
+                "secrets_get_failed",
                 secret_name=secret_name,
                 path=path,
                 error=str(e),
             )
             return None
-        else:
-            value = secret.secretValue if secret else None
-            if value:
-                # Cache the value with TTL
-                secrets_cache.set(cache_key, value, SECRETS_CACHE_TTL_SECONDS)
-                logger.debug(
-                    "infisical_cache_set",
-                    secret_name=secret_name,
-                    path=path,
-                )
-            return value
 
     def _set_secret(self, secret_name: str, secret_value: str, path: str) -> bool:
-        """Create or update a secret in Infisical."""
-        if not self._ensure_initialized() or self._client is None:
-            logger.error("infisical_not_available", operation="set_secret")
-            return False
+        """Create or update a secret in the database."""
+        self._ensure_initialized()
 
-        # Ensure the folder path exists before creating the secret
-        if not self._ensure_folder_exists(path):
-            logger.error(
-                "infisical_folder_creation_failed",
-                path=path,
-                secret_name=secret_name,
-            )
-            return False
+        # Build full path
+        full_path = f"{path}/{secret_name}"
 
         # Invalidate cache before updating
         cache_key = self._get_cache_key(secret_name, path)
         secrets_cache.delete(cache_key)
 
         try:
-            # Try to create first
-            self._client.secrets.create_secret_by_name(
-                secret_name=secret_name,
-                secret_value=secret_value,
-                project_id=settings.INFISICAL_PROJECT_ID,
-                environment_slug=settings.INFISICAL_ENVIRONMENT,
-                secret_path=path,
-            )
-            logger.info(
-                "infisical_secret_created",
+            # Encrypt the value
+            encrypted_value = encrypt_value(secret_value)
+
+            with Session(engine) as session:
+                # Check if secret already exists
+                statement = select(EncryptedSecret).where(
+                    EncryptedSecret.path == full_path
+                )
+                existing = session.exec(statement).first()
+
+                if existing:
+                    # Update existing secret
+                    existing.encrypted_value = encrypted_value
+                    existing.updated_at = datetime.now(UTC)
+                    session.add(existing)
+                    session.commit()
+                    logger.info(
+                        "secrets_updated",
+                        secret_name=secret_name,
+                        path=path,
+                    )
+                else:
+                    # Create new secret
+                    new_secret = EncryptedSecret(
+                        path=full_path,
+                        encrypted_value=encrypted_value,
+                    )
+                    session.add(new_secret)
+                    session.commit()
+                    logger.info(
+                        "secrets_created",
+                        secret_name=secret_name,
+                        path=path,
+                    )
+
+                return True
+
+        except Exception as e:
+            logger.exception(
+                "secrets_set_failed",
                 secret_name=secret_name,
                 path=path,
+                error=str(e),
             )
-        except Exception:
-            # Secret might already exist, try update
-            try:
-                self._client.secrets.update_secret_by_name(
-                    current_secret_name=secret_name,
-                    secret_value=secret_value,
-                    project_id=settings.INFISICAL_PROJECT_ID,
-                    environment_slug=settings.INFISICAL_ENVIRONMENT,
-                    secret_path=path,
-                )
-                logger.info(
-                    "infisical_secret_updated",
-                    secret_name=secret_name,
-                    path=path,
-                )
-            except Exception as e:
-                logger.exception(
-                    "infisical_set_secret_failed",
-                    secret_name=secret_name,
-                    path=path,
-                    error=str(e),
-                )
-                return False
-            else:
-                return True
-        else:
-            return True
+            return False
 
     def _delete_secret(self, secret_name: str, path: str) -> bool:
-        """Delete a secret from Infisical."""
-        if not self._ensure_initialized() or self._client is None:
-            logger.error("infisical_not_available", operation="delete_secret")
-            return False
+        """Delete a secret from the database."""
+        self._ensure_initialized()
+
+        # Build full path
+        full_path = f"{path}/{secret_name}"
 
         # Invalidate cache before deleting
         cache_key = self._get_cache_key(secret_name, path)
         secrets_cache.delete(cache_key)
 
         try:
-            self._client.secrets.delete_secret_by_name(
-                secret_name=secret_name,
-                project_id=settings.INFISICAL_PROJECT_ID,
-                environment_slug=settings.INFISICAL_ENVIRONMENT,
-                secret_path=path,
-            )
-            logger.info(
-                "infisical_secret_deleted",
-                secret_name=secret_name,
-                path=path,
-            )
+            with Session(engine) as session:
+                statement = select(EncryptedSecret).where(
+                    EncryptedSecret.path == full_path
+                )
+                secret = session.exec(statement).first()
+
+                if secret:
+                    session.delete(secret)
+                    session.commit()
+                    logger.info(
+                        "secrets_deleted",
+                        secret_name=secret_name,
+                        path=path,
+                    )
+                    return True
+
+                # Secret didn't exist - that's okay
+                return True
+
         except Exception as e:
             logger.exception(
-                "infisical_delete_secret_failed",
+                "secrets_delete_failed",
                 secret_name=secret_name,
                 path=path,
                 error=str(e),
             )
             return False
-        else:
-            return True
 
     def _get_env_fallback(self, provider: LLMProvider) -> str | None:
         """Get API key from environment variables (backward compatibility)."""
@@ -358,7 +303,7 @@ class SecretsService:
         org_id: str,
         team_id: str | None = None,
     ) -> bool:
-        """Store LLM API key in Infisical.
+        """Store LLM API key in encrypted database storage.
 
         Args:
             provider: The LLM provider (openai, anthropic, google)
@@ -393,7 +338,7 @@ class SecretsService:
         org_id: str,
         team_id: str | None = None,
     ) -> bool:
-        """Delete LLM API key from Infisical.
+        """Delete LLM API key from encrypted database storage.
 
         Args:
             provider: The LLM provider (openai, anthropic, google)
@@ -495,7 +440,7 @@ class SecretsService:
     ) -> LLMProvider:
         """Get the default LLM provider for an org/team.
 
-        Checks Infisical for team/org level override, falls back to settings.
+        Checks database for team/org level override, falls back to settings.
 
         Args:
             org_id: Organization ID
@@ -508,14 +453,14 @@ class SecretsService:
         if team_id:
             team_path = self._get_secret_path(org_id, team_id)
             provider = self._get_secret("default_provider", team_path)
-            if provider and provider in SUPPORTED_PROVIDERS:
-                return provider
+            if provider in SUPPORTED_PROVIDERS:
+                return cast("LLMProvider", provider)
 
         # Check org-level default
         org_path = self._get_secret_path(org_id)
         provider = self._get_secret("default_provider", org_path)
-        if provider and provider in SUPPORTED_PROVIDERS:
-            return provider
+        if provider in SUPPORTED_PROVIDERS:
+            return cast("LLMProvider", provider)
 
         # Fall back to settings
         return settings.DEFAULT_LLM_PROVIDER
@@ -552,7 +497,7 @@ class SecretsService:
         team_id: str | None = None,
         user_id: str | None = None,
     ) -> str:
-        """Get the Infisical path for MCP server secrets."""
+        """Get the database path for MCP server secrets."""
         if user_id and team_id:
             return f"/organizations/{org_id}/teams/{team_id}/users/{user_id}/mcp"
         if team_id:
@@ -567,7 +512,7 @@ class SecretsService:
         team_id: str | None = None,
         user_id: str | None = None,
     ) -> str | None:
-        """Store an MCP server auth secret in Infisical.
+        """Store an MCP server auth secret in encrypted storage.
 
         Args:
             server_id: The MCP server ID (used as part of secret name)
@@ -598,7 +543,7 @@ class SecretsService:
         team_id: str | None = None,
         user_id: str | None = None,
     ) -> str | None:
-        """Retrieve an MCP server auth secret from Infisical.
+        """Retrieve an MCP server auth secret from encrypted storage.
 
         Args:
             server_id: The MCP server ID
@@ -628,7 +573,7 @@ class SecretsService:
         team_id: str | None = None,
         user_id: str | None = None,
     ) -> bool:
-        """Delete an MCP server auth secret from Infisical.
+        """Delete an MCP server auth secret from encrypted storage.
 
         Args:
             server_id: The MCP server ID

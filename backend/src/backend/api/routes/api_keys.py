@@ -23,7 +23,7 @@ class APIKeyCreate(BaseModel):
     )
     api_key: str = Field(
         min_length=1,
-        description="The API key value (will be stored securely in Infisical)",
+        description="The API key value (will be encrypted and stored securely)",
     )
 
 
@@ -95,7 +95,7 @@ async def set_org_api_key(
     """Set an organization-level API key for an LLM provider.
 
     Only org admins and owners can set API keys.
-    The key is stored securely in Infisical, never in the database.
+    The key is encrypted and stored securely in the database.
     Teams without their own key will use this as a fallback.
     """
     if request.provider not in SUPPORTED_PROVIDERS:
@@ -114,7 +114,7 @@ async def set_org_api_key(
     if not success:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to store API key. Check Infisical configuration.",
+            detail="Failed to store API key. Please try again.",
         )
 
     status_info = secrets.check_api_key_status(
@@ -174,7 +174,7 @@ async def delete_org_api_key(
     if not success:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to delete API key. It may not exist or check Infisical configuration.",
+            detail="Failed to delete API key. It may not exist.",
         )
 
     await audit_service.log(
@@ -244,7 +244,7 @@ async def set_org_default_provider(
     if not success:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to update default provider. Check Infisical configuration.",
+            detail="Failed to update default provider. Please try again.",
         )
 
     await audit_service.log(
@@ -321,7 +321,7 @@ async def set_team_api_key(
     if not success:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to store API key. Check Infisical configuration.",
+            detail="Failed to store API key. Please try again.",
         )
 
     status_info = secrets.check_api_key_status(
@@ -385,7 +385,7 @@ async def delete_team_api_key(
     if not success:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to delete API key. It may not exist or check Infisical configuration.",
+            detail="Failed to delete API key. It may not exist.",
         )
 
     await audit_service.log(
@@ -461,7 +461,7 @@ async def set_team_default_provider(
     if not success:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to update default provider. Check Infisical configuration.",
+            detail="Failed to update default provider. Please try again.",
         )
 
     await audit_service.log(

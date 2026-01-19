@@ -123,7 +123,7 @@ class AuditLoggingMiddleware:
             # Build log message
             message_text = f"{method} {path} -> {status_code} ({duration_ms:.1f}ms)"
 
-            # Log to OpenSearch
+            # Log to audit service
             await audit_service.log_app(
                 level=level,
                 logger_name="http.request",

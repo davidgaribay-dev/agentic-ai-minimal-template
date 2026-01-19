@@ -25,7 +25,6 @@ from backend.agents.base import (
 )
 from backend.agents.context import LLMContext
 from backend.agents.tools import get_available_tools, get_context_aware_tools
-from backend.agents.tracing import build_langfuse_config
 from backend.core.db import engine
 from backend.core.logging import get_logger
 from backend.mcp.client import get_mcp_tools_for_context
@@ -61,9 +60,6 @@ class AgentConfig:
     include_mcp_tools: bool = True
     require_tool_approval: bool | None = None  # None = use settings
 
-    # Tracing
-    enable_tracing: bool = True
-
     def to_llm_context(self) -> LLMContext:
         """Convert to LLMContext for use with context managers."""
         return LLMContext(
@@ -84,7 +80,6 @@ class AgentInstance:
 
     graph: Any  # Compiled LangGraph
     config: AgentConfig
-    langfuse_config: dict = field(default_factory=dict)
     tools: list = field(default_factory=list)
     mcp_tool_names: set = field(default_factory=set)
 
@@ -187,21 +182,9 @@ class AgentFactory:
         else:
             graph = self._create_base_graph()
 
-        # Build Langfuse config
-        langfuse_config = {}
-        if config.enable_tracing:
-            langfuse_config = build_langfuse_config(
-                user_id=config.user_id,
-                session_id=config.thread_id,
-                org_id=config.org_id,
-                team_id=config.team_id,
-                provider=config.provider,
-            )
-
         return AgentInstance(
             graph=graph,
             config=config,
-            langfuse_config=langfuse_config,
             tools=all_tools,
             mcp_tool_names=mcp_tool_names,
         )

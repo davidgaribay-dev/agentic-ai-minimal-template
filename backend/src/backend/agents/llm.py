@@ -23,7 +23,7 @@ def get_chat_model(provider: LLMProvider | None = None) -> BaseChatModel:
     """Get a chat model instance for the specified provider (legacy, uses env vars).
 
     This function is cached and uses environment variables directly.
-    For multi-tenant support with Infisical, use get_chat_model_with_context instead.
+    For multi-tenant support with encrypted secrets, use get_chat_model_with_context instead.
 
     Args:
         provider: LLM provider to use. Defaults to settings.DEFAULT_LLM_PROVIDER
@@ -74,9 +74,9 @@ def get_chat_model_with_context(
     team_id: str | None = None,
     provider: LLMProvider | None = None,
 ) -> BaseChatModel:
-    """Get a chat model with API key from Infisical (multi-tenant).
+    """Get a chat model with API key from encrypted storage (multi-tenant).
 
-    This function fetches the API key from Infisical with the following
+    This function fetches the API key from encrypted database with the following
     fallback chain:
     1. Team-level key (if team_id provided)
     2. Org-level key
@@ -111,7 +111,7 @@ def get_chat_model_with_context(
         provider=provider,
         org_id=org_id,
         team_id=team_id,
-        source="infisical",
+        source="encrypted_db",
     )
 
     if provider == "anthropic":

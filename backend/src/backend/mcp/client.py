@@ -243,7 +243,7 @@ def _build_auth_headers(server: MCPServer, org_id: str) -> dict[str, str] | None
 
     Args:
         server: MCPServer instance
-        org_id: Organization ID (for Infisical secret resolution)
+        org_id: Organization ID (for encrypted secret resolution)
 
     Returns:
         Headers dict or None if auth cannot be configured
@@ -256,7 +256,7 @@ def _build_auth_headers(server: MCPServer, org_id: str) -> dict[str, str] | None
         )
         return None
 
-    # Get the secret value from Infisical
+    # Get the secret value from encrypted storage
     try:
         secrets_service = get_secrets_service()
         if not secrets_service:

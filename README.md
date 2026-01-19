@@ -67,7 +67,7 @@ A production-ready full-stack AI agent template built for teams and enterprises.
 - **Hierarchical Prompts** — System prompts at org, team, and user levels (auto-concatenated)
 - **Semantic Memory** — Persistent user context with pgvector embeddings and deduplication
 - **MCP Tool Integration** — Connect external HTTP/SSE tools with approval workflow
-- **LLM Tracing** — Langfuse integration for observability and debugging
+- **Audit Logging** — PostgreSQL-based audit logging with frontend viewer
 
 ### MCP (Model Context Protocol)
 
@@ -84,13 +84,13 @@ A production-ready full-stack AI agent template built for teams and enterprises.
 - **Teams** — Sub-groups within organizations with granular permissions
 - **Hierarchical Settings** — Chat, memory, and MCP settings cascade org → team → user
 - **Invitations** — Email-based invites with secure token validation
-- **Per-Team API Keys** — Store LLM credentials per team via Infisical
+- **Per-Team API Keys** — Store LLM credentials per team (encrypted in database)
 
 ### Enterprise Features
 
 - **RBAC** — 22 org permissions + 17 team permissions with role-based mappings
-- **Audit Logging** — OpenSearch integration with 90-day retention
-- **Secrets Management** — Infisical for secure API key and MCP auth storage
+- **Audit Logging** — PostgreSQL-based with configurable retention (90 days default)
+- **Secrets Management** — Encrypted database storage using Fernet (AES-128-CBC)
 - **Rate Limiting** — Configurable limits per endpoint category
 - **Security Headers** — CORS, CSP, HSTS, XSS protection
 
@@ -118,7 +118,7 @@ A production-ready full-stack AI agent template built for teams and enterprises.
 git clone https://github.com/davidgaribay-dev/agentic-ai-template.git
 cd agentic-ai-template
 
-# Run setup (starts infrastructure, runs migrations, configures Infisical/Langfuse)
+# Run setup (starts infrastructure, runs migrations)
 ./setup-local.sh
 
 # Start dev servers in separate terminals
@@ -136,8 +136,6 @@ docker compose -f docker-compose-local.yml up -d
 cd backend
 uv sync
 uv run alembic upgrade head
-uv run python scripts/setup-infisical.py
-uv run python scripts/setup-langfuse.py
 uv run uvicorn backend.main:app --reload
 
 # Frontend setup (new terminal)
@@ -153,14 +151,10 @@ npm run dev
 | Frontend | http://localhost:5173 | React application |
 | API | http://localhost:8000 | FastAPI backend |
 | API Docs | http://localhost:8000/v1/docs | Swagger/OpenAPI |
-| Infisical | http://localhost:8081 | Secrets management |
-| Langfuse | http://localhost:3001 | LLM tracing |
-| OpenSearch | http://localhost:5601 | Audit log dashboards |
 
 ### Default Credentials
 
 - **Superuser**: `admin@example.com` / `changethis`
-- Other services auto-configured by setup scripts
 
 ---
 
@@ -187,10 +181,10 @@ npm run dev
 └────────┬───────────────┬─────────────────┬──────────────┬───────────┘
          │               │                 │              │
          ▼               ▼                 ▼              ▼
-┌─────────────┐  ┌───────────────┐  ┌───────────┐  ┌───────────────┐
-│ PostgreSQL  │  │   Infisical   │  │ SeaweedFS │  │  OpenSearch   │
-│  + pgvector │  │   (Secrets)   │  │   (S3)    │  │   (Logs)      │
-└─────────────┘  └───────────────┘  └───────────┘  └───────────────┘
+┌─────────────────────────────────────────────┐  ┌───────────┐
+│       PostgreSQL + pgvector                  │  │ SeaweedFS │
+│  (Data + Audit Logs + Encrypted Secrets)    │  │   (S3)    │
+└─────────────────────────────────────────────┘  └───────────┘
 ```
 
 ### Multi-Tenant Data Model
@@ -207,7 +201,7 @@ Organization (tenant boundary)
 ├── MCP Servers (hierarchical: org → team → user)
 ├── Chat Settings (hierarchical: org → team → user)
 ├── Memory (scoped to org + team + user)
-└── API Keys (via Infisical)
+└── API Keys (encrypted in database)
 ```
 
 ### Project Structure
@@ -231,8 +225,8 @@ Organization (tenant boundary)
 │   │   ├── conversations/      # Chat history (soft delete)
 │   │   ├── prompts/            # System prompts (org/team/user)
 │   │   ├── settings/           # Chat settings hierarchy
-│   │   ├── audit/              # OpenSearch logging
-│   │   └── core/               # Config, DB, security, secrets
+│   │   ├── audit/              # PostgreSQL audit logging
+│   │   └── core/               # Config, DB, security, encrypted secrets
 │   ├── scripts/                # Setup automation
 │   └── alembic/                # Database migrations
 │
@@ -271,9 +265,7 @@ Organization (tenant boundary)
 | **LangGraph** | 0.6+ | Agent orchestration with state |
 | **LangChain** | 0.3+ | LLM provider integrations |
 | **Alembic** | 1.16+ | Database migrations |
-| **Infisical** | Latest | Secrets management |
-| **OpenSearch** | 2.18 | Audit logging |
-| **Langfuse** | 3.0+ | LLM observability |
+| **Cryptography** | 41.0+ | Secrets encryption (Fernet) |
 
 ### Frontend
 
@@ -293,14 +285,8 @@ Organization (tenant boundary)
 
 | Service | Port | Purpose |
 |---------|------|---------|
-| PostgreSQL | 5432 | Application database (pgvector) |
+| PostgreSQL | 5432 | Application database (pgvector) + audit logs + encrypted secrets |
 | SeaweedFS | 8333 | S3-compatible storage |
-| Infisical | 8081 | Secrets management |
-| OpenSearch | 9200 | Log storage & search |
-| Dashboards | 5601 | Log visualization |
-| Langfuse | 3001 | LLM tracing UI |
-| ClickHouse | - | Langfuse analytics |
-| MinIO | 9090 | Langfuse blob storage |
 
 ---
 
@@ -334,17 +320,17 @@ POSTGRES_PASSWORD=postgres
 POSTGRES_DB=app
 
 # Security
-SECRET_KEY=your-secret-key
+SECRET_KEY=your-secret-key    # Also used for secrets encryption
 FRONTEND_URL=http://localhost:5173
 
-# LLM Providers (at least one required)
+# LLM Providers (optional - can be set via UI)
 ANTHROPIC_API_KEY=sk-ant-...
 OPENAI_API_KEY=sk-...
 GOOGLE_API_KEY=...
 
-# External Services
-INFISICAL_URL=http://localhost:8081
-LANGFUSE_BASE_URL=http://localhost:3001
+# Audit logging
+AUDIT_LOG_RETENTION_DAYS=90
+APP_LOG_RETENTION_DAYS=30
 ```
 
 **Frontend** (`frontend/.env`):
@@ -403,9 +389,9 @@ Full documentation at http://localhost:8000/v1/docs
 - **Authentication**: JWT tokens (30min access, 7-day refresh)
 - **Password Hashing**: bcrypt with timing-safe comparison
 - **RBAC**: Fine-grained org and team permissions (22 org + 17 team permissions)
-- **Secrets**: Infisical (never stored in config files)
-- **MCP Auth**: Bearer/API key secrets stored securely in Infisical
-- **Audit Trail**: All actions logged to OpenSearch
+- **Secrets**: Encrypted in database using Fernet (AES-128-CBC)
+- **MCP Auth**: Bearer/API key secrets stored encrypted in PostgreSQL
+- **Audit Trail**: All actions logged to PostgreSQL (90-day retention)
 - **Headers**: CORS, CSP, HSTS, X-Frame-Options
 - **Rate Limiting**: Per-endpoint configurable limits
 

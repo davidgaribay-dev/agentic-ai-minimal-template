@@ -200,7 +200,7 @@ class TTLCache:
 class CachingWrapper:
     """Wraps a service/function with TTL caching.
 
-    Useful for caching external service calls like Infisical secrets.
+    Useful for caching expensive operations like database queries or API calls.
     """
 
     def __init__(self, ttl_seconds: int = 300):

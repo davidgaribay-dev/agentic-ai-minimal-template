@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
+import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import {
   createFileRoute,
   Link,
@@ -29,10 +30,21 @@ import {
   MoreHorizontal,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
   Brain,
   Plug,
   Palette,
   FileSearch,
+  ScrollText,
+  FileText,
+  Download,
+  RefreshCw,
+  X,
+  Calendar,
+  Filter,
+  CheckCircle,
+  XCircle,
+  Eye,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import {
@@ -46,11 +58,14 @@ import {
   apiKeysApi,
   invitationsApi,
   organizationsApi,
+  auditApi,
   type TeamCreate,
   type InvitationCreate,
   type OrgRole,
   type OrganizationChatSettings,
   type LLMProvider,
+  type AuditEvent,
+  type AuditLogQuery,
   ApiError,
 } from "@/lib/api";
 import { useOrgChatSettings, useUpdateOrgChatSettings } from "@/lib/queries";
@@ -116,9 +131,24 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { isValidImageUrl, getInitials } from "@/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/data-table";
+
+const PAGE_SIZES = [25, 50, 100] as const;
 
 const orgSettingsSearchSchema = z.object({
   tab: z
@@ -130,6 +160,7 @@ const orgSettingsSearchSchema = z.object({
       "theme",
       "rag",
       "guardrails",
+      "audit",
     ])
     .optional(),
 });
@@ -185,6 +216,7 @@ function OrgSettingsPage() {
       label: t("org_settings_guardrails"),
       icon: ShieldAlert,
     },
+    { value: "audit", label: t("audit_title"), icon: ScrollText },
   ];
 
   if (!currentOrg || currentOrgRole === null) {
@@ -238,9 +270,11 @@ function OrgSettingsPage() {
   return (
     <div className="bg-background min-h-screen">
       <div className="mx-auto max-w-5xl px-4 md:px-6 py-4 md:py-8">
-        <h1 className="text-lg font-semibold mb-4 md:mb-6">
-          {t("org_settings_title")}
-        </h1>
+        <div className="mb-4 md:mb-6">
+          <h1 className="text-lg font-semibold">
+            {t("org_settings_title")}
+          </h1>
+        </div>
         <Tabs
           value={currentTab}
           onValueChange={handleTabChange}
@@ -314,6 +348,10 @@ function OrgSettingsPage() {
 
             <TabsContent value="guardrails" className="mt-0">
               <OrgGuardrailsSection orgId={currentOrg.id} />
+            </TabsContent>
+
+            <TabsContent value="audit" className="mt-0">
+              <AuditLogsSection orgId={currentOrg.id} />
             </TabsContent>
           </div>
         </Tabs>
@@ -1434,5 +1472,672 @@ function OrgGuardrailsSection({ orgId }: { orgId: string }) {
         onUpdate={(data) => updateMutation.mutate(data)}
       />
     </div>
+  );
+}
+
+function AuditLogsSection({ orgId }: { orgId: string }) {
+  const { t } = useTranslation();
+
+  const [selectedEvent, setSelectedEvent] = useState<AuditEvent | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+
+  // Local filter state
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState<(typeof PAGE_SIZES)[number]>(25);
+  const [actionFilter, setActionFilter] = useState("");
+  const [outcomeFilter, setOutcomeFilter] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [startDate, setStartDate] = useState(
+    format(subDays(new Date(), 7), "yyyy-MM-dd")
+  );
+  const [endDate, setEndDate] = useState(format(new Date(), "yyyy-MM-dd"));
+
+  // Build query params
+  const queryParams = useMemo<AuditLogQuery>(() => {
+    const params: AuditLogQuery = {
+      skip: (page - 1) * limit,
+      limit,
+      sort_field: "timestamp",
+      sort_order: "desc",
+    };
+
+    if (startDate) {
+      params.start_time = startOfDay(new Date(startDate)).toISOString();
+    }
+    if (endDate) {
+      params.end_time = endOfDay(new Date(endDate)).toISOString();
+    }
+    if (actionFilter) {
+      params.actions = [actionFilter];
+    }
+    if (outcomeFilter) {
+      params.outcome = outcomeFilter;
+    }
+    if (searchQuery) {
+      params.query = searchQuery;
+    }
+
+    return params;
+  }, [page, limit, startDate, endDate, actionFilter, outcomeFilter, searchQuery]);
+
+  // Fetch audit logs
+  const {
+    data: logsData,
+    isLoading,
+    isError,
+    refetch,
+    isFetching,
+  } = useQuery({
+    queryKey: ["audit-logs", orgId, queryParams],
+    queryFn: () => auditApi.listLogs(orgId, queryParams),
+    enabled: !!orgId,
+  });
+
+  // Fetch available actions
+  const { data: availableActions } = useQuery({
+    queryKey: ["audit-actions", orgId],
+    queryFn: () => auditApi.getActions(orgId),
+    enabled: !!orgId,
+  });
+
+  const totalPages = useMemo(() => {
+    if (!logsData?.total) return 1;
+    return Math.ceil(logsData.total / limit);
+  }, [logsData?.total, limit]);
+
+  const updateFilters = useCallback(
+    (updates: {
+      page?: number;
+      limit?: number;
+      action?: string;
+      outcome?: string;
+      search?: string;
+      startDate?: string;
+      endDate?: string;
+    }) => {
+      if (updates.page !== undefined) setPage(updates.page);
+      if (updates.limit !== undefined)
+        setLimit(updates.limit as (typeof PAGE_SIZES)[number]);
+      if (updates.action !== undefined) setActionFilter(updates.action);
+      if (updates.outcome !== undefined) setOutcomeFilter(updates.outcome);
+      if (updates.search !== undefined) setSearchQuery(updates.search);
+      if (updates.startDate !== undefined) setStartDate(updates.startDate);
+      if (updates.endDate !== undefined) setEndDate(updates.endDate);
+    },
+    []
+  );
+
+  const handleExport = async () => {
+    if (!orgId || !startDate || !endDate) return;
+
+    setIsExporting(true);
+    try {
+      const blob = await auditApi.exportLogs(orgId, {
+        start_time: startOfDay(new Date(startDate)).toISOString(),
+        end_time: endOfDay(new Date(endDate)).toISOString(),
+        actions: actionFilter ? [actionFilter] : undefined,
+        outcome: outcomeFilter || undefined,
+      });
+
+      // Download the blob
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `audit-logs-${orgId}-${startDate}-${endDate}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch {
+      // Error handled silently
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 py-2">
+        <FileText className="size-4" />
+        <span className="text-sm font-medium">{t("audit_title")}</span>
+      </div>
+      <p className="text-xs text-muted-foreground">{t("audit_description")}</p>
+
+      {/* Filters */}
+      <div className="flex flex-col md:flex-row gap-3">
+        {/* Date range */}
+        <div className="flex items-center gap-2">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 gap-1.5">
+                <Calendar className="size-3.5" />
+                {startDate && endDate
+                  ? `${format(new Date(startDate), "MMM d")} - ${format(new Date(endDate), "MMM d")}`
+                  : t("audit_date_range")}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-3" align="start">
+              <div className="space-y-3">
+                <div className="flex gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">{t("audit_start_date")}</Label>
+                    <Input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) =>
+                        updateFilters({ startDate: e.target.value, page: 1 })
+                      }
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{t("audit_end_date")}</Label>
+                    <Input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) =>
+                        updateFilters({ endDate: e.target.value, page: 1 })
+                      }
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-1.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() =>
+                      updateFilters({
+                        startDate: format(new Date(), "yyyy-MM-dd"),
+                        endDate: format(new Date(), "yyyy-MM-dd"),
+                        page: 1,
+                      })
+                    }
+                  >
+                    {t("audit_today")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() =>
+                      updateFilters({
+                        startDate: format(subDays(new Date(), 7), "yyyy-MM-dd"),
+                        endDate: format(new Date(), "yyyy-MM-dd"),
+                        page: 1,
+                      })
+                    }
+                  >
+                    {t("audit_last_7_days")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() =>
+                      updateFilters({
+                        startDate: format(subDays(new Date(), 30), "yyyy-MM-dd"),
+                        endDate: format(new Date(), "yyyy-MM-dd"),
+                        page: 1,
+                      })
+                    }
+                  >
+                    {t("audit_last_30_days")}
+                  </Button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        {/* Action filter */}
+        <Select
+          value={actionFilter || "all"}
+          onValueChange={(v) =>
+            updateFilters({ action: v === "all" ? "" : v, page: 1 })
+          }
+        >
+          <SelectTrigger className="h-8 w-[180px] text-sm">
+            <Filter className="size-3.5 mr-1.5" />
+            <SelectValue placeholder={t("audit_filter_action")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("audit_all_actions")}</SelectItem>
+            {availableActions?.map((action) => (
+              <SelectItem key={action} value={action}>
+                {action}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Outcome filter */}
+        <Select
+          value={outcomeFilter || "all"}
+          onValueChange={(v) =>
+            updateFilters({ outcome: v === "all" ? "" : v, page: 1 })
+          }
+        >
+          <SelectTrigger className="h-8 w-[130px] text-sm">
+            <SelectValue placeholder={t("audit_filter_outcome")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("audit_all_outcomes")}</SelectItem>
+            <SelectItem value="success">{t("audit_outcome_success")}</SelectItem>
+            <SelectItem value="failure">{t("audit_outcome_failure")}</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Search */}
+        <div className="flex-1 max-w-xs">
+          <Input
+            type="text"
+            placeholder={t("audit_search_placeholder")}
+            value={searchQuery}
+            onChange={(e) => updateFilters({ search: e.target.value, page: 1 })}
+            className="h-8 text-sm"
+          />
+        </div>
+
+        {/* Clear filters */}
+        {(actionFilter || outcomeFilter || searchQuery) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8"
+            onClick={() =>
+              updateFilters({
+                action: "",
+                outcome: "",
+                search: "",
+                page: 1,
+              })
+            }
+          >
+            <X className="size-3.5 mr-1" />
+            {t("audit_clear_filters")}
+          </Button>
+        )}
+
+        <div className="flex-1" />
+
+        {/* Refresh and Export */}
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8"
+            onClick={() => refetch()}
+            disabled={isFetching}
+          >
+            <RefreshCw
+              className={`size-3.5 mr-1.5 ${isFetching ? "animate-spin" : ""}`}
+            />
+            {t("audit_refresh")}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8"
+            onClick={handleExport}
+            disabled={isExporting || !logsData?.events.length}
+          >
+            {isExporting ? (
+              <Loader2 className="size-3.5 mr-1.5 animate-spin" />
+            ) : (
+              <Download className="size-3.5 mr-1.5" />
+            )}
+            {t("audit_export")}
+          </Button>
+        </div>
+      </div>
+
+      {/* Results count */}
+      {logsData && (
+        <div className="text-sm text-muted-foreground">
+          {t("audit_showing_results", {
+            from: (page - 1) * limit + 1,
+            to: Math.min(page * limit, logsData.total),
+            total: logsData.total,
+          })}
+        </div>
+      )}
+
+      {/* Table */}
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[180px]">
+                {t("audit_col_timestamp")}
+              </TableHead>
+              <TableHead>{t("audit_col_action")}</TableHead>
+              <TableHead>{t("audit_col_actor")}</TableHead>
+              <TableHead className="w-[100px]">
+                {t("audit_col_outcome")}
+              </TableHead>
+              <TableHead className="w-[60px]"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell>
+                    <Skeleton className="h-4 w-32" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-48" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-32" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-16" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-8" />
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : isError ? (
+              <TableRow>
+                <TableCell
+                  colSpan={5}
+                  className="text-center py-8 text-muted-foreground"
+                >
+                  {t("audit_failed_load")}
+                </TableCell>
+              </TableRow>
+            ) : logsData?.events.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={5}
+                  className="text-center py-8 text-muted-foreground"
+                >
+                  {t("audit_no_results")}
+                </TableCell>
+              </TableRow>
+            ) : (
+              logsData?.events.map((event) => (
+                <TableRow
+                  key={event.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => setSelectedEvent(event)}
+                >
+                  <TableCell className="font-mono text-xs">
+                    {format(new Date(event.timestamp), "MMM d, yyyy HH:mm:ss")}
+                  </TableCell>
+                  <TableCell>
+                    <code className="text-xs bg-muted px-1.5 py-0.5 rounded">
+                      {event.action}
+                    </code>
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {event.actor.email || t("audit_system")}
+                  </TableCell>
+                  <TableCell>
+                    <AuditOutcomeBadge outcome={event.outcome} />
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-7"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedEvent(event);
+                      }}
+                    >
+                      <Eye className="size-3.5" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Pagination */}
+      {logsData && totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              {t("audit_rows_per_page")}
+            </span>
+            <Select
+              value={limit.toString()}
+              onValueChange={(v) =>
+                updateFilters({ limit: parseInt(v), page: 1 })
+              }
+            >
+              <SelectTrigger className="h-8 w-[70px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZES.map((size) => (
+                  <SelectItem key={size} value={size.toString()}>
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              {t("audit_page_of", { current: page, total: totalPages })}
+            </span>
+            <div className="flex gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-8"
+                disabled={page <= 1}
+                onClick={() => updateFilters({ page: page - 1 })}
+              >
+                <ChevronLeft className="size-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-8"
+                disabled={page >= totalPages}
+                onClick={() => updateFilters({ page: page + 1 })}
+              >
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Detail Dialog */}
+      <AuditEventDialog
+        event={selectedEvent}
+        onClose={() => setSelectedEvent(null)}
+      />
+    </div>
+  );
+}
+
+function AuditOutcomeBadge({ outcome }: { outcome: string }) {
+  if (outcome === "success") {
+    return (
+      <Badge
+        variant="secondary"
+        className="bg-green-500/15 text-green-600 dark:text-green-400 border-0"
+      >
+        <CheckCircle className="size-3 mr-1" />
+        Success
+      </Badge>
+    );
+  }
+  if (outcome === "failure") {
+    return (
+      <Badge
+        variant="secondary"
+        className="bg-red-500/15 text-red-600 dark:text-red-400 border-0"
+      >
+        <XCircle className="size-3 mr-1" />
+        Failure
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="outline" className="text-muted-foreground">
+      {outcome}
+    </Badge>
+  );
+}
+
+function AuditEventDialog({
+  event,
+  onClose,
+}: {
+  event: AuditEvent | null;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+
+  if (!event) return null;
+
+  return (
+    <Dialog open={!!event} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <FileText className="size-5" />
+            {t("audit_detail_title")}
+          </DialogTitle>
+          <DialogDescription>
+            {format(new Date(event.timestamp), "MMMM d, yyyy 'at' HH:mm:ss")}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Action and Outcome */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs text-muted-foreground">
+                {t("audit_detail_action")}
+              </Label>
+              <code className="block mt-1 text-sm bg-muted px-2 py-1 rounded">
+                {event.action}
+              </code>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">
+                {t("audit_detail_outcome")}
+              </Label>
+              <div className="mt-1">
+                <AuditOutcomeBadge outcome={event.outcome} />
+              </div>
+            </div>
+          </div>
+
+          {/* Actor */}
+          <div>
+            <Label className="text-xs text-muted-foreground">
+              {t("audit_detail_actor")}
+            </Label>
+            <div className="mt-1 text-sm space-y-1">
+              {event.actor.email && (
+                <div>
+                  <span className="text-muted-foreground">Email:</span>{" "}
+                  {event.actor.email}
+                </div>
+              )}
+              {event.actor.ip_address && (
+                <div>
+                  <span className="text-muted-foreground">IP:</span>{" "}
+                  {event.actor.ip_address}
+                </div>
+              )}
+              {event.actor.user_agent && (
+                <div
+                  className="text-xs text-muted-foreground truncate"
+                  title={event.actor.user_agent}
+                >
+                  {event.actor.user_agent}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Targets */}
+          {event.targets.length > 0 && (
+            <div>
+              <Label className="text-xs text-muted-foreground">
+                {t("audit_detail_targets")}
+              </Label>
+              <div className="mt-1 space-y-1">
+                {event.targets.map((target, i) => (
+                  <div key={i} className="text-sm flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">
+                      {target.type}
+                    </Badge>
+                    {target.name || target.id}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Metadata */}
+          {Object.keys(event.metadata).length > 0 && (
+            <div>
+              <Label className="text-xs text-muted-foreground">
+                {t("audit_detail_metadata")}
+              </Label>
+              <pre className="mt-1 text-xs bg-muted p-2 rounded overflow-x-auto">
+                {JSON.stringify(event.metadata, null, 2)}
+              </pre>
+            </div>
+          )}
+
+          {/* Changes */}
+          {event.changes && Object.keys(event.changes).length > 0 && (
+            <div>
+              <Label className="text-xs text-muted-foreground">
+                {t("audit_detail_changes")}
+              </Label>
+              <pre className="mt-1 text-xs bg-muted p-2 rounded overflow-x-auto">
+                {JSON.stringify(event.changes, null, 2)}
+              </pre>
+            </div>
+          )}
+
+          {/* Error info */}
+          {event.error_message && (
+            <div>
+              <Label className="text-xs text-muted-foreground">
+                {t("audit_detail_error")}
+              </Label>
+              <div className="mt-1 text-sm text-destructive">
+                {event.error_code && (
+                  <span className="font-mono mr-2">[{event.error_code}]</span>
+                )}
+                {event.error_message}
+              </div>
+            </div>
+          )}
+
+          {/* IDs */}
+          <div className="pt-2 border-t text-xs text-muted-foreground space-y-1">
+            <div>
+              Event ID: <span className="font-mono">{event.id}</span>
+            </div>
+            {event.request_id && (
+              <div>
+                Request ID: <span className="font-mono">{event.request_id}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

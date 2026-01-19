@@ -159,7 +159,7 @@ class RateLimitError(AppException):
 
 
 class ExternalServiceError(AppException):
-    """External service (Infisical, OpenSearch, etc.) is unavailable or failed."""
+    """External service (SeaweedFS, etc.) is unavailable or failed."""
 
     def __init__(self, service: str, message: str | None = None):
         msg = f"{service} is unavailable"

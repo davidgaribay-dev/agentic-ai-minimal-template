@@ -30,8 +30,7 @@ src/backend/
 │   ├── context.py       # Agent execution context (org/team/user isolation)
 │   ├── factory.py       # Agent builder with dependency injection
 │   ├── llm.py           # Multi-provider LLM factory
-│   ├── tools.py         # @tool decorated functions
-│   └── tracing.py       # Langfuse observability
+│   └── tools.py         # @tool decorated functions
 ├── auth/
 │   ├── models.py        # User model + schemas
 │   ├── crud.py          # Timing-safe authentication
@@ -54,7 +53,8 @@ src/backend/
 │   ├── config.py        # Pydantic settings with computed fields
 │   ├── db.py            # Engine, session, pagination utilities
 │   ├── security.py      # JWT tokens, password hashing
-│   ├── secrets.py       # Infisical integration
+│   ├── secrets.py       # Encrypted database secrets (Fernet/AES-128-CBC)
+│   ├── encrypted_secrets.py  # EncryptedSecret model and Fernet cipher
 │   ├── logging.py       # structlog configuration
 │   ├── cache.py         # Redis/in-memory caching utilities
 │   ├── http.py          # HTTP client with retries and circuit breaker
@@ -159,19 +159,19 @@ with llm_context(org_id=str(org.id), team_id=str(team.id)):
 # Context auto-cleaned up, prevents bleeding between requests
 ```
 
-**Thread-Safe Singletons** ([agents/tracing.py](src/backend/agents/tracing.py)):
+**Thread-Safe Singletons** ([core/encrypted_secrets.py](src/backend/core/encrypted_secrets.py)):
 ```python
-# Double-checked locking pattern for thread-safe initialization
-_langfuse_lock = threading.Lock()
-_langfuse_handler: CallbackHandler | None = None
+# Double-checked locking pattern for thread-safe Fernet cipher initialization
+_fernet_lock = threading.Lock()
+_fernet: Fernet | None = None
 
-def get_langfuse_handler() -> CallbackHandler | None:
-    if _langfuse_handler is not None:  # Fast path
-        return _langfuse_handler
-    with _langfuse_lock:  # Thread-safe creation
-        if _langfuse_handler is not None:  # Re-check after lock
-            return _langfuse_handler
-        # Create and cache handler
+def get_fernet() -> Fernet:
+    if _fernet is not None:  # Fast path
+        return _fernet
+    with _fernet_lock:  # Thread-safe creation
+        if _fernet is not None:  # Re-check after lock
+            return _fernet
+        # Derive key from SECRET_KEY using PBKDF2 and cache
 ```
 
 **Agent Factory** ([agents/factory.py](src/backend/agents/factory.py)):
@@ -285,14 +285,12 @@ Important: Members use `GET /organizations/{id}/my-membership` for their role (d
 ## Agent System
 
 Multi-provider LLM (`agents/llm.py`):
-- `get_chat_model_with_context(org_id, team_id, provider)` - uses Infisical + env fallback
+- `get_chat_model_with_context(org_id, team_id, provider)` - uses encrypted database secrets + env fallback
 - API key resolution: team-level → org-level → environment
 
 Checkpointing: Thread ID = conversation_id. LangGraph stores history in PostgreSQL via `AsyncPostgresSaver`.
 
 Tools: Add `@tool` functions to `agents/tools.py` - automatically available to ReAct agent.
-
-Tracing: Langfuse integration via `build_langfuse_config()` - include in all agent calls.
 
 ## MCP (Model Context Protocol)
 
@@ -347,7 +345,7 @@ Settings in hierarchy (org → team → user):
 - `mcp_max_servers_per_team/user` - limits (org only)
 - `disabled_mcp_servers`, `disabled_tools` - granular disable (union of all levels)
 
-Auth secrets: Stored in Infisical at `/organizations/{org_id}/[teams/{team_id}/][users/{user_id}/]mcp/mcp_server_{server_id}`
+Auth secrets: Stored encrypted in PostgreSQL at path `/organizations/{org_id}/[teams/{team_id}/][users/{user_id}/]mcp/mcp_server_{server_id}`
 
 ## Conversation Search
 
@@ -616,13 +614,14 @@ Add `@tool` decorated function in `agents/tools.py`
 Key variables (see `core/config.py` for full list):
 ```
 POSTGRES_*                  # Database connection
-SECRET_KEY                  # JWT signing (auto-generated if missing)
-ANTHROPIC_API_KEY           # LLM providers
+SECRET_KEY                  # JWT signing + secrets encryption key
+ANTHROPIC_API_KEY           # LLM providers (fallback, can also be set via UI)
 OPENAI_API_KEY
 GOOGLE_API_KEY
 DEFAULT_LLM_PROVIDER        # anthropic|openai|google
-LANGFUSE_*                  # Tracing
-INFISICAL_*                 # Secrets management
+AUDIT_LOG_DIR               # Directory for JSON audit log files (default: /var/log/app)
+AUDIT_LOG_RETENTION_DAYS    # Days to retain audit logs (default: 90)
+APP_LOG_RETENTION_DAYS      # Days to retain app logs (default: 30)
 ```
 
 ## Rate Limits
@@ -728,8 +727,8 @@ uv run pre-commit run --all-files
 - Pydantic plugin integration
 
 **Ignored external libraries** (missing stubs):
-- langchain, langgraph, langmem, opensearch, infisicalsdk
-- passlib, emails, slowapi, sse_starlette, langfuse
+- langchain, langgraph, langmem
+- passlib, emails, slowapi, sse_starlette
 
 ### Pre-commit Hooks
 

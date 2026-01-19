@@ -259,3 +259,15 @@ export {
   type GuardrailTestResult,
   type GuardrailTestRequest,
 } from "./guardrails";
+
+// Audit module
+export {
+  auditApi,
+  type LogLevel,
+  type AuditActor,
+  type AuditTarget,
+  type AuditEvent,
+  type AuditLogResponse,
+  type AuditLogQuery,
+  type AuditLogExportParams,
+} from "./audit";

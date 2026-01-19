@@ -4,6 +4,10 @@ from sqlalchemy import pool
 from sqlmodel import SQLModel, create_engine
 
 from alembic import context
+from backend.audit.models import (  # noqa: F401 - Import models for autogenerate
+    AppLog,
+    AuditLog,
+)
 from backend.auth.models import User  # noqa: F401 - Import models for autogenerate
 from backend.auth.token_revocation import (
     RevokedToken,  # noqa: F401 - Import models for autogenerate
@@ -12,6 +16,9 @@ from backend.conversations.models import (
     Conversation,  # noqa: F401 - Import models for autogenerate
 )
 from backend.core.config import settings
+from backend.core.encrypted_secrets import (
+    EncryptedSecret,  # noqa: F401 - Import models for autogenerate
+)
 from backend.documents.models import (  # noqa: F401 - Import models for autogenerate
     Document,
     DocumentChunk,

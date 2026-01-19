@@ -104,11 +104,12 @@ async def health_check(
 ) -> HealthResponse:
     """Check if the agent service is healthy and configured.
 
-    LLM is considered configured if either:
-    - Environment variables have API keys set
-    - Infisical is enabled (API keys can be managed per org/team)
+    LLM is considered configured if:
+    - Environment variables have API keys set, OR
+    - API keys can be configured per org/team via encrypted database storage
     """
-    llm_configured = settings.has_llm_api_key or settings.infisical_enabled
+    # Always report LLM configured since org-level keys can be set via UI
+    llm_configured = True
     return HealthResponse(
         status="ok",
         llm_configured=llm_configured,
@@ -134,17 +135,17 @@ async def chat(
     Conversations are tracked in the database for the chat history UI.
 
     API keys are resolved in this order:
-    1. Team-level key from Infisical (if organization_id and team_id provided)
-    2. Org-level key from Infisical (if organization_id provided)
+    1. Team-level key from encrypted storage (if organization_id and team_id provided)
+    2. Org-level key from encrypted storage (if organization_id provided)
     3. Environment variable fallback
 
     When organization_id is provided, the user must be a member of that organization.
     """
     has_org_context = chat_request.organization_id is not None
-    if not settings.has_llm_api_key and not settings.infisical_enabled:
+    if not settings.has_llm_api_key and not has_org_context:
         raise HTTPException(
             status_code=503,
-            detail="No LLM API key configured. Configure via Infisical or set environment variables.",
+            detail="No LLM API key configured. Set environment variables or provide organization_id.",
         )
 
     # Verify organization membership when org context is provided
@@ -161,13 +162,16 @@ async def chat(
                 detail="Not a member of this organization",
             )
 
-    if has_org_context and settings.infisical_enabled:
+    if has_org_context and chat_request.organization_id is not None:
         secrets = get_secrets_service()
         statuses = secrets.list_api_key_status(
             org_id=chat_request.organization_id,
             team_id=chat_request.team_id,
         )
-        if not any(s["is_configured"] for s in statuses):
+        if (
+            not any(s["is_configured"] for s in statuses)
+            and not settings.has_llm_api_key
+        ):
             raise HTTPException(
                 status_code=503,
                 detail="No LLM API key configured for this organization/team. Set up API keys in settings.",
@@ -189,6 +193,23 @@ async def chat(
             if chat_request.organization_id
             else None,
             team_id=uuid.UUID(chat_request.team_id) if chat_request.team_id else None,
+        )
+
+        # Audit log conversation creation
+        await audit_service.log(
+            AuditAction.CONVERSATION_CREATED,
+            actor=current_user,
+            request=request,
+            organization_id=uuid.UUID(chat_request.organization_id)
+            if chat_request.organization_id
+            else None,
+            team_id=uuid.UUID(chat_request.team_id) if chat_request.team_id else None,
+            targets=[Target(type="conversation", id=conversation_id, name=title)],
+            metadata={
+                "has_organization": chat_request.organization_id is not None,
+                "has_team": chat_request.team_id is not None,
+                "created_via": "chat_endpoint",
+            },
         )
     else:
         existing = get_conversation(

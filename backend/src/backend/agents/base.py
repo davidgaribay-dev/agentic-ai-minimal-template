@@ -19,7 +19,6 @@ from sqlmodel import Session, select
 from backend.agents.context import LLMContext, _llm_context
 from backend.agents.llm import get_chat_model, get_chat_model_with_context
 from backend.agents.tools import get_available_tools, get_context_aware_tools
-from backend.agents.tracing import build_langfuse_config
 from backend.core.config import settings
 from backend.core.db import engine
 from backend.core.logging import get_logger
@@ -1551,23 +1550,19 @@ async def run_agent(
         message: User message to process
         thread_id: Optional thread ID for conversation persistence.
                   If provided, previous messages in this thread are automatically included.
-        user_id: Optional user ID for Langfuse tracing
+        user_id: Optional user ID for logging
 
     Returns:
         Agent response as a string
     """
     agent = await get_agent()
 
-    config = build_langfuse_config(
-        user_id=user_id,
-        session_id=thread_id,
-    )
+    config = {"configurable": {"thread_id": thread_id}} if thread_id else {}
 
     logger.info(
         "running_agent",
         thread_id=thread_id,
         has_checkpointer=thread_id is not None,
-        langfuse_enabled=settings.langfuse_enabled,
     )
 
     result = await agent.ainvoke(
@@ -1592,7 +1587,7 @@ async def stream_agent(
     Args:
         message: User message to process
         thread_id: Optional thread ID for conversation persistence
-        user_id: Optional user ID for Langfuse tracing
+        user_id: Optional user ID for logging
 
     Yields:
         Response tokens as they are generated
@@ -1600,16 +1595,12 @@ async def stream_agent(
     try:
         agent = await get_agent()
 
-        config = build_langfuse_config(
-            user_id=user_id,
-            session_id=thread_id,
-        )
+        config = {"configurable": {"thread_id": thread_id}} if thread_id else {}
 
         logger.info(
             "streaming_agent",
             thread_id=thread_id,
             has_checkpointer=thread_id is not None,
-            langfuse_enabled=settings.langfuse_enabled,
         )
 
         async for event in agent.astream_events(
@@ -1640,10 +1631,10 @@ async def run_agent_with_context(
     user_id: str | None = None,
     media_ids: list[str] | None = None,
 ) -> str:
-    """Run the agent with organization/team context for Infisical API keys.
+    """Run the agent with organization/team context for encrypted API keys.
 
     This version uses the context variable to pass org/team info to the chat node,
-    which then fetches the appropriate API key from Infisical and system prompt.
+    which then fetches the appropriate API key from encrypted storage and system prompt.
 
     Supports multimodal messages with images when media_ids are provided.
 
@@ -1653,7 +1644,7 @@ async def run_agent_with_context(
         team_id: Optional team ID for team-level API key override
         thread_id: Optional thread ID for conversation persistence
         provider: Optional LLM provider override
-        user_id: Optional user ID for Langfuse tracing and system prompt lookup
+        user_id: Optional user ID for tracing and system prompt lookup
         media_ids: Optional list of media IDs (images) to include in the message
 
     Returns:
@@ -1661,13 +1652,7 @@ async def run_agent_with_context(
     """
     agent = await get_agent()
 
-    config = build_langfuse_config(
-        user_id=user_id,
-        session_id=thread_id,
-        org_id=org_id,
-        team_id=team_id,
-        provider=provider,
-    )
+    config = {"configurable": {"thread_id": thread_id}} if thread_id else {}
 
     token = _llm_context.set(
         LLMContext(
@@ -1686,7 +1671,6 @@ async def run_agent_with_context(
             org_id=org_id,
             team_id=team_id,
             has_checkpointer=thread_id is not None,
-            langfuse_enabled=settings.langfuse_enabled,
         )
 
         # Build the input message (text-only or multimodal with images)
@@ -1730,7 +1714,7 @@ async def stream_agent_with_context(
     """Stream the agent response with organization/team context.
 
     This version uses the context variable to pass org/team info to the chat node,
-    which then fetches the appropriate API key from Infisical and system prompt.
+    which then fetches the appropriate API key from encrypted storage and system prompt.
     If MCP is enabled and servers are configured, loads MCP tools.
 
     When tool approval is required and an MCP tool is called, yields a dict with
@@ -1744,7 +1728,7 @@ async def stream_agent_with_context(
         team_id: Optional team ID for team-level API key override
         thread_id: Optional thread ID for conversation persistence
         provider: Optional LLM provider override
-        user_id: Optional user ID for Langfuse tracing and system prompt lookup
+        user_id: Optional user ID for tracing and system prompt lookup
         media_ids: Optional list of media IDs (images) to include in the message
 
     Yields:
@@ -1764,13 +1748,7 @@ async def stream_agent_with_context(
         # Use agent with tools (includes MCP tools if enabled)
         agent = await get_agent_with_tools(org_id, team_id, user_id)
 
-        config = build_langfuse_config(
-            user_id=user_id,
-            session_id=thread_id,
-            org_id=org_id,
-            team_id=team_id,
-            provider=provider,
-        )
+        config = {"configurable": {"thread_id": thread_id}} if thread_id else {}
 
         logger.info(
             "streaming_agent_with_context",
@@ -1778,7 +1756,6 @@ async def stream_agent_with_context(
             org_id=org_id,
             team_id=team_id,
             has_checkpointer=thread_id is not None,
-            langfuse_enabled=settings.langfuse_enabled,
         )
 
         # Check and fix orphaned tool calls in the checkpoint BEFORE invoking
@@ -2139,13 +2116,7 @@ async def resume_agent_with_context(
     try:
         agent = await get_agent_with_tools(org_id, team_id, user_id)
 
-        config = build_langfuse_config(
-            user_id=user_id,
-            session_id=thread_id,
-            org_id=org_id,
-            team_id=team_id,
-            provider=provider,
-        )
+        config = {"configurable": {"thread_id": thread_id}} if thread_id else {}
 
         # Check if conversation is actually in an interrupted state
         state = await agent.aget_state(config)

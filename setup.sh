@@ -230,30 +230,8 @@ fi
 # =============================================================================
 print_step 3 "Generating secrets for Docker services"
 
-# Check if secrets already exist in root .env
-if [ -f "$SCRIPT_DIR/.env" ]; then
-    if grep -q "INFISICAL_ENCRYPTION_KEY=" "$SCRIPT_DIR/.env" 2>/dev/null; then
-        print_warning "Root .env already exists with secrets (skipping generation)"
-    else
-        print_info "Running secret generation..."
-        cd "$BACKEND_DIR"
-        if command_exists uv; then
-            uv run python scripts/generate_secrets.py
-        else
-            python3 scripts/generate_secrets.py
-        fi
-        cd "$SCRIPT_DIR"
-    fi
-else
-    print_info "Running secret generation..."
-    cd "$BACKEND_DIR"
-    if command_exists uv; then
-        uv run python scripts/generate_secrets.py
-    else
-        python3 scripts/generate_secrets.py
-    fi
-    cd "$SCRIPT_DIR"
-fi
+# Note: Secrets are now stored encrypted in the database using SECRET_KEY
+print_info "Secrets will be stored encrypted in the database"
 
 # Generate SECRET_KEY for backend if not set
 if [ -f "$BACKEND_DIR/.env" ]; then
@@ -373,55 +351,27 @@ if command_exists uv; then
         WARNINGS=$((WARNINGS + 1))
     fi
 fi
+
+# Create audit logs directory
+echo -e "${DIM}  Creating audit logs directory...${NC}"
+mkdir -p "$BACKEND_DIR/logs"
+print_success "Audit logs directory created (backend/logs)"
+
 cd "$SCRIPT_DIR"
 
 # =============================================================================
-# Step 7: Configure Infisical & Langfuse
+# Step 7: Verify Services
 # =============================================================================
-print_step 7 "Configuring Infisical & Langfuse"
+print_step 7 "Verifying services"
 
-# Wait for Infisical to be fully ready
-echo -e "${DIM}  Waiting for Infisical to be ready...${NC}"
-sleep 5
-if wait_for_service "Infisical" "http://localhost:8081/api/status" 30 2>/dev/null; then
-    :
+# Wait for backend to be ready
+echo -e "${DIM}  Waiting for backend to be ready...${NC}"
+if wait_for_service "Backend" "http://localhost:8000/health" 60 2>/dev/null; then
+    print_success "Backend is ready"
 else
-    sleep 10
+    print_warning "Backend may still be starting - check with: docker compose logs backend"
+    WARNINGS=$((WARNINGS + 1))
 fi
-
-# Setup Infisical
-echo -e "${DIM}  Setting up Infisical (secrets management)...${NC}"
-cd "$BACKEND_DIR"
-if command_exists uv; then
-    if uv run python scripts/setup-infisical.py 2>&1 | grep -E "(SUCCESS|SKIP|ERROR|Created|already|configured)" | tail -5; then
-        print_success "Infisical configured"
-    else
-        print_warning "Infisical setup had issues - run manually: cd backend && uv run python scripts/setup-infisical.py"
-        WARNINGS=$((WARNINGS + 1))
-    fi
-fi
-cd "$SCRIPT_DIR"
-
-# Wait for Langfuse to be ready
-echo -e "${DIM}  Waiting for Langfuse to be ready...${NC}"
-if wait_for_service "Langfuse" "http://localhost:3001/api/public/health" 60 2>/dev/null; then
-    :
-else
-    sleep 15
-fi
-
-# Setup Langfuse
-echo -e "${DIM}  Setting up Langfuse (LLM observability)...${NC}"
-cd "$BACKEND_DIR"
-if command_exists uv; then
-    if uv run python scripts/setup-langfuse.py 2>&1 | grep -E "(SUCCESS|SKIP|ERROR|Created|already|configured)" | tail -5; then
-        print_success "Langfuse configured"
-    else
-        print_warning "Langfuse setup had issues - run manually: cd backend && uv run python scripts/setup-langfuse.py"
-        WARNINGS=$((WARNINGS + 1))
-    fi
-fi
-cd "$SCRIPT_DIR"
 
 # =============================================================================
 # Step 8: Setup Complete
@@ -444,9 +394,7 @@ echo -e "${BOLD}Services:${NC}"
 echo -e "  ${CYAN}Frontend:${NC}               http://localhost:5173"
 echo -e "  ${CYAN}Backend API:${NC}            http://localhost:8000"
 echo -e "  ${CYAN}API Docs (Swagger):${NC}     http://localhost:8000/v1/docs"
-echo -e "  ${CYAN}Infisical:${NC}              http://localhost:8081"
-echo -e "  ${CYAN}OpenSearch Dashboards:${NC}  http://localhost:5601"
-echo -e "  ${CYAN}Langfuse:${NC}               http://localhost:3001"
+echo -e "  ${CYAN}Audit Logs:${NC}             http://localhost:5173/org/audit-logs"
 
 echo ""
 echo -e "${BOLD}Default Credentials:${NC}"

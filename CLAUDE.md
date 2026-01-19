@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Full-stack AI agent platform with FastAPI + LangGraph backend and React 19 + TanStack frontend. Features JWT authentication, multi-tenant architecture (Organizations → Teams → Users), SSE streaming chat, MCP (Model Context Protocol) tool integration, mobile-responsive UI, and enterprise integrations (Infisical secrets, OpenSearch audit logging, Langfuse LLM tracing).
+Full-stack AI agent platform with FastAPI + LangGraph backend and React 19 + TanStack frontend. Features JWT authentication, multi-tenant architecture (Organizations → Teams → Users), SSE streaming chat, MCP (Model Context Protocol) tool integration, mobile-responsive UI, encrypted secrets storage, and PostgreSQL-based audit logging.
 
 See also: [backend/CLAUDE.md](backend/CLAUDE.md) for API patterns, [frontend/CLAUDE.md](frontend/CLAUDE.md) for UI patterns.
 
@@ -23,9 +23,9 @@ Setup Scripts:
 - `setup.sh` - **Production**: Full stack with backend/frontend in Docker containers
 - `setup-local.sh` - **Development**: Infrastructure only, run backend/frontend locally with hot reload
 - `docker-compose.yml` - Full stack (backend + frontend + all infrastructure)
-- `docker-compose-local.yml` - Infrastructure only (DB, SeaweedFS, Infisical, OpenSearch, Langfuse)
+- `docker-compose-local.yml` - Infrastructure only (DB, SeaweedFS)
 
-Services: Frontend (5173), Backend API (8000), API Docs (8000/v1/docs), Infisical (8081), OpenSearch Dashboards (5601), Langfuse (3001)
+Services: Frontend (5173), Backend API (8000), API Docs (8000/v1/docs)
 
 Default superuser: `admin@example.com` / `changethis` (configure in `backend/.env`)
 
@@ -67,7 +67,7 @@ SSE streaming: `POST /v1/agent/chat` with `stream: true`
 
 System prompts: Hierarchical concatenation (org → team → user) prepended to messages.
 
-LLM key resolution: team-level → org-level → environment variable (via Infisical)
+LLM key resolution: team-level → org-level → environment variable (secrets stored encrypted in PostgreSQL)
 
 **Multimodal Chat (Image & Document Uploads)**: Send images and documents with chat messages
 - Images: JPEG, PNG, GIF, WebP (max 10MB per file, 5 files per message)
@@ -149,26 +149,26 @@ Tool configuration (per hierarchy level):
 
 Effective tools endpoint: `GET /v1/mcp/effective-tools` returns all available tools with server info, respecting disabled settings.
 
-Auth secrets stored in Infisical (never exposed in API responses).
+Auth secrets stored encrypted in PostgreSQL (never exposed in API responses).
 
 ## Infrastructure Services
 
 | Service | Port | Purpose | Docs |
 |---------|------|---------|------|
-| PostgreSQL (app) | 5432 | Main database | - |
+| PostgreSQL | 5432 | Main database + audit logs + encrypted secrets | `backend/core/db.py` |
 | SeaweedFS | 8333 | S3 storage (uploads) | `backend/core/storage.py` |
-| Infisical | 8081 | Secrets management | `backend/core/secrets.py` |
-| OpenSearch | 9200 | Audit/app logs | `backend/audit/` |
-| OpenSearch Dashboards | 5601 | Log visualization | - |
-| Langfuse | 3001 | LLM tracing | `backend/agents/tracing.py` |
 
-Infisical secrets paths (auto-managed via `SecretsService`):
-- LLM API keys: `/organizations/{org_id}/[teams/{team_id}/]{provider}_api_key`
-- MCP auth secrets: `/organizations/{org_id}/[teams/{team_id}/][users/{user_id}/]mcp/mcp_server_{server_id}`
+**Secrets Management** (via `backend/core/secrets.py`):
+- LLM API keys and MCP auth secrets stored in `encrypted_secrets` table
+- Encrypted using Fernet (AES-128-CBC) with key derived from `SECRET_KEY` via PBKDF2
+- Paths: `/organizations/{org_id}/[teams/{team_id}/]{provider}_api_key`, `/organizations/{org_id}/.../mcp/mcp_server_{server_id}`
+- All secrets entered via UI and automatically stored/retrieved
 
-All secrets are entered directly in the UI and automatically stored/retrieved via `backend/core/secrets.py`. Never manually create secrets in Infisical for features that have UI configuration.
-
-OpenSearch indices: `audit-logs-YYYY.MM.DD` (90-day retention), `app-logs-YYYY.MM.DD` (30-day retention)
+**Audit Logging** (via `backend/audit/`):
+- `audit_logs` table for compliance events (user actions, security events)
+- `app_logs` table for application logs (errors, debugging)
+- Configurable retention via `AUDIT_LOG_RETENTION_DAYS` (default: 90), `APP_LOG_RETENTION_DAYS` (default: 30)
+- Frontend viewer at `/org/audit-logs` for org admins
 
 ## Project Structure
 
@@ -179,7 +179,7 @@ OpenSearch indices: `audit-logs-YYYY.MM.DD` (90-day retention), `app-logs-YYYY.M
 ├── docker-compose-local.yml # Infrastructure only (for local dev)
 ├── backend/
 │   ├── src/backend/
-│   │   ├── agents/         # LangGraph agent, tools, tracing, context, factory
+│   │   ├── agents/         # LangGraph agent, tools, context, factory
 │   │   ├── mcp/            # MCP server registry, client, tool loading, types
 │   │   ├── api/routes/     # REST endpoints (/v1 prefix)
 │   │   ├── auth/           # User model, JWT, dependencies, token revocation
@@ -194,10 +194,9 @@ OpenSearch indices: `audit-logs-YYYY.MM.DD` (90-day retention), `app-logs-YYYY.M
 │   │   ├── media/          # Chat media uploads (images, documents)
 │   │   ├── memory/         # User memory extraction and storage
 │   │   ├── prompts/        # System and template prompts
-│   │   ├── audit/          # OpenSearch logging
-│   │   └── core/           # Config, DB, security, secrets, cache, HTTP, tasks, UoW, exceptions
-│   ├── scripts/            # Setup scripts (setup-infisical.py, backfill_message_index.py, etc.)
-│   ├── opensearch/         # Default dashboards config
+│   │   ├── audit/          # PostgreSQL audit logging
+│   │   └── core/           # Config, DB, security, secrets (encrypted), cache, HTTP, tasks, UoW, exceptions
+│   ├── scripts/            # Setup scripts (backfill_message_index.py, etc.)
 │   └── alembic/            # Database migrations
 └── frontend/               # React 19 + TanStack + Tailwind v4 + i18next
     └── src/
@@ -298,11 +297,11 @@ Pre-commit hooks match GitHub Actions CI exactly:
 Backend essentials (`backend/.env`):
 ```
 POSTGRES_SERVER, POSTGRES_PORT, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
-SECRET_KEY                    # JWT signing
+SECRET_KEY                    # JWT signing + secrets encryption key
 FRONTEND_URL                  # CORS + redirects
-ANTHROPIC_API_KEY             # LLM fallback
-INFISICAL_URL, INFISICAL_CLIENT_ID, INFISICAL_CLIENT_SECRET, INFISICAL_PROJECT_ID
-LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, LANGFUSE_BASE_URL
+ANTHROPIC_API_KEY             # LLM fallback (optional, can be set via UI)
+AUDIT_LOG_RETENTION_DAYS      # Default: 90
+APP_LOG_RETENTION_DAYS        # Default: 30
 ```
 
 Frontend (`frontend/.env`):
@@ -311,7 +310,7 @@ VITE_API_URL=http://localhost:8000
 VITE_PORT=5173
 ```
 
-See `backend/.env.example` for full list including OpenSearch, Langfuse infrastructure passwords.
+See `backend/.env.example` for full list.
 
 ## Adding Features
 

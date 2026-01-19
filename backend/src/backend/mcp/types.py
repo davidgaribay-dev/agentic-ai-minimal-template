@@ -16,7 +16,7 @@ class MCPServerConfig(TypedDict):
     transport: str  # "http" | "sse" | "streamable_http"
     auth_type: str  # "none" | "bearer" | "api_key"
     auth_header_name: NotRequired[str]
-    auth_secret: NotRequired[str]  # Only present when retrieved from Infisical
+    auth_secret: NotRequired[str]  # Only present when retrieved from encrypted storage
     enabled: bool
     tool_prefix: bool
     scope: str  # "org" | "team" | "user"

@@ -6,7 +6,6 @@ from langgraph.prebuilt import create_react_agent
 
 from backend.agents.llm import get_chat_model
 from backend.agents.tools import get_available_tools
-from backend.agents.tracing import build_langfuse_config
 from backend.core.config import settings
 from backend.core.logging import get_logger
 
@@ -75,34 +74,25 @@ async def run_react_agent(
     Args:
         message: User message to process
         thread_id: Optional thread ID for conversation persistence
-        user_id: Optional user ID for Langfuse tracing
-        org_id: Optional organization ID for Langfuse metadata
-        team_id: Optional team ID for Langfuse metadata
+        user_id: Optional user ID (kept for API compatibility)
+        org_id: Optional organization ID (kept for API compatibility)
+        team_id: Optional team ID (kept for API compatibility)
 
     Returns:
         Agent response as a string
     """
     agent = get_react_agent()
 
-    config = build_langfuse_config(
-        user_id=user_id,
-        session_id=thread_id,
-        org_id=org_id,
-        team_id=team_id,
-        provider=settings.DEFAULT_LLM_PROVIDER,
-    )
+    config = {"configurable": {"thread_id": thread_id}} if thread_id else {}
 
     logger.info(
         "running_react_agent",
         thread_id=thread_id,
-        langfuse_enabled=settings.langfuse_enabled,
     )
 
     result = await agent.ainvoke(
         {"messages": [HumanMessage(content=message)]},
-        config=config
-        if config.get("configurable") or config.get("callbacks")
-        else None,
+        config=config if config else None,
     )
 
     for msg in reversed(result["messages"]):
@@ -127,34 +117,25 @@ async def stream_react_agent(
     Args:
         message: User message to process
         thread_id: Optional thread ID for conversation persistence
-        user_id: Optional user ID for Langfuse tracing
-        org_id: Optional organization ID for Langfuse metadata
-        team_id: Optional team ID for Langfuse metadata
+        user_id: Optional user ID (kept for API compatibility)
+        org_id: Optional organization ID (kept for API compatibility)
+        team_id: Optional team ID (kept for API compatibility)
 
     Yields:
         Event dicts with 'type' and 'data' keys
     """
     agent = get_react_agent()
 
-    config = build_langfuse_config(
-        user_id=user_id,
-        session_id=thread_id,
-        org_id=org_id,
-        team_id=team_id,
-        provider=settings.DEFAULT_LLM_PROVIDER,
-    )
+    config = {"configurable": {"thread_id": thread_id}} if thread_id else {}
 
     logger.info(
         "streaming_react_agent",
         thread_id=thread_id,
-        langfuse_enabled=settings.langfuse_enabled,
     )
 
     async for event in agent.astream_events(
         {"messages": [HumanMessage(content=message)]},
-        config=config
-        if config.get("configurable") or config.get("callbacks")
-        else None,
+        config=config if config else None,
         version="v2",
     ):
         event_type = event.get("event", "")

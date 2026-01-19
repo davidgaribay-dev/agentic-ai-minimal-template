@@ -224,53 +224,10 @@ class Settings(BaseSettings):
             ]
         )
 
-    # Infisical Secrets Management
-    INFISICAL_URL: str | None = None
-    INFISICAL_CLIENT_ID: str | None = None
-    INFISICAL_CLIENT_SECRET: str | None = None
-    INFISICAL_PROJECT_ID: str | None = None
-    INFISICAL_ENVIRONMENT: str = "dev"
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def infisical_enabled(self) -> bool:
-        """Check if Infisical is properly configured."""
-        return all(
-            [
-                self.INFISICAL_URL,
-                self.INFISICAL_CLIENT_ID,
-                self.INFISICAL_CLIENT_SECRET,
-                self.INFISICAL_PROJECT_ID,
-            ]
-        )
-
-    # OpenSearch Configuration
-    OPENSEARCH_URL: str | None = None
-    OPENSEARCH_VERIFY_CERTS: bool = False
-    OPENSEARCH_AUDIT_RETENTION_DAYS: int = 90
-    OPENSEARCH_APP_LOG_RETENTION_DAYS: int = 30
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def opensearch_enabled(self) -> bool:
-        """Check if OpenSearch is configured."""
-        return bool(self.OPENSEARCH_URL)
-
-    # Langfuse - LLM Observability
-    LANGFUSE_PUBLIC_KEY: str | None = None
-    LANGFUSE_SECRET_KEY: str | None = None
-    LANGFUSE_HOST: str = "http://localhost:3001"
-    LANGFUSE_BASE_URL: str | None = None
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def langfuse_base_url(self) -> str:
-        return self.LANGFUSE_BASE_URL or self.LANGFUSE_HOST
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def langfuse_enabled(self) -> bool:
-        return bool(self.LANGFUSE_PUBLIC_KEY and self.LANGFUSE_SECRET_KEY)
+    # Audit Logging Configuration (PostgreSQL + JSON file backup)
+    AUDIT_LOG_DIR: str = "/var/log/app"
+    AUDIT_LOG_RETENTION_DAYS: int = 90
+    APP_LOG_RETENTION_DAYS: int = 30
 
 
 @lru_cache

@@ -58,7 +58,7 @@ def create_mcp_server(
     session.commit()
     session.refresh(server)
 
-    # Store auth secret in Infisical if provided
+    # Store auth secret in encrypted database if provided
     if data.auth_secret:
         secrets = get_secrets_service()
         secret_ref = secrets.set_mcp_auth_secret(
@@ -77,7 +77,7 @@ def create_mcp_server(
             logger.warning(
                 "mcp_auth_secret_storage_failed",
                 server_id=str(server.id),
-                message="Auth secret was provided but could not be stored in Infisical",
+                message="Auth secret was provided but could not be stored",
             )
 
     return server
@@ -265,7 +265,7 @@ def delete_mcp_server(
 ) -> bool:
     """Delete an MCP server.
 
-    Also deletes any associated auth secret from Infisical.
+    Also deletes any associated auth secret from encrypted storage.
 
     Args:
         session: Database session
@@ -278,7 +278,7 @@ def delete_mcp_server(
     if not server:
         return False
 
-    # Delete auth secret from Infisical if it exists
+    # Delete auth secret from encrypted storage if it exists
     if server.auth_secret_ref:
         secrets = get_secrets_service()
         secrets.delete_mcp_auth_secret(

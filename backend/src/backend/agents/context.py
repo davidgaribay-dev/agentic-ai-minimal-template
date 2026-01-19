@@ -16,7 +16,7 @@ class LLMContext:
     """Context data for LLM invocations.
 
     Contains org/team/user context for:
-    - API key resolution from Infisical
+    - API key resolution from encrypted storage
     - System prompt lookup
     - Memory retrieval
     - MCP tool loading

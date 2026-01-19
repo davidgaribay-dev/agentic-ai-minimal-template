@@ -12,13 +12,8 @@ from slowapi.errors import RateLimitExceeded
 from structlog import contextvars
 
 from backend.agents.base import agent_lifespan
-from backend.agents.tracing import (
-    check_langfuse_connection,
-    flush_langfuse,
-    shutdown_langfuse,
-)
 from backend.api.main import api_router
-from backend.audit.client import opensearch_lifespan
+from backend.audit.client import audit_lifespan
 from backend.audit.middleware import AuditLoggingMiddleware
 from backend.audit.service import audit_service
 from backend.core.config import settings
@@ -47,9 +42,6 @@ def custom_generate_unique_id(route: APIRoute) -> str:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan handler."""
-    # Check Langfuse connection on startup
-    langfuse_connected = check_langfuse_connection()
-
     # Initialize i18n translations
     init_translations()
 
@@ -59,13 +51,10 @@ async def lifespan(app: FastAPI):
         debug=settings.DEBUG,
         llm_provider=settings.DEFAULT_LLM_PROVIDER,
         has_api_key=settings.has_llm_api_key,
-        opensearch_enabled=settings.opensearch_enabled,
-        langfuse_enabled=settings.langfuse_enabled,
-        langfuse_connected=langfuse_connected,
         default_language=settings.DEFAULT_LANGUAGE,
     )
 
-    async with opensearch_lifespan():
+    async with audit_lifespan():
         await audit_service.start()
 
         # Initialize memory store (PostgresStore with semantic search)
@@ -91,10 +80,6 @@ async def lifespan(app: FastAPI):
         await cleanup_memory_store()
 
         await audit_service.stop()
-
-    # Flush any pending Langfuse events and shutdown on app shutdown
-    flush_langfuse()
-    shutdown_langfuse()
 
     logger.info("application_shutdown")
 
@@ -224,12 +209,12 @@ def create_app() -> FastAPI:
 
     app.include_router(api_router, prefix=settings.API_V1_STR)
 
-    if settings.opensearch_enabled:
-        app.add_middleware(
-            AuditLoggingMiddleware,
-            slow_request_threshold_ms=1000.0,
-        )
-        logger.info("audit_middleware_enabled")
+    # Audit logging middleware (always enabled - uses PostgreSQL)
+    app.add_middleware(
+        AuditLoggingMiddleware,
+        slow_request_threshold_ms=1000.0,
+    )
+    logger.info("audit_middleware_enabled")
 
     # Add locale middleware for i18n (parses Accept-Language header)
     # Added AFTER AuditLoggingMiddleware so it runs as outermost layer

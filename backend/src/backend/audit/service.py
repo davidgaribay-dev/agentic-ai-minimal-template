@@ -44,7 +44,7 @@ class AuditService:
     """Service for recording audit events and application logs.
 
     This service provides a high-level interface for logging events
-    to OpenSearch with proper formatting and async handling.
+    to PostgreSQL with proper formatting and async handling.
 
     Dropped events are tracked via _dropped_count for monitoring.
     When the queue is full, events are logged with severity and dropped.
