@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -114,6 +115,7 @@ export function EditPromptDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-base">{t("prompts_edit")}</DialogTitle>
+          <DialogDescription>{t("prompts_edit_desc")}</DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit}>
           <div className="space-y-3 py-3">

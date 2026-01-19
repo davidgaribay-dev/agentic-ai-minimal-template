@@ -1,7 +1,8 @@
 from enum import Enum
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 import uuid
 
+from sqlalchemy import Index, UniqueConstraint
 from sqlmodel import Field, Relationship, SQLModel
 
 from backend.core.base_models import (
@@ -106,6 +107,14 @@ class OrganizationMember(OrganizationMemberBase, TimestampedTable, table=True):
     """
 
     __tablename__ = "organization_member"
+    __table_args__ = (
+        # Unique constraint: user can only be member of org once
+        UniqueConstraint("organization_id", "user_id", name="uq_org_member_org_user"),
+        # Index for querying members by org and role (e.g., find all admins)
+        Index("ix_org_member_org_role", "organization_id", "role"),
+        # Index for finding all orgs a user belongs to
+        Index("ix_org_member_user", "user_id"),
+    )
 
     organization_id: uuid.UUID = Field(
         foreign_key="organization.id", nullable=False, ondelete="CASCADE"
@@ -121,11 +130,6 @@ class OrganizationMember(OrganizationMemberBase, TimestampedTable, table=True):
         back_populates="org_member",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
-
-    class Config:
-        """SQLModel config."""
-
-        table_args: ClassVar = {"unique_constraint": ["organization_id", "user_id"]}
 
 
 class OrganizationMemberCreate(SQLModel):

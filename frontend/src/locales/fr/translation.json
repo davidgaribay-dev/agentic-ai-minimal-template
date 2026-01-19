@@ -632,7 +632,9 @@
   "mcp_error_unknown": "Erreur inconnue",
 
   "prompts_create_system": "Créer un prompt système",
+  "prompts_create_system_desc": "Créer un prompt système qui définit le comportement de l'IA.",
   "prompts_create_template": "Créer un modèle",
+  "prompts_create_template_desc": "Créer un modèle réutilisable pour les prompts courants.",
   "prompts_brief_description": "Brève description",
   "prompts_personal_system_desc": "Les prompts système personnels s'ajoutent au comportement de l'IA en plus des prompts d'organisation et d'équipe.",
   "prompts_personal_template_desc": "Les modèles personnels sont des extraits de texte que vous seul pouvez voir et utiliser dans les conversations.",
@@ -766,6 +768,7 @@
   "mcp_add_server_title": "Ajouter un serveur MCP",
   "mcp_add_server_desc": "Connectez-vous à un serveur MCP distant pour activer des outils supplémentaires.",
   "mcp_edit_server": "Modifier le serveur MCP",
+  "mcp_edit_server_desc": "Modifier la configuration du serveur et les paramètres d'authentification.",
   "mcp_edit": "Modifier",
   "mcp_transport": "Transport",
   "mcp_transport_http": "HTTP",

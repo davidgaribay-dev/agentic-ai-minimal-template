@@ -632,7 +632,9 @@
   "mcp_error_unknown": "不明なエラー",
 
   "prompts_create_system": "システムプロンプトを作成",
+  "prompts_create_system_desc": "AIの動作を定義するシステムプロンプトを作成します。",
   "prompts_create_template": "テンプレートを作成",
+  "prompts_create_template_desc": "一般的なプロンプト用の再利用可能なテンプレートを作成します。",
   "prompts_brief_description": "簡単な説明",
   "prompts_personal_system_desc": "個人用システムプロンプトは、組織とチームのプロンプトに加えてAIの動作を追加します。",
   "prompts_personal_template_desc": "個人用テンプレートは、あなただけが見て会話で使用できるテキストスニペットです。",
@@ -766,6 +768,7 @@
   "mcp_add_server_title": "MCPサーバーを追加",
   "mcp_add_server_desc": "リモートMCPサーバーに接続して追加ツールを有効化します。",
   "mcp_edit_server": "MCPサーバーを編集",
+  "mcp_edit_server_desc": "サーバー設定と認証設定を変更します。",
   "mcp_edit": "編集",
   "mcp_transport": "トランスポート",
   "mcp_transport_http": "HTTP",

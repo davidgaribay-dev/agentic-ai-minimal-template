@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 import uuid
 
 from pydantic import EmailStr
+from sqlalchemy import Index
 from sqlmodel import Field, Relationship, SQLModel
 
 from backend.core.base_models import BaseTable, PaginatedResponse
@@ -87,6 +88,10 @@ class PasswordHistory(SQLModel, table=True):
     """
 
     __tablename__ = "password_history"
+    __table_args__ = (
+        # Composite index for efficient queries ordering by created_at per user
+        Index("ix_password_history_user_created", "user_id", "created_at"),
+    )
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     user_id: uuid.UUID = Field(foreign_key="user.id", index=True, ondelete="CASCADE")

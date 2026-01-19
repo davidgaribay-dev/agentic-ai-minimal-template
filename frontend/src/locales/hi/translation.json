@@ -634,7 +634,9 @@
   "mcp_error_unknown": "अज्ञात त्रुटि",
 
   "prompts_create_system": "सिस्टम प्रॉम्प्ट बनाएं",
+  "prompts_create_system_desc": "AI के व्यवहार को परिभाषित करने वाला सिस्टम प्रॉम्प्ट बनाएं।",
   "prompts_create_template": "टेम्पलेट बनाएं",
+  "prompts_create_template_desc": "सामान्य प्रॉम्प्ट के लिए पुन: प्रयोज्य टेम्पलेट बनाएं।",
   "prompts_brief_description": "संक्षिप्त विवरण",
   "prompts_personal_system_desc": "व्यक्तिगत सिस्टम प्रॉम्प्ट संगठन और टीम प्रॉम्प्ट के ऊपर AI के व्यवहार में जोड़ते हैं।",
   "prompts_personal_template_desc": "व्यक्तिगत टेम्पलेट टेक्स्ट स्निपेट हैं जो केवल आप देख और बातचीत में उपयोग कर सकते हैं।",
@@ -768,6 +770,7 @@
   "mcp_add_server_title": "MCP सर्वर जोड़ें",
   "mcp_add_server_desc": "अतिरिक्त टूल सक्षम करने के लिए रिमोट MCP सर्वर से कनेक्ट करें।",
   "mcp_edit_server": "MCP सर्वर संपादित करें",
+  "mcp_edit_server_desc": "सर्वर कॉन्फ़िगरेशन और प्रमाणीकरण सेटिंग्स संशोधित करें।",
   "mcp_edit": "संपादित करें",
   "mcp_transport": "ट्रांसपोर्ट",
   "mcp_transport_http": "HTTP",

@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -103,6 +104,11 @@ export function CreatePromptDialog({
               ? t("prompts_create_system")
               : t("prompts_create_template")}
           </DialogTitle>
+          <DialogDescription>
+            {defaultType === "system"
+              ? t("prompts_create_system_desc")
+              : t("prompts_create_template_desc")}
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit}>
           <div className="space-y-3 py-3">

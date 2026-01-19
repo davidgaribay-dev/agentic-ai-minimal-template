@@ -1,3 +1,31 @@
+/**
+ * UI Store
+ *
+ * Persistent UI preferences (sidebar state, panel state, widths).
+ * Uses localStorage persistence via zustand/persist middleware.
+ *
+ * Design decisions:
+ * 1. Separate from chat-store because:
+ *    - UI preferences should survive page refresh (persisted)
+ *    - Changes infrequently (only on user interactions)
+ *    - Small payload suitable for localStorage
+ *
+ * 2. Granular selectors provided to prevent unnecessary re-renders:
+ *    - useSidebarState(): Only sidebar-related state
+ *    - useSidePanelState(): Only side panel-related state
+ *    - Atomic selectors (useSidebarOpen, useSidePanelOpen, etc.)
+ *
+ * 3. Side panel width is clamped to min/max from design tokens
+ *
+ * Usage:
+ *   // Full state (rarely needed)
+ *   const { sidebarOpen, toggleSidebar } = useUIStore();
+ *
+ *   // Preferred: Use granular selectors
+ *   const { sidebarOpen, toggleSidebar } = useSidebarState();
+ *   const sidePanelOpen = useSidePanelOpen();
+ */
+
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useShallow } from "zustand/react/shallow";

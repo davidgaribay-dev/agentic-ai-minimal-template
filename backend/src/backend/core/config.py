@@ -60,10 +60,16 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str = "changethis"
     POSTGRES_DB: str = "app"
 
-    # Connection pool settings - adjust for production load
-    POSTGRES_POOL_SIZE: int = 5  # Core pool connections
-    POSTGRES_MAX_OVERFLOW: int = 10  # Additional connections beyond pool_size
-    POSTGRES_POOL_RECYCLE: int = 3600  # Recycle connections after N seconds
+    # Connection pool settings
+    # Development: pool_size=5, max_overflow=10 (handles ~15 concurrent requests)
+    # Production: Adjust based on expected load and database connection limits
+    # Sizing formula: total_connections = (pool_size + max_overflow) * app_instances
+    # Must be less than db_max_connections. PostgreSQL default is 100.
+    # Example: 4 instances with pool_size=10, max_overflow=5 uses 60 connections
+    # See: https://docs.sqlalchemy.org/en/20/core/pooling.html
+    POSTGRES_POOL_SIZE: int = 5  # Minimum connections maintained in pool
+    POSTGRES_MAX_OVERFLOW: int = 10  # Temporary connections beyond pool_size
+    POSTGRES_POOL_RECYCLE: int = 3600  # Recycle connections after 1 hour
 
     @field_validator("POSTGRES_PASSWORD", mode="after")
     @classmethod

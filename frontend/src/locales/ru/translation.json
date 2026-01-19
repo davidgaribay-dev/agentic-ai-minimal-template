@@ -632,7 +632,9 @@
   "mcp_error_unknown": "Неизвестная ошибка",
 
   "prompts_create_system": "Создать системный промпт",
+  "prompts_create_system_desc": "Создать системный промпт, определяющий поведение AI.",
   "prompts_create_template": "Создать шаблон",
+  "prompts_create_template_desc": "Создать многоразовый шаблон для типовых промптов.",
   "prompts_brief_description": "Краткое описание",
   "prompts_personal_system_desc": "Персональные системные промпты добавляются к поведению AI поверх промптов организации и команды.",
   "prompts_personal_template_desc": "Персональные шаблоны - это текстовые фрагменты, которые видите и используете только вы в диалогах.",
@@ -766,6 +768,7 @@
   "mcp_add_server_title": "Добавить MCP сервер",
   "mcp_add_server_desc": "Подключитесь к удалённому MCP серверу для включения дополнительных инструментов.",
   "mcp_edit_server": "Редактировать MCP сервер",
+  "mcp_edit_server_desc": "Изменить конфигурацию сервера и настройки аутентификации.",
   "mcp_edit": "Редактировать",
   "mcp_transport": "Транспорт",
   "mcp_transport_http": "HTTP",

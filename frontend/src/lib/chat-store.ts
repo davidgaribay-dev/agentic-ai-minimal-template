@@ -1,3 +1,28 @@
+/**
+ * Chat Messages Store
+ *
+ * Ephemeral chat state for active conversations. NOT persisted to localStorage.
+ * Supports multiple concurrent chat instances (e.g., main panel + side panel).
+ *
+ * Design decisions:
+ * 1. Separate from ui-store because:
+ *    - Chat state is session-scoped and should not survive page refresh
+ *    - Chat state changes frequently during streaming (would cause excessive writes)
+ *    - Different lifecycle than persistent UI preferences
+ *
+ * 2. Multi-instance support via sessions keyed by instanceId:
+ *    - Allows multiple chat views of different conversations simultaneously
+ *    - Sessions with same conversationId are synced (e.g., side panel and main view)
+ *
+ * 3. Tool approval state included for HITL (Human-in-the-Loop) MCP tool flow:
+ *    - pendingToolApproval: Current tool awaiting user decision
+ *    - rejectedToolCall: Recently rejected tool (for undo capability)
+ *
+ * Usage:
+ *   const session = useChatMessagesStore(state => state.sessions["page"]);
+ *   const actions = useChatMessagesStore(useShallow(actionsSelector));
+ */
+
 import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 
@@ -65,7 +90,7 @@ interface ChatSession {
 }
 
 /** Global chat state - supports multiple concurrent sessions keyed by instanceId */
-interface ChatMessagesState {
+export interface ChatMessagesState {
   /** Sessions keyed by instanceId (e.g., "page" or "panel") */
   sessions: Record<string, ChatSession>;
 

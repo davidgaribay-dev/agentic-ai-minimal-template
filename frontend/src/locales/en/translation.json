@@ -632,7 +632,9 @@
   "mcp_error_unknown": "Unknown error",
 
   "prompts_create_system": "Create System Prompt",
+  "prompts_create_system_desc": "Create a system prompt that defines AI behavior.",
   "prompts_create_template": "Create Template",
+  "prompts_create_template_desc": "Create a reusable template for common prompts.",
   "prompts_brief_description": "Brief description",
   "prompts_personal_system_desc": "Personal system prompts add to the AI's behavior on top of organization and team prompts.",
   "prompts_personal_template_desc": "Personal templates are text snippets only you can see and use in conversations.",
@@ -766,6 +768,7 @@
   "mcp_add_server_title": "Add MCP Server",
   "mcp_add_server_desc": "Connect to a remote MCP server to enable additional tools.",
   "mcp_edit_server": "Edit MCP Server",
+  "mcp_edit_server_desc": "Modify server configuration and authentication settings.",
   "mcp_edit": "Edit",
   "mcp_transport": "Transport",
   "mcp_transport_http": "HTTP",

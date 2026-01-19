@@ -634,7 +634,9 @@
   "mcp_error_unknown": "未知错误",
 
   "prompts_create_system": "创建系统提示词",
+  "prompts_create_system_desc": "创建一个定义 AI 行为的系统提示词。",
   "prompts_create_template": "创建模板",
+  "prompts_create_template_desc": "创建一个可重用的常用提示词模板。",
   "prompts_brief_description": "简要描述",
   "prompts_personal_system_desc": "个人系统提示词会在组织和团队提示词之上添加到 AI 行为中。",
   "prompts_personal_template_desc": "个人模板是只有您可以在对话中查看和使用的文本片段。",
@@ -768,6 +770,7 @@
   "mcp_add_server_title": "添加 MCP 服务器",
   "mcp_add_server_desc": "连接到远程 MCP 服务器以启用更多工具。",
   "mcp_edit_server": "编辑 MCP 服务器",
+  "mcp_edit_server_desc": "修改服务器配置和认证设置。",
   "mcp_edit": "编辑",
   "mcp_transport": "传输协议",
   "mcp_transport_http": "HTTP",

@@ -26,6 +26,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -142,6 +143,7 @@ export function EditServerDialog({ server, scope }: EditServerDialogProps) {
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{t("mcp_edit_server")}</DialogTitle>
+          <DialogDescription>{t("mcp_edit_server_desc")}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>

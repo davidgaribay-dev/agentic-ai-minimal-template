@@ -6,6 +6,11 @@
  * - Organization/team switching
  * - Persistence to localStorage
  * - TanStack Query integration for data fetching
+ *
+ * Hook variants:
+ * - useWorkspace(): Throws if outside provider (strict, default)
+ * - useWorkspaceOptional(): Returns null if outside provider
+ * - useWorkspaceSafe(): Returns safe defaults if outside provider
  */
 
 import {
@@ -26,6 +31,7 @@ import {
   type OrgRole,
 } from "./api";
 import { isLoggedIn, useCurrentUser } from "./auth";
+import { queryDefaults } from "./query-defaults";
 
 export interface WorkspaceState {
   /** Currently selected organization */
@@ -88,7 +94,7 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     queryKey: workspaceKeys.organizations,
     queryFn: () => organizationsApi.getOrganizations(),
     enabled: isLoggedIn(),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    ...queryDefaults.stable,
   });
 
   const organizations = orgsData?.data ?? [];
@@ -122,7 +128,7 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     queryKey: workspaceKeys.teams(currentOrgId ?? ""),
     queryFn: () => teamsApi.getMyTeams(currentOrgId!),
     enabled: isLoggedIn() && !!currentOrgId,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    ...queryDefaults.stable,
   });
 
   const teams = teamsData?.data ?? [];
@@ -131,7 +137,7 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     queryKey: ["workspace", "my-membership", currentOrgId],
     queryFn: () => organizationsApi.getMyMembership(currentOrgId!),
     enabled: isLoggedIn() && !!currentOrgId,
-    staleTime: 1000 * 60 * 5,
+    ...queryDefaults.stable,
   });
 
   useEffect(() => {
@@ -240,6 +246,10 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
   );
 }
 
+/**
+ * Returns workspace state. Throws if used outside WorkspaceProvider.
+ * Use this for components that must be within the workspace context.
+ */
 export function useWorkspace(): WorkspaceState {
   const context = useContext(WorkspaceContext);
   if (!context) {
@@ -248,12 +258,45 @@ export function useWorkspace(): WorkspaceState {
   return context;
 }
 
+/**
+ * Returns workspace state or null if outside WorkspaceProvider.
+ * Use for components that may render outside workspace context (e.g., error boundaries).
+ */
+export function useWorkspaceOptional(): WorkspaceState | null {
+  return useContext(WorkspaceContext);
+}
+
+/** Default workspace state for components outside the provider */
+const defaultWorkspaceState: WorkspaceState = {
+  currentOrg: null,
+  currentTeam: null,
+  currentOrgRole: null,
+  organizations: [],
+  teams: [],
+  isLoadingOrgs: true,
+  isLoadingTeams: true,
+  orgsError: null,
+  teamsError: null,
+  switchOrganization: () => {},
+  switchTeam: () => {},
+  refresh: () => {},
+};
+
+/**
+ * Returns workspace state with safe defaults if outside WorkspaceProvider.
+ * Useful for components that need graceful degradation (loading states, fallbacks).
+ */
+export function useWorkspaceSafe(): WorkspaceState {
+  const context = useContext(WorkspaceContext);
+  return context ?? defaultWorkspaceState;
+}
+
 export function useOrganizations() {
   return useQuery({
     queryKey: workspaceKeys.organizations,
     queryFn: () => organizationsApi.getOrganizations(),
     enabled: isLoggedIn(),
-    staleTime: 1000 * 60 * 5,
+    ...queryDefaults.stable,
   });
 }
 
@@ -262,6 +305,7 @@ export function useOrganization(orgId: string | undefined) {
     queryKey: ["workspace", "organization", orgId],
     queryFn: () => organizationsApi.getOrganization(orgId!),
     enabled: isLoggedIn() && !!orgId,
+    ...queryDefaults.stable,
   });
 }
 
@@ -270,6 +314,7 @@ export function useOrganizationMembers(orgId: string | undefined) {
     queryKey: workspaceKeys.membership(orgId ?? ""),
     queryFn: () => organizationsApi.getMembers(orgId!),
     enabled: isLoggedIn() && !!orgId,
+    ...queryDefaults.stable,
   });
 }
 
@@ -278,7 +323,7 @@ export function useTeams(orgId: string | undefined) {
     queryKey: workspaceKeys.teams(orgId ?? ""),
     queryFn: () => teamsApi.getMyTeams(orgId!),
     enabled: isLoggedIn() && !!orgId,
-    staleTime: 1000 * 60 * 5,
+    ...queryDefaults.stable,
   });
 }
 
@@ -287,6 +332,7 @@ export function useTeam(orgId: string | undefined, teamId: string | undefined) {
     queryKey: ["workspace", "team", orgId, teamId],
     queryFn: () => teamsApi.getTeam(orgId!, teamId!),
     enabled: isLoggedIn() && !!orgId && !!teamId,
+    ...queryDefaults.stable,
   });
 }
 
@@ -298,5 +344,6 @@ export function useTeamMembers(
     queryKey: ["workspace", "team-members", orgId, teamId],
     queryFn: () => teamsApi.getMembers(orgId!, teamId!),
     enabled: isLoggedIn() && !!orgId && !!teamId,
+    ...queryDefaults.stable,
   });
 }

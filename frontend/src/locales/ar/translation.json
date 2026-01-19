@@ -632,7 +632,9 @@
   "mcp_error_unknown": "خطأ غير معروف",
 
   "prompts_create_system": "إنشاء مطالبة نظام",
+  "prompts_create_system_desc": "إنشاء مطالبة نظام تحدد سلوك الذكاء الاصطناعي.",
   "prompts_create_template": "إنشاء قالب",
+  "prompts_create_template_desc": "إنشاء قالب قابل لإعادة الاستخدام للمطالبات الشائعة.",
   "prompts_brief_description": "وصف موجز",
   "prompts_personal_system_desc": "مطالبات النظام الشخصية تضيف إلى سلوك الذكاء الاصطناعي بالإضافة إلى مطالبات المؤسسة والفريق.",
   "prompts_personal_template_desc": "القوالب الشخصية هي مقاطع نصية يمكنك فقط رؤيتها واستخدامها في المحادثات.",
@@ -766,6 +768,7 @@
   "mcp_add_server_title": "إضافة خادم MCP",
   "mcp_add_server_desc": "الاتصال بخادم MCP عن بعد لتفعيل أدوات إضافية.",
   "mcp_edit_server": "تعديل خادم MCP",
+  "mcp_edit_server_desc": "تعديل إعدادات الخادم والمصادقة.",
   "mcp_edit": "تعديل",
   "mcp_transport": "النقل",
   "mcp_transport_http": "HTTP",

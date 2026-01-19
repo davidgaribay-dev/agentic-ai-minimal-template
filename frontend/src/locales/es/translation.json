@@ -634,7 +634,9 @@
   "mcp_error_unknown": "Error desconocido",
 
   "prompts_create_system": "Crear prompt del sistema",
+  "prompts_create_system_desc": "Crear un prompt del sistema que define el comportamiento de la IA.",
   "prompts_create_template": "Crear plantilla",
+  "prompts_create_template_desc": "Crear una plantilla reutilizable para prompts comunes.",
   "prompts_brief_description": "Breve descripción",
   "prompts_personal_system_desc": "Los prompts personales del sistema se añaden al comportamiento de la IA además de los prompts de la organización y el equipo.",
   "prompts_personal_template_desc": "Las plantillas personales son fragmentos de texto que solo tú puedes ver y usar en las conversaciones.",
@@ -768,6 +770,7 @@
   "mcp_add_server_title": "Agregar servidor MCP",
   "mcp_add_server_desc": "Conéctate a un servidor MCP remoto para habilitar herramientas adicionales.",
   "mcp_edit_server": "Editar servidor MCP",
+  "mcp_edit_server_desc": "Modificar la configuración del servidor y los ajustes de autenticación.",
   "mcp_edit": "Editar",
   "mcp_transport": "Transporte",
   "mcp_transport_http": "HTTP",

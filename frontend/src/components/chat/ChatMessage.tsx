@@ -346,6 +346,28 @@ function createComponentsWithCitations(
   };
 }
 
+/**
+ * Custom comparison function for ChatMessage memo.
+ * Prevents unnecessary re-renders when array references change but content doesn't.
+ * This is critical for performance during chat streaming where parent components
+ * may recreate arrays on each render.
+ */
+function chatMessagePropsAreEqual(
+  prev: ChatMessageProps,
+  next: ChatMessageProps,
+): boolean {
+  return (
+    prev.role === next.role &&
+    prev.content === next.content &&
+    prev.isStreaming === next.isStreaming &&
+    prev.guardrail_blocked === next.guardrail_blocked &&
+    prev.className === next.className &&
+    // Compare array lengths first (fast path)
+    (prev.sources?.length ?? 0) === (next.sources?.length ?? 0) &&
+    (prev.media?.length ?? 0) === (next.media?.length ?? 0)
+  );
+}
+
 export const ChatMessage = memo(function ChatMessage({
   role,
   content,
@@ -498,4 +520,4 @@ export const ChatMessage = memo(function ChatMessage({
       ) : null}
     </div>
   );
-});
+}, chatMessagePropsAreEqual);

@@ -8,6 +8,11 @@
  * - Loading and error states
  * - Human-in-the-loop (HITL) tool approval for MCP tools
  *
+ * Performance optimizations:
+ * - Actions selector defined outside hook for referential stability
+ * - Callback refs prevent unnecessary re-renders from callback prop changes
+ * - Cleanup effect handles both abort controller and reconnection timers
+ *
  * Usage:
  *   const { messages, sendMessage, isStreaming, error, pendingToolApproval, resumeWithApproval } = useChat({ instanceId: "page" })
  */
@@ -27,9 +32,30 @@ import {
   type ChatMediaAttachment,
   type PendingToolApproval,
   type RejectedToolCall,
+  type ChatMessagesState,
 } from "@/lib/chat-store";
 import i18n from "@/locales/i18n";
 import { useShallow } from "zustand/react/shallow";
+
+/**
+ * Stable selector for store actions - defined outside hook to prevent
+ * recreation on every render. Using useShallow with this selector ensures
+ * the returned object only changes when individual action references change
+ * (which they never do since they're defined in create()).
+ */
+const actionsSelector = (state: ChatMessagesState) => ({
+  setMessages: state.setMessages,
+  updateMessage: state.updateMessage,
+  addMessages: state.addMessages,
+  removeMessage: state.removeMessage,
+  setIsStreaming: state.setIsStreaming,
+  setError: state.setError,
+  setConversationId: state.setConversationId,
+  setPendingToolApproval: state.setPendingToolApproval,
+  setRejectedToolCall: state.setRejectedToolCall,
+  clearSession: state.clearSession,
+  syncConversation: state.syncConversation,
+});
 
 export type {
   ChatMessage,
@@ -110,21 +136,8 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
     useShallow((state) => state.sessions[instanceId] ?? defaultSession),
   );
 
-  const actions = useChatMessagesStore(
-    useShallow((state) => ({
-      setMessages: state.setMessages,
-      updateMessage: state.updateMessage,
-      addMessages: state.addMessages,
-      removeMessage: state.removeMessage,
-      setIsStreaming: state.setIsStreaming,
-      setError: state.setError,
-      setConversationId: state.setConversationId,
-      setPendingToolApproval: state.setPendingToolApproval,
-      setRejectedToolCall: state.setRejectedToolCall,
-      clearSession: state.clearSession,
-      syncConversation: state.syncConversation,
-    })),
-  );
+  // Use stable selector defined outside hook for consistent reference
+  const actions = useChatMessagesStore(useShallow(actionsSelector));
 
   const {
     messages,
@@ -137,7 +150,25 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
   const conversationId = sessionConversationId ?? initialConversationId ?? null;
 
   const abortControllerRef = useRef<AbortController | null>(null);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const queryClient = useQueryClient();
+
+  // Store callback options in refs to avoid dependency changes triggering re-renders
+  // These callbacks are user-provided and may change on every render
+  const callbacksRef = useRef({
+    onError,
+    onStreamStart,
+    onStreamEnd,
+    onTitleUpdate,
+  });
+  useEffect(() => {
+    callbacksRef.current = {
+      onError,
+      onStreamStart,
+      onStreamEnd,
+      onTitleUpdate,
+    };
+  });
 
   const stopStreaming = useCallback(() => {
     if (abortControllerRef.current) {
@@ -147,15 +178,23 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
     actions.setIsStreaming(instanceId, false);
   }, [instanceId, actions]);
 
-  // Cleanup SSE stream on unmount to prevent memory leaks
+  // Cleanup SSE stream and timers on unmount to prevent memory leaks
   useEffect(() => {
     return () => {
+      // Abort any pending fetch/SSE requests
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
         abortControllerRef.current = null;
       }
+      // Clear any reconnection timers
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+      // Reset streaming state for this instance
+      actions.setIsStreaming(instanceId, false);
     };
-  }, []);
+  }, [instanceId, actions]);
 
   const sendMessage = useCallback(
     async (content: string, options?: SendMessageOptions) => {
@@ -212,7 +251,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
 
       actions.addMessages(instanceId, [userMessage, assistantMessage]);
       actions.setIsStreaming(instanceId, true);
-      onStreamStart?.();
+      callbacksRef.current.onStreamStart?.();
 
       abortControllerRef.current = new AbortController();
 
@@ -241,7 +280,10 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
 
             case "title":
               if (event.data.conversation_id && event.data.title) {
-                onTitleUpdate?.(event.data.conversation_id, event.data.title);
+                callbacksRef.current.onTitleUpdate?.(
+                  event.data.conversation_id,
+                  event.data.title,
+                );
                 agentApi
                   .updateTitle(event.data.conversation_id, event.data.title)
                   .then(() => {
@@ -310,7 +352,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
           queryClient.invalidateQueries({
             queryKey: queryKeys.conversations.list(teamId),
           });
-          onStreamEnd?.(newConversationId);
+          callbacksRef.current.onStreamEnd?.(newConversationId);
         }
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") {
@@ -321,7 +363,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
         const error =
           err instanceof Error ? err : new Error(i18n.t("error_stream_failed"));
         actions.setError(instanceId, error);
-        onError?.(error);
+        callbacksRef.current.onError?.(error);
 
         actions.updateMessage(instanceId, assistantMessageId, {
           content: i18n.t("chat_error_response"),
@@ -332,16 +374,14 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
         abortControllerRef.current = null;
       }
     },
+    // Dependencies reduced from 12 to 7 by using callbacksRef for callbacks
+    // Callbacks (onError, onStreamStart, onStreamEnd, onTitleUpdate) accessed via ref
     [
       conversationId,
       organizationId,
       teamId,
       isStreaming,
       pendingToolApproval,
-      onError,
-      onStreamStart,
-      onStreamEnd,
-      onTitleUpdate,
       queryClient,
       instanceId,
       actions,
@@ -524,7 +564,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
         queryClient.invalidateQueries({
           queryKey: queryKeys.conversations.list(teamId),
         });
-        onStreamEnd?.(conversationId);
+        callbacksRef.current.onStreamEnd?.(conversationId);
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") {
           if (approved) {
@@ -536,7 +576,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
         const error =
           err instanceof Error ? err : new Error(i18n.t("error_resume_failed"));
         actions.setError(instanceId, error);
-        onError?.(error);
+        callbacksRef.current.onError?.(error);
 
         if (approved) {
           actions.updateMessage(instanceId, assistantMessageId, {
@@ -549,13 +589,12 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
         abortControllerRef.current = null;
       }
     },
+    // Dependencies reduced from 9 to 7 by using callbacksRef for callbacks
     [
       conversationId,
       organizationId,
       teamId,
       pendingToolApproval,
-      onError,
-      onStreamEnd,
       queryClient,
       instanceId,
       actions,

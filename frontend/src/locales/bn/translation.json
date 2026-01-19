@@ -634,7 +634,9 @@
   "mcp_error_unknown": "অজানা ত্রুটি",
 
   "prompts_create_system": "সিস্টেম প্রম্পট তৈরি করুন",
+  "prompts_create_system_desc": "AI-এর আচরণ সংজ্ঞায়িত করে এমন একটি সিস্টেম প্রম্পট তৈরি করুন।",
   "prompts_create_template": "টেমপ্লেট তৈরি করুন",
+  "prompts_create_template_desc": "সাধারণ প্রম্পটগুলির জন্য একটি পুনঃব্যবহারযোগ্য টেমপ্লেট তৈরি করুন।",
   "prompts_brief_description": "সংক্ষিপ্ত বিবরণ",
   "prompts_personal_system_desc": "ব্যক্তিগত সিস্টেম প্রম্পট প্রতিষ্ঠান এবং টিম প্রম্পটের উপরে AI-এর আচরণে যোগ করে।",
   "prompts_personal_template_desc": "ব্যক্তিগত টেমপ্লেট হল টেক্সট স্নিপেট যা শুধুমাত্র আপনি কথোপকথনে দেখতে এবং ব্যবহার করতে পারেন।",
@@ -768,6 +770,7 @@
   "mcp_add_server_title": "MCP সার্ভার যোগ করুন",
   "mcp_add_server_desc": "অতিরিক্ত টুল সক্ষম করতে একটি রিমোট MCP সার্ভারে সংযোগ করুন।",
   "mcp_edit_server": "MCP সার্ভার সম্পাদনা করুন",
+  "mcp_edit_server_desc": "সার্ভার কনফিগারেশন এবং প্রমাণীকরণ সেটিংস পরিবর্তন করুন।",
   "mcp_edit": "সম্পাদনা",
   "mcp_transport": "ট্রান্সপোর্ট",
   "mcp_transport_http": "HTTP",

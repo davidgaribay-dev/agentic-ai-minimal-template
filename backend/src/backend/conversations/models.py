@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any, Optional
 import uuid
 
 from pydantic import field_validator
+from sqlalchemy import Index
 from sqlmodel import Field, Relationship, SQLModel
 
 from backend.core.base_models import (
@@ -37,6 +38,18 @@ class Conversation(ConversationBase, OptionalAuditedTable, SoftDeleteMixin, tabl
     - created_by_id: Tracks who created the conversation (audit trail, from OptionalAuditedTable)
     - user_id: Deprecated, kept for backwards compatibility during migration
     """
+
+    __table_args__ = (
+        # Composite index for listing conversations by team, user, sorted by update time
+        Index(
+            "ix_conversation_team_user_updated",
+            "team_id",
+            "created_by_id",
+            "updated_at",
+        ),
+        # Composite index for filtering by team with soft delete check
+        Index("ix_conversation_team_deleted", "team_id", "deleted_at"),
+    )
 
     # Multi-tenant scoping (required for new conversations)
     # Note: Not using HierarchicalScopedMixin due to deprecated user_id field semantics
@@ -103,6 +116,10 @@ class ConversationMessage(SQLModel, table=True):
     """
 
     __tablename__ = "conversation_message"
+    __table_args__ = (
+        # Composite index for fetching messages by conversation, sorted by time
+        Index("ix_conv_msg_conv_created", "conversation_id", "created_at"),
+    )
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     conversation_id: uuid.UUID = Field(
