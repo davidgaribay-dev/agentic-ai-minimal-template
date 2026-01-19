@@ -1,0 +1,223 @@
+from typing import Annotated
+import uuid
+
+from fastapi import APIRouter, Depends, Query, Request
+
+from backend.audit import audit_service
+from backend.audit.schemas import AuditAction, Target
+from backend.auth.deps import CurrentUser, SessionDep
+from backend.rbac import (
+    OrgContextDep,
+    OrgPermission,
+    TeamContextDep,
+    TeamPermission,
+    require_org_permission,
+    require_team_permission,
+)
+from backend.settings import service
+from backend.settings.models import (
+    EffectiveSettings,
+    OrganizationSettingsPublic,
+    OrganizationSettingsUpdate,
+    TeamSettingsPublic,
+    TeamSettingsUpdate,
+    UserSettingsPublic,
+    UserSettingsUpdate,
+)
+
+router = APIRouter(tags=["settings"])
+
+
+@router.get(
+    "/organizations/{organization_id}/chat-settings",
+    response_model=OrganizationSettingsPublic,
+    dependencies=[Depends(require_org_permission(OrgPermission.ORG_READ))],
+)
+def get_org_chat_settings(
+    session: SessionDep,
+    org_context: OrgContextDep,
+) -> OrganizationSettingsPublic:
+    """Get organization chat visibility settings.
+
+    Requires org:read permission (member, admin, or owner).
+    """
+    settings = service.get_or_create_org_settings(session, org_context.org_id)
+    return OrganizationSettingsPublic.model_validate(settings)
+
+
+@router.put(
+    "/organizations/{organization_id}/chat-settings",
+    response_model=OrganizationSettingsPublic,
+    dependencies=[Depends(require_org_permission(OrgPermission.ORG_UPDATE))],
+)
+async def update_org_chat_settings(
+    request: Request,
+    session: SessionDep,
+    org_context: OrgContextDep,
+    current_user: CurrentUser,
+    settings_in: OrganizationSettingsUpdate,
+) -> OrganizationSettingsPublic:
+    """Update organization chat visibility settings.
+
+    Requires org:update permission (admin or owner).
+    These settings are the master controls - if disabled, teams and users
+    cannot enable the feature.
+    """
+    # Get current settings for change tracking
+    current_settings = service.get_or_create_org_settings(session, org_context.org_id)
+    changes = {}
+    update_data = settings_in.model_dump(exclude_unset=True)
+    for field, new_value in update_data.items():
+        old_value = getattr(current_settings, field, None)
+        if old_value != new_value:
+            changes[field] = {"before": old_value, "after": new_value}
+
+    settings = service.update_org_settings(session, org_context.org_id, settings_in)
+
+    if changes:
+        await audit_service.log(
+            AuditAction.ORG_SETTINGS_UPDATED,
+            actor=current_user,
+            request=request,
+            organization_id=org_context.org_id,
+            targets=[Target(type="organization_settings", id=str(org_context.org_id))],
+            changes=changes,
+        )
+
+    return OrganizationSettingsPublic.model_validate(settings)
+
+
+@router.get(
+    "/organizations/{organization_id}/teams/{team_id}/chat-settings",
+    response_model=TeamSettingsPublic,
+    dependencies=[Depends(require_team_permission(TeamPermission.TEAM_READ))],
+)
+def get_team_chat_settings(
+    session: SessionDep,
+    team_context: TeamContextDep,
+) -> TeamSettingsPublic:
+    """Get team chat visibility settings.
+
+    Requires team:read permission (team member, admin, or org admin).
+    """
+    settings = service.get_or_create_team_settings(session, team_context.team_id)
+    return TeamSettingsPublic.model_validate(settings)
+
+
+@router.put(
+    "/organizations/{organization_id}/teams/{team_id}/chat-settings",
+    response_model=TeamSettingsPublic,
+    dependencies=[Depends(require_team_permission(TeamPermission.TEAM_UPDATE))],
+)
+async def update_team_chat_settings(
+    request: Request,
+    session: SessionDep,
+    team_context: TeamContextDep,
+    current_user: CurrentUser,
+    settings_in: TeamSettingsUpdate,
+) -> TeamSettingsPublic:
+    """Update team chat visibility settings.
+
+    Requires team:update permission (team admin or org admin).
+    These settings can only enable features that the org has enabled.
+    """
+    # Get current settings for change tracking
+    current_settings = service.get_or_create_team_settings(
+        session, team_context.team_id
+    )
+    changes = {}
+    update_data = settings_in.model_dump(exclude_unset=True)
+    for field, new_value in update_data.items():
+        old_value = getattr(current_settings, field, None)
+        if old_value != new_value:
+            changes[field] = {"before": old_value, "after": new_value}
+
+    settings = service.update_team_settings(session, team_context.team_id, settings_in)
+
+    if changes:
+        await audit_service.log(
+            AuditAction.TEAM_SETTINGS_UPDATED,
+            actor=current_user,
+            request=request,
+            organization_id=team_context.org_id,
+            team_id=team_context.team_id,
+            targets=[Target(type="team_settings", id=str(team_context.team_id))],
+            changes=changes,
+        )
+
+    return TeamSettingsPublic.model_validate(settings)
+
+
+@router.get(
+    "/users/me/chat-settings",
+    response_model=UserSettingsPublic,
+)
+def get_user_chat_settings(
+    session: SessionDep,
+    current_user: CurrentUser,
+) -> UserSettingsPublic:
+    """Get current user's chat visibility settings."""
+    settings = service.get_or_create_user_settings(session, current_user.id)
+    return UserSettingsPublic.model_validate(settings)
+
+
+@router.put(
+    "/users/me/chat-settings",
+    response_model=UserSettingsPublic,
+)
+async def update_user_chat_settings(
+    request: Request,
+    session: SessionDep,
+    current_user: CurrentUser,
+    settings_in: UserSettingsUpdate,
+) -> UserSettingsPublic:
+    """Update current user's chat visibility settings.
+
+    These settings are personal preferences that only apply when both
+    org and team allow the feature.
+    """
+    # Get current settings for change tracking
+    current_settings = service.get_or_create_user_settings(session, current_user.id)
+    changes = {}
+    update_data = settings_in.model_dump(exclude_unset=True)
+    for field, new_value in update_data.items():
+        old_value = getattr(current_settings, field, None)
+        if old_value != new_value:
+            changes[field] = {"before": old_value, "after": new_value}
+
+    settings = service.update_user_settings(session, current_user.id, settings_in)
+
+    if changes:
+        await audit_service.log(
+            AuditAction.USER_SETTINGS_UPDATED,
+            actor=current_user,
+            request=request,
+            targets=[Target(type="user_settings", id=str(current_user.id))],
+            changes=changes,
+        )
+
+    return UserSettingsPublic.model_validate(settings)
+
+
+@router.get(
+    "/settings/effective",
+    response_model=EffectiveSettings,
+)
+def get_effective_chat_settings(
+    session: SessionDep,
+    current_user: CurrentUser,
+    organization_id: Annotated[uuid.UUID | None, Query()] = None,
+    team_id: Annotated[uuid.UUID | None, Query()] = None,
+) -> EffectiveSettings:
+    """Get effective chat settings after applying hierarchy.
+
+    Computes the final enabled/disabled state for each chat feature
+    by applying the org > team > user hierarchy. Also indicates which
+    level disabled each feature (if any).
+    """
+    return service.get_effective_settings(
+        session=session,
+        user_id=current_user.id,
+        organization_id=organization_id,
+        team_id=team_id,
+    )

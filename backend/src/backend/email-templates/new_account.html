@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+        <h1>{{ t('email_new_account_title', project_name=project_name) }}</h1>
+        <p>{{ t('email_new_account_greeting', username=username) }}</p>
+        <p>{{ t('email_new_account_intro') }}</p>
+        <div class="credentials">
+            <p><strong>{{ t('email_new_account_email_label') }}</strong> {{ email }}</p>
+            <p><strong>{{ t('email_new_account_password_label') }}</strong> {{ password }}</p>
+        </div>
+        <p>{{ t('email_new_account_change_password') }}</p>
+        <a href="{{ link }}" class="button">{{ t('email_new_account_button', project_name=project_name) }}</a>
+{% endblock %}

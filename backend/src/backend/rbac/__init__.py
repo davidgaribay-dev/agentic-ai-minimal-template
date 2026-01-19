@@ -1,0 +1,76 @@
+from backend.rbac.deps import (
+    OrganizationContext,
+    OrgContextDep,
+    PlatformAdminDep,
+    RequireOrgAdminDep,
+    RequireOrgOwnerDep,
+    RequireTeamAdminDep,
+    TeamContext,
+    TeamContextDep,
+    get_current_platform_admin,
+    get_org_context,
+    get_org_membership,
+    get_organization,
+    get_organization_by_slug,
+    get_team,
+    get_team_by_slug,
+    get_team_context,
+    get_team_membership,
+    require_org_admin,
+    require_org_owner,
+    require_org_permission,
+    require_team_admin,
+    require_team_permission,
+    validate_team_membership,
+)
+from backend.rbac.permissions import (
+    ORG_ROLE_PERMISSIONS,
+    TEAM_ROLE_PERMISSIONS,
+    OrgPermission,
+    TeamPermission,
+    can_assign_org_role,
+    can_assign_team_role,
+    has_org_permission,
+    has_team_permission,
+)
+
+__all__ = [
+    # Permission mappings
+    "ORG_ROLE_PERMISSIONS",
+    "TEAM_ROLE_PERMISSIONS",
+    # Type aliases for dependency injection
+    "OrgContextDep",
+    # Permission enums
+    "OrgPermission",
+    # Context classes
+    "OrganizationContext",
+    "PlatformAdminDep",
+    "RequireOrgAdminDep",
+    "RequireOrgOwnerDep",
+    "RequireTeamAdminDep",
+    "TeamContext",
+    "TeamContextDep",
+    "TeamPermission",
+    "can_assign_org_role",
+    "can_assign_team_role",
+    "get_current_platform_admin",
+    "get_org_context",
+    "get_org_membership",
+    # Dependency functions
+    "get_organization",
+    "get_organization_by_slug",
+    "get_team",
+    "get_team_by_slug",
+    "get_team_context",
+    "get_team_membership",
+    # Permission check functions
+    "has_org_permission",
+    "has_team_permission",
+    "require_org_admin",
+    "require_org_owner",
+    "require_org_permission",
+    "require_team_admin",
+    "require_team_permission",
+    # Validation helpers
+    "validate_team_membership",
+]

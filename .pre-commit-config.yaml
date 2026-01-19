@@ -1,0 +1,134 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+#
+# Usage:
+#   pre-commit install          # Install hooks (one-time)
+#   pre-commit run --all-files  # Run on all files
+#   SKIP=mypy git commit        # Skip specific hooks
+#   git commit --no-verify      # Skip all hooks (emergency only)
+#
+# The hooks below auto-fix issues on commit. CI runs the same checks
+# in "check only" mode - if pre-commit passes locally, CI will pass.
+
+# Global exclusions - skip generated/vendored files
+exclude: |
+  (?x)^(
+    frontend/node_modules/|
+    frontend/dist/|
+    backend/\.venv/|
+    \.git/
+  )
+
+repos:
+  # =============================================================================
+  # General file checks (fast, language-agnostic)
+  # =============================================================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--unsafe]  # Allow custom YAML tags
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: check-json
+        exclude: ^frontend/tsconfig.*\.json$  # tsconfig files use JSONC (comments allowed)
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: detect-private-key
+      - id: mixed-line-ending
+
+  # =============================================================================
+  # Security scanning
+  # Matches: backend-ci.yml -> security-scan -> Run Gitleaks
+  # =============================================================================
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.22.1
+    hooks:
+      - id: gitleaks
+
+  # =============================================================================
+  # Python (backend/) - Ruff linting
+  # Matches: backend-ci.yml -> uv run ruff check . --output-format=github
+  # Pre-commit uses --fix for auto-fixing; CI uses check-only mode
+  # =============================================================================
+  - repo: local
+    hooks:
+      - id: ruff-lint
+        name: ruff check (backend)
+        entry: bash -c 'cd backend && uv run ruff check --fix .'
+        language: system
+        files: ^backend/
+        types: [python]
+        pass_filenames: false
+
+  # =============================================================================
+  # Python (backend/) - Ruff formatting
+  # Matches: backend-ci.yml -> uv run ruff format --check .
+  # Pre-commit auto-formats; CI uses --check mode
+  # =============================================================================
+  - repo: local
+    hooks:
+      - id: ruff-format
+        name: ruff format (backend)
+        entry: bash -c 'cd backend && uv run ruff format .'
+        language: system
+        files: ^backend/
+        types: [python]
+        pass_filenames: false
+
+  # =============================================================================
+  # Python (backend/) - MyPy type checking
+  # Matches: backend-ci.yml -> uv run mypy src/backend
+  # =============================================================================
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy (backend)
+        entry: bash -c 'cd backend && uv run mypy src/backend'
+        language: system
+        files: ^backend/src/backend/
+        types: [python]
+        pass_filenames: false
+
+  # =============================================================================
+  # TypeScript/JavaScript (frontend/) - ESLint
+  # Matches: frontend-ci.yml -> npm run lint
+  # =============================================================================
+  - repo: local
+    hooks:
+      - id: frontend-eslint
+        name: eslint (frontend)
+        entry: bash -c 'cd frontend && npm run lint'
+        language: system
+        files: ^frontend/src/.*\.(ts|tsx|js|jsx)$
+        pass_filenames: false
+
+  # =============================================================================
+  # TypeScript/JavaScript (frontend/) - TypeScript type checking
+  # Matches: frontend-ci.yml -> npm run typecheck
+  # =============================================================================
+  - repo: local
+    hooks:
+      - id: frontend-typecheck
+        name: typecheck (frontend)
+        entry: bash -c 'cd frontend && npm run typecheck'
+        language: system
+        files: ^frontend/src/.*\.(ts|tsx)$
+        pass_filenames: false
+
+  # =============================================================================
+  # TypeScript/JavaScript (frontend/) - Prettier formatting
+  # Matches: frontend-ci.yml -> npm run format:check
+  # Pre-commit auto-formats; CI uses format:check mode
+  # =============================================================================
+  - repo: local
+    hooks:
+      - id: frontend-prettier
+        name: prettier (frontend)
+        entry: bash -c 'cd frontend && npm run format'
+        language: system
+        files: ^frontend/src/.*\.(ts|tsx|js|jsx|json|css)$
+        pass_filenames: false
