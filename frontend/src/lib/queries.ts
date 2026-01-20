@@ -706,6 +706,7 @@ export function useUpdateOrgThemeSettings(orgId: string | undefined) {
       });
       queryClient.invalidateQueries({
         queryKey: ["themeSettings", "effective"],
+        refetchType: "active",
       });
     },
   });
@@ -739,6 +740,7 @@ export function useUpdateTeamThemeSettings(
       });
       queryClient.invalidateQueries({
         queryKey: ["themeSettings", "effective"],
+        refetchType: "active",
       });
     },
   });
@@ -763,6 +765,7 @@ export function useUpdateUserThemeSettings() {
       queryClient.invalidateQueries({ queryKey: queryKeys.themeSettings.user });
       queryClient.invalidateQueries({
         queryKey: ["themeSettings", "effective"],
+        refetchType: "active",
       });
     },
   });
