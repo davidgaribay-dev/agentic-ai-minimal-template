@@ -126,7 +126,9 @@ def upload_file(
         logger.exception("upload_failed", key=object_key, error=str(e))
         raise StorageError(f"Failed to upload file: {e}") from e
 
-    return f"{settings.s3_public_base_url}/{settings.S3_BUCKET_NAME}/{object_key}"
+    # Return URL through our storage proxy API instead of direct S3 URL
+    # This ensures images are accessible from the browser (S3 might not be)
+    return f"{settings.server_host}/v1/storage/{settings.S3_BUCKET_NAME}/{object_key}"
 
 
 def delete_file(url: str) -> bool:
@@ -138,12 +140,17 @@ def delete_file(url: str) -> bool:
     Returns:
         True if deleted successfully, False if file didn't exist
     """
-    prefix = f"{settings.s3_public_base_url}/{settings.S3_BUCKET_NAME}/"
-    if not url.startswith(prefix):
+    # Support both new API URLs and legacy S3 URLs
+    api_prefix = f"{settings.server_host}/v1/storage/{settings.S3_BUCKET_NAME}/"
+    s3_prefix = f"{settings.s3_public_base_url}/{settings.S3_BUCKET_NAME}/"
+
+    if url.startswith(api_prefix):
+        object_key = url[len(api_prefix):]
+    elif url.startswith(s3_prefix):
+        object_key = url[len(s3_prefix):]
+    else:
         logger.warning("invalid_url_for_deletion", url=url)
         return False
-
-    object_key = url[len(prefix) :]
 
     client = get_s3_client()
     try:
@@ -272,7 +279,7 @@ def get_document_url(object_key: str) -> str:
     Returns:
         The full URL to access the document
     """
-    return f"{settings.s3_public_base_url}/{settings.S3_BUCKET_NAME}/{object_key}"
+    return f"{settings.server_host}/v1/storage/{settings.S3_BUCKET_NAME}/{object_key}"
 
 
 # =============================================================================
@@ -427,7 +434,7 @@ def get_chat_media_url(object_key: str) -> str:
     Returns:
         The full URL to access the media
     """
-    return f"{settings.s3_public_base_url}/{settings.S3_BUCKET_NAME}/{object_key}"
+    return f"{settings.server_host}/v1/storage/{settings.S3_BUCKET_NAME}/{object_key}"
 
 
 def validate_chat_media_type(content_type: str) -> bool:

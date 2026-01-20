@@ -1,7 +1,5 @@
 from backend.auth.crud import (
-    add_password_to_history,
     authenticate,
-    check_password_history,
     create_user,
     get_user_by_email,
     get_user_by_id,
@@ -59,9 +57,7 @@ __all__ = [
     "UserUpdateMe",
     "UsersPublic",
     # CRUD
-    "add_password_to_history",
     "authenticate",
-    "check_password_history",
     "cleanup_expired_tokens",
     "create_user",
     "get_current_user",

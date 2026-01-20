@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING
 import uuid
 
 from pydantic import EmailStr
-from sqlalchemy import Index
 from sqlmodel import Field, Relationship, SQLModel
 
 from backend.core.base_models import BaseTable, PaginatedResponse
@@ -16,10 +15,6 @@ if TYPE_CHECKING:
     from backend.rag_settings.models import UserRAGSettings
     from backend.settings.models import UserSettings
     from backend.theme_settings.models import UserThemeSettings
-
-
-# Number of recent passwords to check for reuse prevention
-PASSWORD_HISTORY_LIMIT = 5
 
 
 class UserBase(SQLModel):
@@ -75,31 +70,6 @@ class User(UserBase, BaseTable, table=True):
         sa_relationship_kwargs={"cascade": "all, delete-orphan", "uselist": False},
     )
 
-    password_history: list["PasswordHistory"] = Relationship(
-        back_populates="user",
-        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
-    )
-
-
-class PasswordHistory(SQLModel, table=True):
-    """Stores hashed passwords to prevent reuse.
-
-    Keeps the last PASSWORD_HISTORY_LIMIT passwords per user.
-    """
-
-    __tablename__ = "password_history"
-    __table_args__ = (
-        # Composite index for efficient queries ordering by created_at per user
-        Index("ix_password_history_user_created", "user_id", "created_at"),
-    )
-
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    user_id: uuid.UUID = Field(foreign_key="user.id", index=True, ondelete="CASCADE")
-    hashed_password: str
-    created_at: datetime = Field(default_factory=datetime.now)
-
-    user: "User" = Relationship(back_populates="password_history")
-
 
 class UserCreate(UserBase):
     password: str = Field(min_length=8, max_length=128)
@@ -109,7 +79,7 @@ class UserRegister(SQLModel):
     """Schema for user registration (public endpoint).
 
     When a user registers without an invitation, they create a new organization
-    and become its owner.
+    and become its owner. A default team is also created automatically.
     """
 
     email: EmailStr = Field(max_length=255)
@@ -117,6 +87,10 @@ class UserRegister(SQLModel):
     full_name: str | None = Field(default=None, max_length=255)
 
     organization_name: str | None = Field(default=None, max_length=255)
+    organization_logo_url: str | None = Field(default=None, max_length=500)
+
+    team_name: str | None = Field(default=None, max_length=255)
+    team_logo_url: str | None = Field(default=None, max_length=500)
 
 
 class UserRegisterWithInvitation(SQLModel):

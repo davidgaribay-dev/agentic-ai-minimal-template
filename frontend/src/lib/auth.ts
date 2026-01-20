@@ -32,7 +32,12 @@ export interface RegisterData {
   password: string;
   full_name?: string;
   organization_name?: string;
+  organization_logo_url?: string;
+  team_name?: string;
+  team_logo_url?: string;
 }
+
+export type RegisterInput = RegisterData | FormData;
 
 export interface RegisterWithInvitationData {
   token: string;
@@ -195,11 +200,35 @@ async function loginApi(credentials: LoginCredentials): Promise<Token> {
   return response.json();
 }
 
-async function registerApi(data: RegisterData): Promise<User> {
-  return fetchWithAuth<User>("/v1/auth/signup", {
+async function registerApi(data: RegisterInput): Promise<User> {
+  const isFormData = data instanceof FormData;
+
+  const token = getToken();
+  const headers: Record<string, string> = {};
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  // Don't set Content-Type for FormData - browser sets it with boundary
+  if (!isFormData) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  const response = await fetch(`${API_URL}/v1/auth/signup`, {
     method: "POST",
-    body: JSON.stringify(data),
+    headers,
+    body: isFormData ? data : JSON.stringify(data),
   });
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ detail: i18n.t("error_request_failed") }));
+    throw new Error(error.detail || `HTTP ${response.status}`);
+  }
+
+  return response.json();
 }
 
 async function registerWithInvitationApi(
@@ -369,17 +398,25 @@ export function useRefreshToken(): UseMutationResult<
  * Hook for registration mutation.
  * Automatically logs in after successful registration.
  */
-export function useRegister(): UseMutationResult<User, Error, RegisterData> {
+export function useRegister(): UseMutationResult<User, Error, RegisterInput> {
   const login = useLogin();
 
   return useMutation({
     mutationFn: registerApi,
     onSuccess: async (_, variables) => {
       // Auto-login after registration
-      await login.mutateAsync({
-        email: variables.email,
-        password: variables.password,
-      });
+      let email: string;
+      let password: string;
+
+      if (variables instanceof FormData) {
+        email = variables.get("email") as string;
+        password = variables.get("password") as string;
+      } else {
+        email = variables.email;
+        password = variables.password;
+      }
+
+      await login.mutateAsync({ email, password });
     },
   });
 }

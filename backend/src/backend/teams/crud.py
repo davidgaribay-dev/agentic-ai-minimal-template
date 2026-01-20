@@ -81,6 +81,7 @@ def create_team(
         name=team_in.name,
         slug=slug,
         description=team_in.description,
+        logo_url=team_in.logo_url,
         organization_id=organization_id,
         created_by_id=created_by_id,
     )

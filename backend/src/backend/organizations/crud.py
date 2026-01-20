@@ -95,6 +95,7 @@ def create_organization(
         name=organization_in.name,
         slug=slug,
         description=organization_in.description,
+        logo_url=organization_in.logo_url,
     )
     session.add(organization)
     session.flush()

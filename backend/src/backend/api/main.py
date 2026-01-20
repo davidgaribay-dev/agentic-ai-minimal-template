@@ -17,6 +17,7 @@ from backend.api.routes import (
     prompts,
     rag_settings,
     settings,
+    storage,
     teams,
     theme_settings,
     users,
@@ -46,3 +47,4 @@ api_router.include_router(mcp.team_router)
 api_router.include_router(mcp.user_router)
 api_router.include_router(media.router)
 api_router.include_router(guardrails.router)
+api_router.include_router(storage.router)

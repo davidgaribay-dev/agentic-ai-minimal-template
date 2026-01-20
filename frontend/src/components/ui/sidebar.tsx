@@ -47,14 +47,15 @@ function useIsMobile() {
   return isMobile;
 }
 
-const SidebarProvider = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentProps<"div"> & {
-    defaultOpen?: boolean;
-    open?: boolean;
-    onOpenChange?: (open: boolean) => void;
-  }
->(({ open: openProp, onOpenChange: setOpenProp, children }) => {
+function SidebarProvider({
+  open: openProp,
+  onOpenChange: setOpenProp,
+  children,
+}: React.PropsWithChildren<{
+  defaultOpen?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}>) {
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = React.useState(false);
 
@@ -112,8 +113,7 @@ const SidebarProvider = React.forwardRef<
       {children}
     </SidebarContext.Provider>
   );
-});
-SidebarProvider.displayName = "SidebarProvider";
+}
 
 const Sidebar = React.forwardRef<
   HTMLDivElement,

@@ -1,11 +1,8 @@
 import uuid
 
-from sqlalchemy import delete as sa_delete
-from sqlmodel import Session, func, select
+from sqlmodel import Session, select
 
 from backend.auth.models import (
-    PASSWORD_HISTORY_LIMIT,
-    PasswordHistory,
     User,
     UserCreate,
     UserUpdate,
@@ -117,85 +114,3 @@ def authenticate(*, session: Session, email: str, password: str) -> User | None:
         return None
 
     return db_user
-
-
-def check_password_history(*, session: Session, user: User, new_password: str) -> bool:
-    """Check if password has been used recently.
-
-    Args:
-        session: Database session
-        user: User to check password history for
-        new_password: The new password to check
-
-    Returns:
-        True if password is allowed (not in history), False if recently used
-    """
-    # Get recent password history entries
-    statement = (
-        select(PasswordHistory)
-        .where(PasswordHistory.user_id == user.id)
-        .order_by(PasswordHistory.created_at.desc())  # type: ignore[attr-defined]
-        .limit(PASSWORD_HISTORY_LIMIT)
-    )
-    history_entries = session.exec(statement).all()
-
-    # Check against each historical password
-    for entry in history_entries:
-        if verify_password(new_password, entry.hashed_password):
-            return False
-
-    return True
-
-
-def add_password_to_history(
-    *, session: Session, user: User, hashed_password: str
-) -> None:
-    """Add a password to the user's history and prune old entries efficiently.
-
-    Uses bulk DELETE with subquery to avoid N+1 query problem.
-    Previous implementation: 3 SELECTs + N DELETEs
-    Current implementation: 1 COUNT + 1 bulk DELETE (when pruning needed)
-
-    Args:
-        session: Database session
-        user: User to add password history for
-        hashed_password: The hashed password to store
-    """
-    # Add new entry
-    history_entry = PasswordHistory(
-        user_id=user.id,
-        hashed_password=hashed_password,
-    )
-    session.add(history_entry)
-    session.flush()  # Ensure new entry is visible for count
-
-    # Count total entries for this user (single efficient COUNT query)
-    count_statement = (
-        select(func.count())
-        .select_from(PasswordHistory)
-        .where(PasswordHistory.user_id == user.id)
-    )
-    total_count = session.exec(count_statement).one()
-
-    # If over limit, bulk delete oldest entries in single operation
-    entries_to_delete = total_count - PASSWORD_HISTORY_LIMIT
-    if entries_to_delete > 0:
-        # Subquery to find IDs of oldest entries to delete
-        oldest_ids_subquery = (
-            select(PasswordHistory.id)
-            .where(PasswordHistory.user_id == user.id)
-            .order_by(PasswordHistory.created_at.asc())  # type: ignore[attr-defined]
-            .limit(entries_to_delete)
-            .subquery()
-        )
-
-        # Single bulk DELETE statement instead of N individual deletes
-        # Use scalar_subquery via column reference for mypy compatibility
-        delete_statement = sa_delete(PasswordHistory).where(
-            PasswordHistory.id.in_(  # type: ignore[attr-defined]
-                select(oldest_ids_subquery.c.id)
-            )
-        )
-        session.exec(delete_statement)
-
-    session.flush()
