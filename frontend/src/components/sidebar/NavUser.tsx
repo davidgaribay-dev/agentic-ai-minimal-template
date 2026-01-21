@@ -118,13 +118,21 @@ export function NavUser() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link {...testId("nav-user-settings")} to="/settings" className="cursor-pointer">
+              <Link
+                {...testId("nav-user-settings")}
+                to="/settings"
+                className="cursor-pointer"
+              >
                 <Settings className="mr-2 size-4" />
                 {t("nav_settings")}
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem {...testId("nav-user-logout")} onClick={logout} className="cursor-pointer">
+            <DropdownMenuItem
+              {...testId("nav-user-logout")}
+              onClick={logout}
+              className="cursor-pointer"
+            >
               <LogOut className="mr-2 size-4" />
               {t("nav_log_out")}
             </DropdownMenuItem>

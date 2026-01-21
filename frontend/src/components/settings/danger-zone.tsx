@@ -70,7 +70,11 @@ export function OrgDangerZone({
   });
 
   return (
-    <Collapsible {...testId("danger-zone-org")} open={dangerOpen} onOpenChange={setDangerOpen}>
+    <Collapsible
+      {...testId("danger-zone-org")}
+      open={dangerOpen}
+      onOpenChange={setDangerOpen}
+    >
       <CollapsibleTrigger className="flex items-center gap-2 text-xs text-muted-foreground hover:text-destructive py-2">
         {dangerOpen ? (
           <ChevronDown className="size-3" />

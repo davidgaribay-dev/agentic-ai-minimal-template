@@ -57,7 +57,11 @@ function LoginPage() {
           </h1>
         </div>
 
-        <form {...testId("login-form")} onSubmit={handleSubmit} className="space-y-4">
+        <form
+          {...testId("login-form")}
+          onSubmit={handleSubmit}
+          className="space-y-4"
+        >
           {login.error && (
             <div
               {...testId("login-error")}

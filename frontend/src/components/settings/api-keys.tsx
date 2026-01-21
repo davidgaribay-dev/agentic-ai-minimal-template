@@ -348,7 +348,12 @@ export function SetApiKeyDialog({
             >
               {t("com_cancel")}
             </Button>
-            <Button {...testId("api-key-save-button")} type="submit" size="sm" disabled={mutation.isPending}>
+            <Button
+              {...testId("api-key-save-button")}
+              type="submit"
+              size="sm"
+              disabled={mutation.isPending}
+            >
               {mutation.isPending && (
                 <Loader2 className="mr-1.5 size-3 animate-spin" />
               )}

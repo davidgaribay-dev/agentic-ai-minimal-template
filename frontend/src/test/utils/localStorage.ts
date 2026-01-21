@@ -5,13 +5,13 @@
  * Extracted from auth.test.ts patterns.
  */
 
-import { vi } from "vitest"
+import { vi } from "vitest";
 
 export interface LocalStorageMock extends Storage {
   /** Expose internal store for debugging */
-  _getStore: () => Record<string, string>
+  _getStore: () => Record<string, string>;
   /** Expose internal store for direct manipulation in tests */
-  _setStore: (store: Record<string, string>) => void
+  _setStore: (store: Record<string, string>) => void;
 }
 
 /**
@@ -19,30 +19,30 @@ export interface LocalStorageMock extends Storage {
  * Each test should create a new mock to ensure isolation.
  */
 export function createLocalStorageMock(): LocalStorageMock {
-  let store: Record<string, string> = {}
+  let store: Record<string, string> = {};
 
   const mock = {
     getItem: vi.fn((key: string) => store[key] ?? null),
     setItem: vi.fn((key: string, value: string) => {
-      store[key] = value
+      store[key] = value;
     }),
     removeItem: vi.fn((key: string) => {
-      delete store[key]
+      delete store[key];
     }),
     clear: vi.fn(() => {
-      store = {}
+      store = {};
     }),
     key: vi.fn((index: number) => Object.keys(store)[index] ?? null),
     get length() {
-      return Object.keys(store).length
+      return Object.keys(store).length;
     },
     _getStore: () => store,
     _setStore: (newStore: Record<string, string>) => {
-      store = newStore
+      store = newStore;
     },
-  }
+  };
 
-  return mock as LocalStorageMock
+  return mock as LocalStorageMock;
 }
 
 /**
@@ -50,12 +50,12 @@ export function createLocalStorageMock(): LocalStorageMock {
  * Call this in beforeEach to ensure each test has a fresh mock.
  */
 export function setupLocalStorage(): LocalStorageMock {
-  const mock = createLocalStorageMock()
+  const mock = createLocalStorageMock();
   Object.defineProperty(window, "localStorage", {
     value: mock,
     writable: true,
-  })
-  return mock
+  });
+  return mock;
 }
 
 /**
@@ -65,24 +65,24 @@ export function setupLocalStorage(): LocalStorageMock {
 export function withAuthToken(
   mock: LocalStorageMock,
   options: {
-    token?: string
-    refreshToken?: string
-    expiresIn?: number
-  } = {}
+    token?: string;
+    refreshToken?: string;
+    expiresIn?: number;
+  } = {},
 ): LocalStorageMock {
   const {
     token = "test-access-token",
     refreshToken = "test-refresh-token",
     expiresIn = 1800, // 30 minutes default
-  } = options
+  } = options;
 
-  const expiryTime = Date.now() + expiresIn * 1000
+  const expiryTime = Date.now() + expiresIn * 1000;
 
-  mock.setItem("auth_token", token)
-  mock.setItem("auth_refresh_token", refreshToken)
-  mock.setItem("auth_token_expiry", expiryTime.toString())
+  mock.setItem("auth_token", token);
+  mock.setItem("auth_refresh_token", refreshToken);
+  mock.setItem("auth_token_expiry", expiryTime.toString());
 
-  return mock
+  return mock;
 }
 
 /**
@@ -92,14 +92,14 @@ export function withAuthToken(
 export function withWorkspaceContext(
   mock: LocalStorageMock,
   options: {
-    orgId?: string
-    teamId?: string
-  } = {}
+    orgId?: string;
+    teamId?: string;
+  } = {},
 ): LocalStorageMock {
-  const { orgId = "org-123", teamId = "team-123" } = options
+  const { orgId = "org-123", teamId = "team-123" } = options;
 
-  mock.setItem("currentOrgId", orgId)
-  mock.setItem("currentTeamId", teamId)
+  mock.setItem("currentOrgId", orgId);
+  mock.setItem("currentTeamId", teamId);
 
-  return mock
+  return mock;
 }

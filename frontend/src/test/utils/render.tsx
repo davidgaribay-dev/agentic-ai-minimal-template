@@ -5,22 +5,26 @@
  * that includes all necessary providers (QueryClient, Router, i18n).
  */
 
-import React, { type ReactElement, type ReactNode } from "react"
-import { render, type RenderOptions, type RenderResult } from "@testing-library/react"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { I18nextProvider } from "react-i18next"
-import i18n from "@/locales/i18n"
+import React, { type ReactElement, type ReactNode } from "react";
+import {
+  render,
+  type RenderOptions,
+  type RenderResult,
+} from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { I18nextProvider } from "react-i18next";
+import i18n from "@/locales/i18n";
 
 /**
  * Options for the custom render function.
  */
 export interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
   /** Custom QueryClient instance (a fresh one is created by default) */
-  queryClient?: QueryClient
+  queryClient?: QueryClient;
   /** Initial route path (not currently implemented, for future use) */
-  initialRoute?: string
+  initialRoute?: string;
   /** Whether to wrap with i18n provider (default: true) */
-  withI18n?: boolean
+  withI18n?: boolean;
 }
 
 /**
@@ -40,29 +44,29 @@ export function createTestQueryClient(): QueryClient {
         retry: false,
       },
     },
-  })
+  });
 }
 
 /**
  * Wrapper component that provides all necessary context providers.
  */
 function createWrapper(options: {
-  queryClient: QueryClient
-  withI18n: boolean
+  queryClient: QueryClient;
+  withI18n: boolean;
 }): React.FC<{ children: ReactNode }> {
-  const { queryClient, withI18n } = options
+  const { queryClient, withI18n } = options;
 
   return function Wrapper({ children }: { children: ReactNode }) {
-    let content = children
+    let content = children;
 
     if (withI18n) {
-      content = <I18nextProvider i18n={i18n}>{content}</I18nextProvider>
+      content = <I18nextProvider i18n={i18n}>{content}</I18nextProvider>;
     }
 
     return (
       <QueryClientProvider client={queryClient}>{content}</QueryClientProvider>
-    )
-  }
+    );
+  };
 }
 
 /**
@@ -80,30 +84,30 @@ function createWrapper(options: {
  */
 export function renderWithProviders(
   ui: ReactElement,
-  options: CustomRenderOptions = {}
+  options: CustomRenderOptions = {},
 ): RenderResult & { queryClient: QueryClient } {
   const {
     queryClient = createTestQueryClient(),
     withI18n = true,
     ...renderOptions
-  } = options
+  } = options;
 
-  const Wrapper = createWrapper({ queryClient, withI18n })
+  const Wrapper = createWrapper({ queryClient, withI18n });
 
-  const result = render(ui, { wrapper: Wrapper, ...renderOptions })
+  const result = render(ui, { wrapper: Wrapper, ...renderOptions });
 
   return {
     ...result,
     queryClient,
-  }
+  };
 }
 
 /**
  * Re-export everything from @testing-library/react for convenience.
  */
-export * from "@testing-library/react"
+export * from "@testing-library/react";
 
 /**
  * Override the default render with our custom one.
  */
-export { renderWithProviders as render }
+export { renderWithProviders as render };

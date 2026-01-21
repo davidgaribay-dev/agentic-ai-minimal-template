@@ -157,7 +157,9 @@ class GoogleProvider:
 
 
 # Provider registry mapping names to implementation classes
-PROVIDER_REGISTRY: dict[str, type[AnthropicProvider | OpenAIProvider | GoogleProvider]] = {
+PROVIDER_REGISTRY: dict[
+    str, type[AnthropicProvider | OpenAIProvider | GoogleProvider]
+] = {
     "anthropic": AnthropicProvider,
     "openai": OpenAIProvider,
     "google": GoogleProvider,

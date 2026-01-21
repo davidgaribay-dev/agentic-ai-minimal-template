@@ -9,16 +9,16 @@
  * - Navigation links
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest"
-import { screen, waitFor } from "@testing-library/react"
-import userEvent from "@testing-library/user-event"
-import { renderWithProviders } from "@/test/utils/render"
-import { server } from "@/test/mocks/server"
-import { errorHandlers } from "@/test/mocks/handlers"
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { renderWithProviders } from "@/test/utils/render";
+import { server } from "@/test/mocks/server";
+import { errorHandlers } from "@/test/mocks/handlers";
 
 // Mock the TanStack Router hooks and components
 vi.mock("@tanstack/react-router", async () => {
-  const actual = await vi.importActual("@tanstack/react-router")
+  const actual = await vi.importActual("@tanstack/react-router");
   return {
     ...actual,
     useNavigate: () => vi.fn(),
@@ -29,34 +29,34 @@ vi.mock("@tanstack/react-router", async () => {
       component: () => null,
       beforeLoad: () => {},
     }),
-  }
-})
+  };
+});
 
 // Import the component under test (import after mocks)
 // Since the route component uses createFileRoute, we need to create a testable version
-import { useState } from "react"
-import { useTranslation } from "react-i18next"
-import { Sparkles } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { testId } from "@/lib/test-id"
-import { useLogin } from "@/lib/auth"
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { testId } from "@/lib/test-id";
+import { useLogin } from "@/lib/auth";
 
 // Create a testable version of the login page component
 function TestableLoginPage() {
-  const { t } = useTranslation()
-  const login = useLogin()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const { t } = useTranslation();
+  const login = useLogin();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
-      await login.mutateAsync({ email, password })
+      await login.mutateAsync({ email, password });
     } catch {
       // Mutation handles error display
     }
-  }
+  };
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-background p-4">
@@ -70,7 +70,11 @@ function TestableLoginPage() {
           </h1>
         </div>
 
-        <form {...testId("login-form")} onSubmit={handleSubmit} className="space-y-4">
+        <form
+          {...testId("login-form")}
+          onSubmit={handleSubmit}
+          className="space-y-4"
+        >
           {login.error && (
             <div
               {...testId("login-error")}
@@ -114,145 +118,162 @@ function TestableLoginPage() {
           </Button>
 
           <p className="pt-4 text-center text-sm text-muted-foreground">
-            {t("auth_no_account")}{" "}
-            <a href="/signup">{t("auth_create_one")}</a>
+            {t("auth_no_account")} <a href="/signup">{t("auth_create_one")}</a>
           </p>
         </form>
       </div>
     </div>
-  )
+  );
 }
 
 describe("Login Page", () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-  })
+    vi.clearAllMocks();
+  });
 
   describe("Form Rendering", () => {
     it("renders the login form with all fields", () => {
-      renderWithProviders(<TestableLoginPage />)
+      renderWithProviders(<TestableLoginPage />);
 
-      expect(screen.getByTestId("login-form")).toBeInTheDocument()
-      expect(screen.getByTestId("login-email-input")).toBeInTheDocument()
-      expect(screen.getByTestId("login-password-input")).toBeInTheDocument()
-      expect(screen.getByTestId("login-submit-button")).toBeInTheDocument()
-    })
+      expect(screen.getByTestId("login-form")).toBeInTheDocument();
+      expect(screen.getByTestId("login-email-input")).toBeInTheDocument();
+      expect(screen.getByTestId("login-password-input")).toBeInTheDocument();
+      expect(screen.getByTestId("login-submit-button")).toBeInTheDocument();
+    });
 
     it("renders the sign in title", () => {
-      renderWithProviders(<TestableLoginPage />)
+      renderWithProviders(<TestableLoginPage />);
 
       // The title should be rendered (translation key: auth_sign_in_title)
-      expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument()
-    })
+      expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
+    });
 
     it("renders link to signup page", () => {
-      renderWithProviders(<TestableLoginPage />)
+      renderWithProviders(<TestableLoginPage />);
 
-      const signupLink = screen.getByRole("link", { name: /create/i })
-      expect(signupLink).toBeInTheDocument()
-      expect(signupLink).toHaveAttribute("href", "/signup")
-    })
-  })
+      const signupLink = screen.getByRole("link", { name: /create/i });
+      expect(signupLink).toBeInTheDocument();
+      expect(signupLink).toHaveAttribute("href", "/signup");
+    });
+  });
 
   describe("Form Interaction", () => {
     it("allows user to type email", async () => {
-      const user = userEvent.setup()
+      const user = userEvent.setup();
 
-      renderWithProviders(<TestableLoginPage />)
+      renderWithProviders(<TestableLoginPage />);
 
-      const emailInput = screen.getByTestId("login-email-input")
-      await user.type(emailInput, "test@example.com")
+      const emailInput = screen.getByTestId("login-email-input");
+      await user.type(emailInput, "test@example.com");
 
-      expect(emailInput).toHaveValue("test@example.com")
-    })
+      expect(emailInput).toHaveValue("test@example.com");
+    });
 
     it("allows user to type password", async () => {
-      const user = userEvent.setup()
+      const user = userEvent.setup();
 
-      renderWithProviders(<TestableLoginPage />)
+      renderWithProviders(<TestableLoginPage />);
 
-      const passwordInput = screen.getByTestId("login-password-input")
-      await user.type(passwordInput, "securepassword123")
+      const passwordInput = screen.getByTestId("login-password-input");
+      await user.type(passwordInput, "securepassword123");
 
-      expect(passwordInput).toHaveValue("securepassword123")
-    })
+      expect(passwordInput).toHaveValue("securepassword123");
+    });
 
     it("submits the form with valid credentials", async () => {
-      const user = userEvent.setup()
+      const user = userEvent.setup();
 
-      renderWithProviders(<TestableLoginPage />)
+      renderWithProviders(<TestableLoginPage />);
 
-      await user.type(screen.getByTestId("login-email-input"), "test@example.com")
-      await user.type(screen.getByTestId("login-password-input"), "password123")
-      await user.click(screen.getByTestId("login-submit-button"))
+      await user.type(
+        screen.getByTestId("login-email-input"),
+        "test@example.com",
+      );
+      await user.type(
+        screen.getByTestId("login-password-input"),
+        "password123",
+      );
+      await user.click(screen.getByTestId("login-submit-button"));
 
       // Form should submit (button may show loading state)
       await waitFor(() => {
-        const button = screen.getByTestId("login-submit-button")
+        const button = screen.getByTestId("login-submit-button");
         // Button should either be disabled (loading) or still clickable (completed)
-        expect(button).toBeInTheDocument()
-      })
-    })
-  })
+        expect(button).toBeInTheDocument();
+      });
+    });
+  });
 
   describe("Error Handling", () => {
     it("displays error message on login failure", async () => {
       // Use the 401 error handler
-      server.use(errorHandlers.auth401())
+      server.use(errorHandlers.auth401());
 
-      const user = userEvent.setup()
+      const user = userEvent.setup();
 
-      renderWithProviders(<TestableLoginPage />)
+      renderWithProviders(<TestableLoginPage />);
 
-      await user.type(screen.getByTestId("login-email-input"), "wrong@example.com")
-      await user.type(screen.getByTestId("login-password-input"), "wrongpassword")
-      await user.click(screen.getByTestId("login-submit-button"))
+      await user.type(
+        screen.getByTestId("login-email-input"),
+        "wrong@example.com",
+      );
+      await user.type(
+        screen.getByTestId("login-password-input"),
+        "wrongpassword",
+      );
+      await user.click(screen.getByTestId("login-submit-button"));
 
       // Error message should appear
       await waitFor(() => {
-        expect(screen.getByTestId("login-error")).toBeInTheDocument()
-      })
-    })
-  })
+        expect(screen.getByTestId("login-error")).toBeInTheDocument();
+      });
+    });
+  });
 
   describe("Loading State", () => {
     it("disables submit button while loading", async () => {
-      const user = userEvent.setup()
+      const user = userEvent.setup();
 
-      renderWithProviders(<TestableLoginPage />)
+      renderWithProviders(<TestableLoginPage />);
 
-      await user.type(screen.getByTestId("login-email-input"), "test@example.com")
-      await user.type(screen.getByTestId("login-password-input"), "password123")
+      await user.type(
+        screen.getByTestId("login-email-input"),
+        "test@example.com",
+      );
+      await user.type(
+        screen.getByTestId("login-password-input"),
+        "password123",
+      );
 
-      const submitButton = screen.getByTestId("login-submit-button")
-      await user.click(submitButton)
+      const submitButton = screen.getByTestId("login-submit-button");
+      await user.click(submitButton);
 
       // During submission, button should be disabled
       // Note: This may happen very quickly with MSW's delay(10)
-      expect(submitButton).toBeInTheDocument()
-    })
-  })
+      expect(submitButton).toBeInTheDocument();
+    });
+  });
 
   describe("Form Validation", () => {
     it("requires email field", () => {
-      renderWithProviders(<TestableLoginPage />)
+      renderWithProviders(<TestableLoginPage />);
 
-      const emailInput = screen.getByTestId("login-email-input")
-      expect(emailInput).toHaveAttribute("required")
-    })
+      const emailInput = screen.getByTestId("login-email-input");
+      expect(emailInput).toHaveAttribute("required");
+    });
 
     it("requires password field", () => {
-      renderWithProviders(<TestableLoginPage />)
+      renderWithProviders(<TestableLoginPage />);
 
-      const passwordInput = screen.getByTestId("login-password-input")
-      expect(passwordInput).toHaveAttribute("required")
-    })
+      const passwordInput = screen.getByTestId("login-password-input");
+      expect(passwordInput).toHaveAttribute("required");
+    });
 
     it("enforces minimum password length", () => {
-      renderWithProviders(<TestableLoginPage />)
+      renderWithProviders(<TestableLoginPage />);
 
-      const passwordInput = screen.getByTestId("login-password-input")
-      expect(passwordInput).toHaveAttribute("minLength", "8")
-    })
-  })
-})
+      const passwordInput = screen.getByTestId("login-password-input");
+      expect(passwordInput).toHaveAttribute("minLength", "8");
+    });
+  });
+});

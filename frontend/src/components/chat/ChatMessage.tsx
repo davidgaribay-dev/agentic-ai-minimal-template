@@ -441,7 +441,10 @@ export const ChatMessage = memo(function ChatMessage({
   // Guardrail blocked message - show special UI
   if (guardrail_blocked) {
     return (
-      <div {...testId("chat-message-blocked")} className={cn("group w-full", className)}>
+      <div
+        {...testId("chat-message-blocked")}
+        className={cn("group w-full", className)}
+      >
         <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
           <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-destructive/10">
             <ShieldAlert className="size-4 text-destructive" />
@@ -458,7 +461,10 @@ export const ChatMessage = memo(function ChatMessage({
   }
 
   return (
-    <div {...testId("chat-message-assistant")} className={cn("group w-full", className)}>
+    <div
+      {...testId("chat-message-assistant")}
+      className={cn("group w-full", className)}
+    >
       {content ? (
         <>
           <div

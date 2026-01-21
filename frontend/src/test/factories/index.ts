@@ -6,24 +6,28 @@
  * with sensible defaults that can be overridden.
  */
 
-import type { User, Token } from "@/lib/api/auth"
-import type { ChatMessage, MessageSource, ChatMediaAttachment } from "@/lib/chat-store"
+import type { User, Token } from "@/lib/api/auth";
+import type {
+  ChatMessage,
+  MessageSource,
+  ChatMediaAttachment,
+} from "@/lib/chat-store";
 
-let idCounter = 0
+let idCounter = 0;
 
 /**
  * Generate a unique ID for test data.
  */
 function generateId(prefix: string = "test"): string {
-  idCounter++
-  return `${prefix}-${idCounter}-${Math.random().toString(36).slice(2, 7)}`
+  idCounter++;
+  return `${prefix}-${idCounter}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
 /**
  * Reset the ID counter (useful in beforeEach).
  */
 export function resetIdCounter(): void {
-  idCounter = 0
+  idCounter = 0;
 }
 
 /**
@@ -39,7 +43,7 @@ export function createUser(overrides: Partial<User> = {}): User {
     profile_image_url: null,
     language: "en",
     ...overrides,
-  }
+  };
 }
 
 /**
@@ -47,14 +51,14 @@ export function createUser(overrides: Partial<User> = {}): User {
  */
 export function createOrganization(
   overrides: Partial<{
-    id: string
-    name: string
-    slug: string
-    created_at: string
-    updated_at: string
-  }> = {}
+    id: string;
+    name: string;
+    slug: string;
+    created_at: string;
+    updated_at: string;
+  }> = {},
 ) {
-  const id = overrides.id || generateId("org")
+  const id = overrides.id || generateId("org");
   return {
     id,
     name: "Test Organization",
@@ -62,7 +66,7 @@ export function createOrganization(
     created_at: "2024-01-01T00:00:00Z",
     updated_at: "2024-01-01T00:00:00Z",
     ...overrides,
-  }
+  };
 }
 
 /**
@@ -70,12 +74,12 @@ export function createOrganization(
  */
 export function createTeam(
   overrides: Partial<{
-    id: string
-    name: string
-    organization_id: string
-    created_at: string
-    updated_at: string
-  }> = {}
+    id: string;
+    name: string;
+    organization_id: string;
+    created_at: string;
+    updated_at: string;
+  }> = {},
 ) {
   return {
     id: generateId("team"),
@@ -84,7 +88,7 @@ export function createTeam(
     created_at: "2024-01-01T00:00:00Z",
     updated_at: "2024-01-01T00:00:00Z",
     ...overrides,
-  }
+  };
 }
 
 /**
@@ -92,14 +96,14 @@ export function createTeam(
  */
 export function createConversation(
   overrides: Partial<{
-    id: string
-    title: string
-    organization_id: string
-    team_id: string
-    user_id: string
-    created_at: string
-    updated_at: string
-  }> = {}
+    id: string;
+    title: string;
+    organization_id: string;
+    team_id: string;
+    user_id: string;
+    created_at: string;
+    updated_at: string;
+  }> = {},
 ) {
   return {
     id: generateId("conv"),
@@ -110,14 +114,14 @@ export function createConversation(
     created_at: "2024-01-01T00:00:00Z",
     updated_at: "2024-01-01T00:00:00Z",
     ...overrides,
-  }
+  };
 }
 
 /**
  * Create a mock chat message.
  */
 export function createChatMessage(
-  overrides: Partial<ChatMessage> = {}
+  overrides: Partial<ChatMessage> = {},
 ): ChatMessage {
   return {
     id: generateId("msg"),
@@ -125,7 +129,7 @@ export function createChatMessage(
     content: "Test message content",
     isStreaming: false,
     ...overrides,
-  }
+  };
 }
 
 /**
@@ -133,13 +137,13 @@ export function createChatMessage(
  */
 export function createAssistantMessage(
   content: string = "Hello! How can I help you?",
-  overrides: Partial<ChatMessage> = {}
+  overrides: Partial<ChatMessage> = {},
 ): ChatMessage {
   return createChatMessage({
     role: "assistant",
     content,
     ...overrides,
-  })
+  });
 }
 
 /**
@@ -147,13 +151,13 @@ export function createAssistantMessage(
  */
 export function createUserMessage(
   content: string = "Hello!",
-  overrides: Partial<ChatMessage> = {}
+  overrides: Partial<ChatMessage> = {},
 ): ChatMessage {
   return createChatMessage({
     role: "user",
     content,
     ...overrides,
-  })
+  });
 }
 
 /**
@@ -161,21 +165,21 @@ export function createUserMessage(
  */
 export function createStreamingMessage(
   content: string = "",
-  overrides: Partial<ChatMessage> = {}
+  overrides: Partial<ChatMessage> = {},
 ): ChatMessage {
   return createChatMessage({
     role: "assistant",
     content,
     isStreaming: true,
     ...overrides,
-  })
+  });
 }
 
 /**
  * Create mock message sources (RAG citations).
  */
 export function createMessageSource(
-  overrides: Partial<MessageSource> = {}
+  overrides: Partial<MessageSource> = {},
 ): MessageSource {
   return {
     content: "Relevant content from document",
@@ -186,14 +190,14 @@ export function createMessageSource(
     chunk_index: 0,
     document_id: generateId("doc"),
     ...overrides,
-  }
+  };
 }
 
 /**
  * Create mock media attachment.
  */
 export function createMediaAttachment(
-  overrides: Partial<ChatMediaAttachment> = {}
+  overrides: Partial<ChatMediaAttachment> = {},
 ): ChatMediaAttachment {
   return {
     id: generateId("media"),
@@ -203,7 +207,7 @@ export function createMediaAttachment(
     width: 800,
     height: 600,
     ...overrides,
-  }
+  };
 }
 
 /**
@@ -216,7 +220,7 @@ export function createToken(overrides: Partial<Token> = {}): Token {
     token_type: "bearer",
     expires_in: 1800,
     ...overrides,
-  }
+  };
 }
 
 /**
@@ -224,11 +228,11 @@ export function createToken(overrides: Partial<Token> = {}): Token {
  */
 export function createPendingToolApproval(
   overrides: Partial<{
-    tool_name: string
-    tool_args: Record<string, unknown>
-    tool_call_id: string | null
-    tool_description: string
-  }> = {}
+    tool_name: string;
+    tool_args: Record<string, unknown>;
+    tool_call_id: string | null;
+    tool_description: string;
+  }> = {},
 ) {
   return {
     tool_name: "search_documents",
@@ -236,7 +240,7 @@ export function createPendingToolApproval(
     tool_call_id: generateId("tool-call"),
     tool_description: "Search for relevant documents",
     ...overrides,
-  }
+  };
 }
 
 /**
@@ -244,12 +248,12 @@ export function createPendingToolApproval(
  */
 export function createRejectedToolCall(
   overrides: Partial<{
-    tool_name: string
-    tool_args: Record<string, unknown>
-    tool_call_id: string | null
-    tool_description: string
-    rejectedAt: number
-  }> = {}
+    tool_name: string;
+    tool_args: Record<string, unknown>;
+    tool_call_id: string | null;
+    tool_description: string;
+    rejectedAt: number;
+  }> = {},
 ) {
   return {
     tool_name: "search_documents",
@@ -258,7 +262,7 @@ export function createRejectedToolCall(
     tool_description: "Search for relevant documents",
     rejectedAt: Date.now(),
     ...overrides,
-  }
+  };
 }
 
 /**
@@ -266,15 +270,15 @@ export function createRejectedToolCall(
  */
 export function createDocument(
   overrides: Partial<{
-    id: string
-    filename: string
-    mime_type: string
-    status: string
-    organization_id: string
-    team_id: string
-    user_id: string
-    created_at: string
-  }> = {}
+    id: string;
+    filename: string;
+    mime_type: string;
+    status: string;
+    organization_id: string;
+    team_id: string;
+    user_id: string;
+    created_at: string;
+  }> = {},
 ) {
   return {
     id: generateId("doc"),
@@ -286,7 +290,7 @@ export function createDocument(
     user_id: "user-123",
     created_at: "2024-01-01T00:00:00Z",
     ...overrides,
-  }
+  };
 }
 
 /**
@@ -294,12 +298,12 @@ export function createDocument(
  */
 export function createMediaUpload(
   overrides: Partial<{
-    id: string
-    filename: string
-    mime_type: string
-    url: string
-    size: number
-  }> = {}
+    id: string;
+    filename: string;
+    mime_type: string;
+    url: string;
+    size: number;
+  }> = {},
 ) {
   return {
     id: generateId("media"),
@@ -308,7 +312,7 @@ export function createMediaUpload(
     url: "/api/media/test-image.jpg",
     size: 1024 * 50, // 50KB
     ...overrides,
-  }
+  };
 }
 
 /**
@@ -317,24 +321,26 @@ export function createMediaUpload(
 export function createConversationWithMessages(
   messageCount: number = 2,
   overrides: {
-    conversation?: Parameters<typeof createConversation>[0]
-    messages?: Partial<ChatMessage>[]
-  } = {}
+    conversation?: Parameters<typeof createConversation>[0];
+    messages?: Partial<ChatMessage>[];
+  } = {},
 ) {
-  const conversation = createConversation(overrides.conversation)
+  const conversation = createConversation(overrides.conversation);
 
-  const messages: ChatMessage[] = []
+  const messages: ChatMessage[] = [];
   for (let i = 0; i < messageCount; i++) {
-    const isUser = i % 2 === 0
-    const messageOverride = overrides.messages?.[i] || {}
+    const isUser = i % 2 === 0;
+    const messageOverride = overrides.messages?.[i] || {};
     messages.push(
       createChatMessage({
         role: isUser ? "user" : "assistant",
-        content: isUser ? `User message ${i + 1}` : `Assistant response ${i + 1}`,
+        content: isUser
+          ? `User message ${i + 1}`
+          : `Assistant response ${i + 1}`,
         ...messageOverride,
-      })
-    )
+      }),
+    );
   }
 
-  return { conversation, messages }
+  return { conversation, messages };
 }

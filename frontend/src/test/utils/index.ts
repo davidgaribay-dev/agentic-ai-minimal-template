@@ -4,10 +4,10 @@
  * Re-exports all test utilities for convenient importing.
  */
 
-export * from "./localStorage"
-export * from "./render"
-export * from "./sse"
-export * from "./store-utils"
+export * from "./localStorage";
+export * from "./render";
+export * from "./sse";
+export * from "./store-utils";
 
 // Export query utilities that don't conflict with render.tsx
 export {
@@ -17,4 +17,4 @@ export {
   clearQueryCache,
   invalidateQueries,
   getQueryState,
-} from "./query"
+} from "./query";

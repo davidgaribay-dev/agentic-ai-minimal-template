@@ -9,7 +9,7 @@
  * - Absolute URLs: http://localhost:8000/v1/...
  */
 
-import { http, HttpResponse, delay } from "msw"
+import { http, HttpResponse, delay } from "msw";
 
 // Default mock data
 export const mockUser = {
@@ -20,7 +20,7 @@ export const mockUser = {
   is_platform_admin: false,
   profile_image_url: null,
   language: "en",
-}
+};
 
 export const mockOrganization = {
   id: "org-123",
@@ -28,7 +28,7 @@ export const mockOrganization = {
   slug: "test-org",
   created_at: "2024-01-01T00:00:00Z",
   updated_at: "2024-01-01T00:00:00Z",
-}
+};
 
 export const mockTeam = {
   id: "team-123",
@@ -36,7 +36,7 @@ export const mockTeam = {
   organization_id: "org-123",
   created_at: "2024-01-01T00:00:00Z",
   updated_at: "2024-01-01T00:00:00Z",
-}
+};
 
 export const mockConversation = {
   id: "conv-123",
@@ -46,148 +46,150 @@ export const mockConversation = {
   user_id: "user-123",
   created_at: "2024-01-01T00:00:00Z",
   updated_at: "2024-01-01T00:00:00Z",
-}
+};
 
 export const mockToken = {
   access_token: "mock-access-token",
   refresh_token: "mock-refresh-token",
   token_type: "bearer",
   expires_in: 1800,
-}
+};
 
 // Default handlers - use wildcard (*) to match any base URL
 export const handlers = [
   // Auth endpoints
   http.post("*/v1/auth/login", async () => {
-    await delay(10)
-    return HttpResponse.json(mockToken)
+    await delay(10);
+    return HttpResponse.json(mockToken);
   }),
 
   http.post("*/v1/auth/logout", async () => {
-    await delay(10)
-    return HttpResponse.json({ message: "Logged out successfully" })
+    await delay(10);
+    return HttpResponse.json({ message: "Logged out successfully" });
   }),
 
   http.post("*/v1/auth/refresh", async () => {
-    await delay(10)
-    return HttpResponse.json(mockToken)
+    await delay(10);
+    return HttpResponse.json(mockToken);
   }),
 
   http.get("*/v1/auth/me", async () => {
-    await delay(10)
-    return HttpResponse.json(mockUser)
+    await delay(10);
+    return HttpResponse.json(mockUser);
   }),
 
   http.patch("*/v1/auth/me", async ({ request }) => {
-    await delay(10)
-    const body = (await request.json()) as Record<string, unknown>
-    return HttpResponse.json({ ...mockUser, ...body })
+    await delay(10);
+    const body = (await request.json()) as Record<string, unknown>;
+    return HttpResponse.json({ ...mockUser, ...body });
   }),
 
   // Agent/Chat endpoints
   http.get("*/v1/agent/health", async () => {
-    await delay(10)
+    await delay(10);
     return HttpResponse.json({
       status: "healthy",
       llm_configured: true,
-    })
+    });
   }),
 
   http.get("*/v1/agent/conversations/:conversationId/history", async () => {
-    await delay(10)
+    await delay(10);
     return HttpResponse.json([
       { role: "user", content: "Hello" },
       { role: "assistant", content: "Hi there!" },
-    ])
+    ]);
   }),
 
   http.get(
     "*/v1/agent/conversations/:conversationId/pending-approval",
     async () => {
-      await delay(10)
-      return HttpResponse.json(null)
-    }
+      await delay(10);
+      return HttpResponse.json(null);
+    },
   ),
 
   http.patch(
     "*/v1/agent/conversations/:conversationId/title",
     async ({ request }) => {
-      await delay(10)
-      const url = new URL(request.url)
-      const title = url.searchParams.get("title") || "Updated Title"
-      return HttpResponse.json({ success: true, title })
-    }
+      await delay(10);
+      const url = new URL(request.url);
+      const title = url.searchParams.get("title") || "Updated Title";
+      return HttpResponse.json({ success: true, title });
+    },
   ),
 
   // Organizations endpoints
   http.get("*/v1/organizations", async () => {
-    await delay(10)
-    return HttpResponse.json({ data: [mockOrganization], count: 1 })
+    await delay(10);
+    return HttpResponse.json({ data: [mockOrganization], count: 1 });
   }),
 
   http.get("*/v1/organizations/:orgId", async () => {
-    await delay(10)
-    return HttpResponse.json(mockOrganization)
+    await delay(10);
+    return HttpResponse.json(mockOrganization);
   }),
 
   // Teams endpoints
   http.get("*/v1/organizations/:orgId/teams", async () => {
-    await delay(10)
-    return HttpResponse.json({ data: [mockTeam], count: 1 })
+    await delay(10);
+    return HttpResponse.json({ data: [mockTeam], count: 1 });
   }),
 
   http.get("*/v1/organizations/:orgId/teams/:teamId", async () => {
-    await delay(10)
-    return HttpResponse.json(mockTeam)
+    await delay(10);
+    return HttpResponse.json(mockTeam);
   }),
 
   // Conversations endpoints
   http.get("*/v1/conversations", async () => {
-    await delay(10)
-    return HttpResponse.json({ data: [mockConversation], count: 1 })
+    await delay(10);
+    return HttpResponse.json({ data: [mockConversation], count: 1 });
   }),
 
   // Media endpoints
   http.post("*/v1/media/upload", async () => {
-    await delay(50)
+    await delay(50);
     return HttpResponse.json({
       id: `media-${Date.now()}`,
       filename: "test-image.jpg",
       mime_type: "image/jpeg",
       url: "/api/media/test-image.jpg",
       size: 1024,
-    })
+    });
   }),
 
   // Documents endpoints
   http.post("*/v1/documents", async () => {
-    await delay(50)
+    await delay(50);
     return HttpResponse.json({
       id: `doc-${Date.now()}`,
       filename: "test-document.pdf",
       mime_type: "application/pdf",
       status: "completed",
-    })
+    });
   }),
-]
+];
 
 /**
  * Create a mock SSE response for chat streaming tests.
  * This is used to simulate streaming responses from the chat API.
  */
-export function createMockSSEResponse(events: Array<{ event?: string; data: unknown }>) {
-  const encoder = new TextEncoder()
+export function createMockSSEResponse(
+  events: Array<{ event?: string; data: unknown }>,
+) {
+  const encoder = new TextEncoder();
   const stream = new ReadableStream({
     start(controller) {
       for (const { event, data } of events) {
         if (event) {
-          controller.enqueue(encoder.encode(`event: ${event}\n`))
+          controller.enqueue(encoder.encode(`event: ${event}\n`));
         }
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
       }
-      controller.close()
+      controller.close();
     },
-  })
+  });
 
   return new Response(stream, {
     headers: {
@@ -195,7 +197,7 @@ export function createMockSSEResponse(events: Array<{ event?: string; data: unkn
       "Cache-Control": "no-cache",
       Connection: "keep-alive",
     },
-  })
+  });
 }
 
 /**
@@ -203,29 +205,29 @@ export function createMockSSEResponse(events: Array<{ event?: string; data: unkn
  */
 export function createChatStreamEvents(
   content: string,
-  conversationId: string = "conv-123"
+  conversationId: string = "conv-123",
 ) {
-  const tokens = content.split(" ")
-  const events: Array<{ event?: string; data: unknown }> = []
+  const tokens = content.split(" ");
+  const events: Array<{ event?: string; data: unknown }> = [];
 
   // Token events
   for (const token of tokens) {
-    events.push({ data: { token: token + " " } })
+    events.push({ data: { token: token + " " } });
   }
 
   // Title event
   events.push({
     event: "title",
     data: { title: "Generated Title", conversation_id: conversationId },
-  })
+  });
 
   // Done event
   events.push({
     event: "done",
     data: { conversation_id: conversationId },
-  })
+  });
 
-  return events
+  return events;
 }
 
 /**
@@ -233,11 +235,11 @@ export function createChatStreamEvents(
  */
 export function createToolApprovalEvents(
   tool: {
-    name: string
-    args: Record<string, unknown>
-    description?: string
+    name: string;
+    args: Record<string, unknown>;
+    description?: string;
   },
-  conversationId: string = "conv-123"
+  conversationId: string = "conv-123",
 ) {
   return [
     { data: { token: "I'll use a tool... " } },
@@ -251,7 +253,7 @@ export function createToolApprovalEvents(
         tool_description: tool.description || `Execute ${tool.name}`,
       },
     },
-  ]
+  ];
 }
 
 /**
@@ -259,7 +261,7 @@ export function createToolApprovalEvents(
  */
 export function createGuardrailBlockEvents(
   message: string,
-  conversationId: string = "conv-123"
+  conversationId: string = "conv-123",
 ) {
   return [
     {
@@ -269,7 +271,7 @@ export function createGuardrailBlockEvents(
         conversation_id: conversationId,
       },
     },
-  ]
+  ];
 }
 
 /**
@@ -277,12 +279,12 @@ export function createGuardrailBlockEvents(
  */
 export function createSourcesEvents(
   sources: Array<{
-    content: string
-    source: string
-    file_type?: string
-    relevance_score?: number
+    content: string;
+    source: string;
+    file_type?: string;
+    relevance_score?: number;
   }>,
-  conversationId: string = "conv-123"
+  conversationId: string = "conv-123",
 ) {
   return [
     {
@@ -300,7 +302,7 @@ export function createSourcesEvents(
         })),
       },
     },
-  ]
+  ];
 }
 
 // =============================================================================
@@ -328,11 +330,11 @@ export const errorHandlers = {
    */
   auth401: () =>
     http.post("*/v1/auth/login", async () => {
-      await delay(10)
+      await delay(10);
       return HttpResponse.json(
         { detail: "Invalid email or password" },
-        { status: 401 }
-      )
+        { status: 401 },
+      );
     }),
 
   /**
@@ -340,11 +342,11 @@ export const errorHandlers = {
    */
   tokenExpired401: () =>
     http.get("*/v1/auth/me", async () => {
-      await delay(10)
+      await delay(10);
       return HttpResponse.json(
         { detail: "Token has expired" },
-        { status: 401 }
-      )
+        { status: 401 },
+      );
     }),
 
   /**
@@ -352,11 +354,11 @@ export const errorHandlers = {
    */
   forbidden403: (path = "*/v1/organizations/:orgId") =>
     http.get(path, async () => {
-      await delay(10)
+      await delay(10);
       return HttpResponse.json(
         { detail: "You don't have permission to access this resource" },
-        { status: 403 }
-      )
+        { status: 403 },
+      );
     }),
 
   /**
@@ -364,11 +366,11 @@ export const errorHandlers = {
    */
   notFound404: (path = "*/v1/conversations/:id") =>
     http.get(path, async () => {
-      await delay(10)
+      await delay(10);
       return HttpResponse.json(
         { detail: "Resource not found" },
-        { status: 404 }
-      )
+        { status: 404 },
+      );
     }),
 
   /**
@@ -376,7 +378,7 @@ export const errorHandlers = {
    */
   validation422: () =>
     http.post("*/v1/auth/signup", async () => {
-      await delay(10)
+      await delay(10);
       return HttpResponse.json(
         {
           detail: [
@@ -394,8 +396,8 @@ export const errorHandlers = {
             },
           ],
         },
-        { status: 422 }
-      )
+        { status: 422 },
+      );
     }),
 
   /**
@@ -403,13 +405,13 @@ export const errorHandlers = {
    */
   rateLimited429: (path = "*/v1/agent/chat") =>
     http.post(path, async () => {
-      await delay(10)
+      await delay(10);
       return HttpResponse.json(
         {
           detail: "Rate limit exceeded. Please try again in 60 seconds.",
         },
-        { status: 429, headers: { "Retry-After": "60" } }
-      )
+        { status: 429, headers: { "Retry-After": "60" } },
+      );
     }),
 
   /**
@@ -417,11 +419,11 @@ export const errorHandlers = {
    */
   serverError500: (path = "*/v1/agent/chat") =>
     http.post(path, async () => {
-      await delay(10)
+      await delay(10);
       return HttpResponse.json(
         { detail: "Internal server error" },
-        { status: 500 }
-      )
+        { status: 500 },
+      );
     }),
 
   /**
@@ -429,11 +431,11 @@ export const errorHandlers = {
    */
   serviceUnavailable503: (path = "*/v1/agent/health") =>
     http.get(path, async () => {
-      await delay(10)
+      await delay(10);
       return HttpResponse.json(
         { detail: "Service temporarily unavailable" },
-        { status: 503 }
-      )
+        { status: 503 },
+      );
     }),
 
   /**
@@ -441,7 +443,7 @@ export const errorHandlers = {
    */
   networkError: (path = "*/v1/agent/chat") =>
     http.post(path, () => {
-      return HttpResponse.error()
+      return HttpResponse.error();
     }),
 
   /**
@@ -449,8 +451,8 @@ export const errorHandlers = {
    */
   slowResponse: (path = "*/v1/auth/login", delayMs = 5000) =>
     http.post(path, async () => {
-      await delay(delayMs)
-      return HttpResponse.json(mockToken)
+      await delay(delayMs);
+      return HttpResponse.json(mockToken);
     }),
 
   /**
@@ -458,25 +460,27 @@ export const errorHandlers = {
    */
   chatError: (errorMessage = "LLM provider error") =>
     http.post("*/v1/agent/chat", async () => {
-      const encoder = new TextEncoder()
+      const encoder = new TextEncoder();
       const stream = new ReadableStream({
         start(controller) {
-          controller.enqueue(encoder.encode(`event: error\n`))
+          controller.enqueue(encoder.encode(`event: error\n`));
           controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ error: errorMessage })}\n\n`)
-          )
-          controller.close()
+            encoder.encode(
+              `data: ${JSON.stringify({ error: errorMessage })}\n\n`,
+            ),
+          );
+          controller.close();
         },
-      })
+      });
       return new Response(stream, {
         headers: {
           "Content-Type": "text/event-stream",
           "Cache-Control": "no-cache",
           Connection: "keep-alive",
         },
-      })
+      });
     }),
-}
+};
 
 /**
  * Helper to create a custom error handler with specific status and message.
@@ -485,14 +489,13 @@ export function createErrorHandler(
   method: "get" | "post" | "put" | "patch" | "delete",
   path: string,
   status: number,
-  detail: string | object
+  detail: string | object,
 ) {
-  const httpMethod = http[method]
+  const httpMethod = http[method];
   return httpMethod(path, async () => {
-    await delay(10)
-    return HttpResponse.json(
-      typeof detail === "string" ? { detail } : detail,
-      { status }
-    )
-  })
+    await delay(10);
+    return HttpResponse.json(typeof detail === "string" ? { detail } : detail, {
+      status,
+    });
+  });
 }

@@ -4,8 +4,8 @@
  * Utilities for testing components and hooks that use TanStack Query.
  */
 
-import * as React from "react"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import * as React from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 /**
  * Creates a QueryClient configured for testing.
@@ -33,7 +33,7 @@ export function createTestQueryClient(): QueryClient {
         retry: false,
       },
     },
-  })
+  });
 }
 
 /**
@@ -48,12 +48,12 @@ export function createTestQueryClient(): QueryClient {
  * ```
  */
 export function createQueryWrapper(queryClient?: QueryClient) {
-  const client = queryClient ?? createTestQueryClient()
+  const client = queryClient ?? createTestQueryClient();
   return function QueryWrapper({ children }: { children: React.ReactNode }) {
     return (
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
-    )
-  }
+    );
+  };
 }
 
 /**
@@ -67,9 +67,9 @@ export function createQueryWrapper(queryClient?: QueryClient) {
  */
 export async function waitForQueryToSettle(
   queryClient: QueryClient,
-  queryKey: unknown[]
+  queryKey: unknown[],
 ): Promise<void> {
-  await queryClient.getQueryCache().find({ queryKey })?.promise
+  await queryClient.getQueryCache().find({ queryKey })?.promise;
 }
 
 /**
@@ -85,9 +85,9 @@ export async function waitForQueryToSettle(
 export function seedQueryCache<T>(
   queryClient: QueryClient,
   queryKey: unknown[],
-  data: T
+  data: T,
 ): void {
-  queryClient.setQueryData(queryKey, data)
+  queryClient.setQueryData(queryKey, data);
 }
 
 /**
@@ -102,7 +102,7 @@ export function seedQueryCache<T>(
  * ```
  */
 export function clearQueryCache(queryClient: QueryClient): void {
-  queryClient.clear()
+  queryClient.clear();
 }
 
 /**
@@ -116,9 +116,9 @@ export function clearQueryCache(queryClient: QueryClient): void {
  */
 export function invalidateQueries(
   queryClient: QueryClient,
-  queryKey: unknown[]
+  queryKey: unknown[],
 ): Promise<void> {
-  return queryClient.invalidateQueries({ queryKey })
+  return queryClient.invalidateQueries({ queryKey });
 }
 
 /**
@@ -133,14 +133,16 @@ export function invalidateQueries(
  */
 export function getQueryState<T>(
   queryClient: QueryClient,
-  queryKey: unknown[]
-): { data: T | undefined; error: Error | null; isLoading: boolean } | undefined {
-  const query = queryClient.getQueryCache().find({ queryKey })
-  if (!query) return undefined
+  queryKey: unknown[],
+):
+  | { data: T | undefined; error: Error | null; isLoading: boolean }
+  | undefined {
+  const query = queryClient.getQueryCache().find({ queryKey });
+  if (!query) return undefined;
 
   return {
     data: query.state.data as T | undefined,
     error: query.state.error as Error | null,
     isLoading: query.state.fetchStatus === "fetching",
-  }
+  };
 }

@@ -5,28 +5,28 @@
  * particularly for chat streaming functionality.
  */
 
-import type { StreamEvent } from "@/lib/api/agent"
+import type { StreamEvent } from "@/lib/api/agent";
 
 /**
  * Create a mock ReadableStream that emits SSE-formatted events.
  * Use this to mock fetch responses for streaming endpoints.
  */
 export function createMockSSEStream(
-  events: Array<{ event?: string; data: unknown }>
+  events: Array<{ event?: string; data: unknown }>,
 ): ReadableStream<Uint8Array> {
-  const encoder = new TextEncoder()
+  const encoder = new TextEncoder();
 
   return new ReadableStream({
     start(controller) {
       for (const { event, data } of events) {
         if (event) {
-          controller.enqueue(encoder.encode(`event: ${event}\n`))
+          controller.enqueue(encoder.encode(`event: ${event}\n`));
         }
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
       }
-      controller.close()
+      controller.close();
     },
-  })
+  });
 }
 
 /**
@@ -34,9 +34,9 @@ export function createMockSSEStream(
  */
 export function createMockSSEResponse(
   events: Array<{ event?: string; data: unknown }>,
-  options: { status?: number; statusText?: string } = {}
+  options: { status?: number; statusText?: string } = {},
 ): Response {
-  const { status = 200, statusText = "OK" } = options
+  const { status = 200, statusText = "OK" } = options;
 
   return new Response(createMockSSEStream(events), {
     status,
@@ -46,7 +46,7 @@ export function createMockSSEResponse(
       "Cache-Control": "no-cache",
       Connection: "keep-alive",
     },
-  })
+  });
 }
 
 /**
@@ -54,24 +54,24 @@ export function createMockSSEResponse(
  * Each event is emitted after the specified delay.
  */
 export function createDelayedSSEStream(
-  events: Array<{ event?: string; data: unknown; delay?: number }>
+  events: Array<{ event?: string; data: unknown; delay?: number }>,
 ): ReadableStream<Uint8Array> {
-  const encoder = new TextEncoder()
+  const encoder = new TextEncoder();
 
   return new ReadableStream({
     async start(controller) {
       for (const { event, data, delay: eventDelay = 0 } of events) {
         if (eventDelay > 0) {
-          await new Promise((resolve) => setTimeout(resolve, eventDelay))
+          await new Promise((resolve) => setTimeout(resolve, eventDelay));
         }
         if (event) {
-          controller.enqueue(encoder.encode(`event: ${event}\n`))
+          controller.enqueue(encoder.encode(`event: ${event}\n`));
         }
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
       }
-      controller.close()
+      controller.close();
     },
-  })
+  });
 }
 
 /**
@@ -79,20 +79,20 @@ export function createDelayedSSEStream(
  */
 export function createTokenEvents(
   content: string,
-  options: { wordByWord?: boolean } = {}
+  options: { wordByWord?: boolean } = {},
 ): Array<{ data: unknown }> {
-  const { wordByWord = true } = options
+  const { wordByWord = true } = options;
 
   if (wordByWord) {
     return content.split(" ").map((word, i, arr) => ({
       data: { token: word + (i < arr.length - 1 ? " " : "") },
-    }))
+    }));
   }
 
   // Character by character
   return content.split("").map((char) => ({
     data: { token: char },
-  }))
+  }));
 }
 
 /**
@@ -101,37 +101,37 @@ export function createTokenEvents(
 export function createCompleteChatStream(
   content: string,
   conversationId: string = "conv-123",
-  title: string = "Generated Title"
+  title: string = "Generated Title",
 ): Array<{ event?: string; data: unknown }> {
-  const events: Array<{ event?: string; data: unknown }> = []
+  const events: Array<{ event?: string; data: unknown }> = [];
 
   // Token events
-  events.push(...createTokenEvents(content))
+  events.push(...createTokenEvents(content));
 
   // Title event
   events.push({
     event: "title",
     data: { title, conversation_id: conversationId },
-  })
+  });
 
   // Done event
   events.push({
     event: "done",
     data: { conversation_id: conversationId },
-  })
+  });
 
-  return events
+  return events;
 }
 
 /**
  * Create a tool approval event.
  */
 export function createToolApprovalEvent(options: {
-  conversationId?: string
-  toolName: string
-  toolArgs?: Record<string, unknown>
-  toolCallId?: string
-  toolDescription?: string
+  conversationId?: string;
+  toolName: string;
+  toolArgs?: Record<string, unknown>;
+  toolCallId?: string;
+  toolDescription?: string;
 }): { event: string; data: unknown } {
   const {
     conversationId = "conv-123",
@@ -139,7 +139,7 @@ export function createToolApprovalEvent(options: {
     toolArgs = {},
     toolCallId = `tool-${Date.now()}`,
     toolDescription = `Execute ${toolName}`,
-  } = options
+  } = options;
 
   return {
     event: "tool_approval",
@@ -150,7 +150,7 @@ export function createToolApprovalEvent(options: {
       tool_call_id: toolCallId,
       tool_description: toolDescription,
     },
-  }
+  };
 }
 
 /**
@@ -158,13 +158,13 @@ export function createToolApprovalEvent(options: {
  */
 export function createSourcesEvent(
   sources: Array<{
-    content: string
-    source: string
-    fileType?: string
-    relevanceScore?: number
-    documentId?: string
+    content: string;
+    source: string;
+    fileType?: string;
+    relevanceScore?: number;
+    documentId?: string;
   }>,
-  conversationId: string = "conv-123"
+  conversationId: string = "conv-123",
 ): { event: string; data: unknown } {
   return {
     event: "sources",
@@ -180,7 +180,7 @@ export function createSourcesEvent(
         document_id: s.documentId || `doc-${i}`,
       })),
     },
-  }
+  };
 }
 
 /**
@@ -188,7 +188,7 @@ export function createSourcesEvent(
  */
 export function createGuardrailBlockEvent(
   message: string,
-  conversationId: string = "conv-123"
+  conversationId: string = "conv-123",
 ): { event: string; data: unknown } {
   return {
     event: "guardrail_block",
@@ -196,19 +196,20 @@ export function createGuardrailBlockEvent(
       message,
       conversation_id: conversationId,
     },
-  }
+  };
 }
 
 /**
  * Create an error event.
  */
-export function createErrorEvent(
-  error: string
-): { event: string; data: unknown } {
+export function createErrorEvent(error: string): {
+  event: string;
+  data: unknown;
+} {
   return {
     event: "error",
     data: { error },
-  }
+  };
 }
 
 /**
@@ -216,13 +217,13 @@ export function createErrorEvent(
  * Useful for testing the chatStream generator function.
  */
 export async function collectStreamEvents(
-  generator: AsyncGenerator<StreamEvent>
+  generator: AsyncGenerator<StreamEvent>,
 ): Promise<StreamEvent[]> {
-  const events: StreamEvent[] = []
+  const events: StreamEvent[] = [];
   for await (const event of generator) {
-    events.push(event)
+    events.push(event);
   }
-  return events
+  return events;
 }
 
 /**
@@ -230,14 +231,14 @@ export async function collectStreamEvents(
  */
 export function createMockFetch(
   events: Array<{ event?: string; data: unknown }>,
-  options: { status?: number; delay?: number } = {}
+  options: { status?: number; delay?: number } = {},
 ): typeof fetch {
-  const { status = 200, delay: responseDelay = 0 } = options
+  const { status = 200, delay: responseDelay = 0 } = options;
 
   return async () => {
     if (responseDelay > 0) {
-      await new Promise((resolve) => setTimeout(resolve, responseDelay))
+      await new Promise((resolve) => setTimeout(resolve, responseDelay));
     }
-    return createMockSSEResponse(events, { status })
-  }
+    return createMockSSEResponse(events, { status });
+  };
 }

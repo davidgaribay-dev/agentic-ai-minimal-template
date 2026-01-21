@@ -239,7 +239,11 @@ function SignupPage() {
 
         {/* Step 1: Email */}
         {step === "email" && (
-          <form {...testId("signup-form-email")} onSubmit={handleEmailSubmit} className="space-y-4">
+          <form
+            {...testId("signup-form-email")}
+            onSubmit={handleEmailSubmit}
+            className="space-y-4"
+          >
             <Input
               {...testId("signup-email-input")}
               id="email"
@@ -274,7 +278,11 @@ function SignupPage() {
 
         {/* Step 2: Password */}
         {step === "password" && (
-          <form {...testId("signup-form-password")} onSubmit={handlePasswordSubmit} className="space-y-4">
+          <form
+            {...testId("signup-form-password")}
+            onSubmit={handlePasswordSubmit}
+            className="space-y-4"
+          >
             <div className="mb-4 text-sm text-muted-foreground">{email}</div>
             <Input
               {...testId("signup-password-input")}
@@ -423,7 +431,11 @@ function SignupPage() {
 
         {/* Step 5: Team */}
         {step === "team" && (
-          <form {...testId("signup-form-team")} onSubmit={handleTeamSubmit} className="space-y-4">
+          <form
+            {...testId("signup-form-team")}
+            onSubmit={handleTeamSubmit}
+            className="space-y-4"
+          >
             <div className="space-y-4">
               <div>
                 <label
