@@ -1,9 +1,10 @@
 import path from "path"
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vitest/config"
+import type { PluginOption } from "vite"
 
 export default defineConfig({
-  plugins: [react()] as any,
+  plugins: [react() as PluginOption],
   define: {
     // Enable test IDs during testing
     "import.meta.env.VITE_ENABLE_TEST_IDS": '"true"',

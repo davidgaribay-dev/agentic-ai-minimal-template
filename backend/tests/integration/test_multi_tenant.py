@@ -15,18 +15,12 @@ They are skipped when running with SQLite (default test database).
 Run with a PostgreSQL test database for full integration testing.
 """
 
-import pytest
 from fastapi.testclient import TestClient
+import pytest
 from sqlmodel import Session
-
-# Skip all tests in this module - requires PostgreSQL (JSONB columns in audit_logs)
-pytestmark = pytest.mark.skip(
-    reason="Integration tests require PostgreSQL (SQLite doesn't support JSONB)"
-)
 
 from backend.organizations.models import OrgRole
 from backend.teams.models import TeamRole
-
 from tests.conftest import (
     create_test_org_member,
     create_test_organization,
@@ -39,6 +33,11 @@ from tests.constants import (
     HTTP_NOT_FOUND,
     HTTP_OK,
     TEST_USER_PASSWORD,
+)
+
+# Skip all tests in this module - requires PostgreSQL (JSONB columns in audit_logs)
+pytestmark = pytest.mark.skip(
+    reason="Integration tests require PostgreSQL (SQLite doesn't support JSONB)"
 )
 
 
@@ -63,8 +62,12 @@ class TestOrganizationIsolation:
     ) -> None:
         """User can access their own organization."""
         # Arrange
-        user = create_test_user(db_session, email="user1@example.com", password=TEST_USER_PASSWORD)
-        org = create_test_organization(db_session, name="User's Org", slug="users-org", owner=user)
+        user = create_test_user(
+            db_session, email="user1@example.com", password=TEST_USER_PASSWORD
+        )
+        org = create_test_organization(
+            db_session, name="User's Org", slug="users-org", owner=user
+        )
 
         headers = get_auth_headers(client, "user1@example.com", TEST_USER_PASSWORD)
 
@@ -80,11 +83,19 @@ class TestOrganizationIsolation:
     ) -> None:
         """User cannot access an organization they're not a member of."""
         # Arrange - create two users with separate orgs
-        user1 = create_test_user(db_session, email="user1@example.com", password=TEST_USER_PASSWORD)
-        user2 = create_test_user(db_session, email="user2@example.com", password=TEST_USER_PASSWORD)
+        user1 = create_test_user(
+            db_session, email="user1@example.com", password=TEST_USER_PASSWORD
+        )
+        user2 = create_test_user(
+            db_session, email="user2@example.com", password=TEST_USER_PASSWORD
+        )
 
-        create_test_organization(db_session, name="User1 Org", slug="user1-org", owner=user1)
-        org2 = create_test_organization(db_session, name="User2 Org", slug="user2-org", owner=user2)
+        create_test_organization(
+            db_session, name="User1 Org", slug="user1-org", owner=user1
+        )
+        org2 = create_test_organization(
+            db_session, name="User2 Org", slug="user2-org", owner=user2
+        )
 
         headers = get_auth_headers(client, "user1@example.com", TEST_USER_PASSWORD)
 
@@ -99,11 +110,19 @@ class TestOrganizationIsolation:
     ) -> None:
         """User only sees organizations they belong to."""
         # Arrange
-        user1 = create_test_user(db_session, email="user1@example.com", password=TEST_USER_PASSWORD)
-        user2 = create_test_user(db_session, email="user2@example.com", password=TEST_USER_PASSWORD)
+        user1 = create_test_user(
+            db_session, email="user1@example.com", password=TEST_USER_PASSWORD
+        )
+        user2 = create_test_user(
+            db_session, email="user2@example.com", password=TEST_USER_PASSWORD
+        )
 
-        org1 = create_test_organization(db_session, name="User1 Org", slug="user1-org", owner=user1)
-        create_test_organization(db_session, name="User2 Org", slug="user2-org", owner=user2)
+        org1 = create_test_organization(
+            db_session, name="User1 Org", slug="user1-org", owner=user1
+        )
+        create_test_organization(
+            db_session, name="User2 Org", slug="user2-org", owner=user2
+        )
 
         headers = get_auth_headers(client, "user1@example.com", TEST_USER_PASSWORD)
 
@@ -126,15 +145,25 @@ class TestTeamIsolation:
     ) -> None:
         """Team member can access their team."""
         # Arrange
-        owner = create_test_user(db_session, email="owner@example.com", password=TEST_USER_PASSWORD)
-        member = create_test_user(db_session, email="member@example.com", password=TEST_USER_PASSWORD)
+        owner = create_test_user(
+            db_session, email="owner@example.com", password=TEST_USER_PASSWORD
+        )
+        member = create_test_user(
+            db_session, email="member@example.com", password=TEST_USER_PASSWORD
+        )
 
-        org = create_test_organization(db_session, name="Test Org", slug="test-org", owner=owner)
+        org = create_test_organization(
+            db_session, name="Test Org", slug="test-org", owner=owner
+        )
         team = create_test_team(db_session, org=org, name="Test Team", slug="test-team")
 
         # Add member to org and team
-        org_member = create_test_org_member(db_session, org=org, user=member, role=OrgRole.member)
-        create_test_team_member(db_session, team=team, org_member=org_member, role=TeamRole.member)
+        org_member = create_test_org_member(
+            db_session, org=org, user=member, role=OrgRole.member
+        )
+        create_test_team_member(
+            db_session, team=team, org_member=org_member, role=TeamRole.member
+        )
 
         headers = get_auth_headers(client, "member@example.com", TEST_USER_PASSWORD)
 
@@ -153,14 +182,24 @@ class TestTeamIsolation:
     ) -> None:
         """User not in team cannot access team details (beyond basic info)."""
         # Arrange
-        owner = create_test_user(db_session, email="owner@example.com", password=TEST_USER_PASSWORD)
-        other_user = create_test_user(db_session, email="other@example.com", password=TEST_USER_PASSWORD)
+        owner = create_test_user(
+            db_session, email="owner@example.com", password=TEST_USER_PASSWORD
+        )
+        other_user = create_test_user(
+            db_session, email="other@example.com", password=TEST_USER_PASSWORD
+        )
 
-        org = create_test_organization(db_session, name="Test Org", slug="test-org", owner=owner)
-        team = create_test_team(db_session, org=org, name="Private Team", slug="private-team")
+        org = create_test_organization(
+            db_session, name="Test Org", slug="test-org", owner=owner
+        )
+        team = create_test_team(
+            db_session, org=org, name="Private Team", slug="private-team"
+        )
 
         # Add other_user to org but NOT to team
-        create_test_org_member(db_session, org=org, user=other_user, role=OrgRole.member)
+        create_test_org_member(
+            db_session, org=org, user=other_user, role=OrgRole.member
+        )
 
         headers = get_auth_headers(client, "other@example.com", TEST_USER_PASSWORD)
 
@@ -183,11 +222,18 @@ class TestCrossOrganizationProtection:
     ) -> None:
         """Cannot add a user from another organization to a team."""
         # Arrange
-        owner1 = create_test_user(db_session, email="owner1@example.com", password=TEST_USER_PASSWORD)
-        owner2 = create_test_user(db_session, email="owner2@example.com", password=TEST_USER_PASSWORD)
+        owner1 = create_test_user(
+            db_session, email="owner1@example.com", password=TEST_USER_PASSWORD
+        )
+        owner2 = create_test_user(
+            db_session, email="owner2@example.com", password=TEST_USER_PASSWORD
+        )
 
-        org1 = create_test_organization(db_session, name="Org1", slug="org1", owner=owner1)
-        org2 = create_test_organization(db_session, name="Org2", slug="org2", owner=owner2)
+        org1 = create_test_organization(
+            db_session, name="Org1", slug="org1", owner=owner1
+        )
+        # Create org2 to establish owner2 as a separate org owner (not used directly)
+        create_test_organization(db_session, name="Org2", slug="org2", owner=owner2)
 
         team1 = create_test_team(db_session, org=org1, name="Team1", slug="team1")
 
@@ -214,10 +260,16 @@ class TestRoleBasedAccess:
     ) -> None:
         """Organization member cannot delete the organization."""
         # Arrange
-        owner = create_test_user(db_session, email="owner@example.com", password=TEST_USER_PASSWORD)
-        member = create_test_user(db_session, email="member@example.com", password=TEST_USER_PASSWORD)
+        owner = create_test_user(
+            db_session, email="owner@example.com", password=TEST_USER_PASSWORD
+        )
+        member = create_test_user(
+            db_session, email="member@example.com", password=TEST_USER_PASSWORD
+        )
 
-        org = create_test_organization(db_session, name="Test Org", slug="test-org", owner=owner)
+        org = create_test_organization(
+            db_session, name="Test Org", slug="test-org", owner=owner
+        )
         create_test_org_member(db_session, org=org, user=member, role=OrgRole.member)
 
         headers = get_auth_headers(client, "member@example.com", TEST_USER_PASSWORD)
@@ -233,20 +285,30 @@ class TestRoleBasedAccess:
     ) -> None:
         """Team viewer cannot create resources."""
         # Arrange
-        owner = create_test_user(db_session, email="owner@example.com", password=TEST_USER_PASSWORD)
-        viewer = create_test_user(db_session, email="viewer@example.com", password=TEST_USER_PASSWORD)
+        owner = create_test_user(
+            db_session, email="owner@example.com", password=TEST_USER_PASSWORD
+        )
+        viewer = create_test_user(
+            db_session, email="viewer@example.com", password=TEST_USER_PASSWORD
+        )
 
-        org = create_test_organization(db_session, name="Test Org", slug="test-org", owner=owner)
+        org = create_test_organization(
+            db_session, name="Test Org", slug="test-org", owner=owner
+        )
         team = create_test_team(db_session, org=org, name="Test Team", slug="test-team")
 
-        org_member = create_test_org_member(db_session, org=org, user=viewer, role=OrgRole.member)
-        create_test_team_member(db_session, team=team, org_member=org_member, role=TeamRole.viewer)
+        org_member = create_test_org_member(
+            db_session, org=org, user=viewer, role=OrgRole.member
+        )
+        create_test_team_member(
+            db_session, team=team, org_member=org_member, role=TeamRole.viewer
+        )
 
         headers = get_auth_headers(client, "viewer@example.com", TEST_USER_PASSWORD)
 
         # Act - try to create a conversation
         response = client.post(
-            f"/v1/conversations",
+            "/v1/conversations",
             headers=headers,
             json={"team_id": str(team.id), "title": "Test Conversation"},
         )

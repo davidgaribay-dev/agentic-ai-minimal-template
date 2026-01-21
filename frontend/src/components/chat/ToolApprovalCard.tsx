@@ -297,6 +297,7 @@ export const ToolRejectionMessage = memo(function ToolRejectionMessage({
 
   return (
     <div
+      data-testid="tool-rejection-message"
       className={cn(
         "flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 text-sm text-muted-foreground",
         className,

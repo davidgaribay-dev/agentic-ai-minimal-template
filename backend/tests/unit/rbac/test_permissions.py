@@ -12,7 +12,9 @@ import pytest
 
 from backend.organizations.models import OrgRole
 from backend.rbac.permissions import (
+    ORG_ROLE_HIERARCHY,
     ORG_ROLE_PERMISSIONS,
+    TEAM_ROLE_HIERARCHY,
     TEAM_ROLE_PERMISSIONS,
     OrgPermission,
     TeamPermission,
@@ -48,7 +50,9 @@ class TestOrgPermissions:
     def test_admin_cannot_transfer_ownership(self) -> None:
         """Organization admin cannot transfer ownership."""
         # Assert
-        assert not has_org_permission(OrgRole.ADMIN, OrgPermission.ORG_TRANSFER_OWNERSHIP)
+        assert not has_org_permission(
+            OrgRole.ADMIN, OrgPermission.ORG_TRANSFER_OWNERSHIP
+        )
 
     def test_member_has_limited_permissions(self) -> None:
         """Organization member has limited permissions."""
@@ -80,7 +84,10 @@ class TestOrgPermissions:
         ("role", "expected_count"),
         [
             (OrgRole.OWNER, len(OrgPermission)),  # Owner has all
-            (OrgRole.ADMIN, len(OrgPermission) - 3),  # Admin missing 3 (delete, transfer, billing_update)
+            (
+                OrgRole.ADMIN,
+                len(OrgPermission) - 3,
+            ),  # Admin missing 3 (delete, transfer, billing_update)
             (OrgRole.MEMBER, 3),  # Member has only 3
         ],
     )
@@ -155,7 +162,9 @@ class TestTeamPermissions:
         assert has_team_permission(TeamRole.VIEWER, TeamPermission.RESOURCES_READ)
 
         # Assert negative cases
-        assert not has_team_permission(TeamRole.VIEWER, TeamPermission.OWN_RESOURCES_CREATE)
+        assert not has_team_permission(
+            TeamRole.VIEWER, TeamPermission.OWN_RESOURCES_CREATE
+        )
         assert not has_team_permission(TeamRole.MEMBER, TeamPermission.TEAM_DELETE)
 
 
@@ -229,21 +238,19 @@ class TestRoleHierarchy:
 
     def test_org_roles_have_correct_hierarchy(self) -> None:
         """Organization roles are correctly ordered."""
-        # Arrange
-        from backend.rbac.permissions import ORG_ROLE_HIERARCHY
-
         # Assert
         assert ORG_ROLE_HIERARCHY[OrgRole.OWNER] > ORG_ROLE_HIERARCHY[OrgRole.ADMIN]
         assert ORG_ROLE_HIERARCHY[OrgRole.ADMIN] > ORG_ROLE_HIERARCHY[OrgRole.MEMBER]
 
     def test_team_roles_have_correct_hierarchy(self) -> None:
         """Team roles are correctly ordered."""
-        # Arrange
-        from backend.rbac.permissions import TEAM_ROLE_HIERARCHY
-
         # Assert
-        assert TEAM_ROLE_HIERARCHY[TeamRole.ADMIN] > TEAM_ROLE_HIERARCHY[TeamRole.MEMBER]
-        assert TEAM_ROLE_HIERARCHY[TeamRole.MEMBER] > TEAM_ROLE_HIERARCHY[TeamRole.VIEWER]
+        assert (
+            TEAM_ROLE_HIERARCHY[TeamRole.ADMIN] > TEAM_ROLE_HIERARCHY[TeamRole.MEMBER]
+        )
+        assert (
+            TEAM_ROLE_HIERARCHY[TeamRole.MEMBER] > TEAM_ROLE_HIERARCHY[TeamRole.VIEWER]
+        )
 
 
 @pytest.mark.unit

@@ -17,7 +17,9 @@ describe("cn (className utility)", () => {
   })
 
   it("handles conditional classes via boolean expressions", () => {
-    expect(cn("base", true && "active", false && "hidden")).toBe("base active")
+    const isActive = true
+    const isHidden = false
+    expect(cn("base", isActive && "active", isHidden && "hidden")).toBe("base active")
   })
 
   it("filters out undefined and null values", () => {

@@ -76,10 +76,9 @@ describe("ChatMessage", () => {
       await user.click(copyButton)
 
       // After clicking, the button should show the check icon (copied state)
-      // The lucide-check class indicates the checkmark icon is displayed
+      // The button contains an icon that changes to indicate copied state
       await waitFor(() => {
-        const checkIcon = copyButton.querySelector(".lucide-check")
-        expect(checkIcon).toBeInTheDocument()
+        expect(copyButton).toHaveAttribute("data-copied", "true")
       })
     })
   })

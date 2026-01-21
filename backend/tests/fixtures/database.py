@@ -9,8 +9,8 @@ which is required for SQLite in-memory databases.
 
 from collections.abc import Generator
 
-import pytest
 from fastapi.testclient import TestClient
+import pytest
 from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
 

@@ -10,6 +10,8 @@ real LLM API calls:
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
+from langchain_core.language_models import FakeListLLM
+from langgraph.checkpoint.memory import MemorySaver
 import pytest
 
 from tests.constants import TEST_ASSISTANT_RESPONSE
@@ -40,11 +42,6 @@ def fake_llm(fake_llm_responses: list[str]) -> Any:
     Returns:
         FakeListLLM instance
     """
-    try:
-        from langchain_core.language_models import FakeListLLM
-    except ImportError:
-        pytest.skip("langchain_core not installed")
-
     return FakeListLLM(responses=fake_llm_responses)
 
 
@@ -59,11 +56,6 @@ def in_memory_checkpointer() -> Any:
     Returns:
         MemorySaver instance
     """
-    try:
-        from langgraph.checkpoint.memory import MemorySaver
-    except ImportError:
-        pytest.skip("langgraph not installed")
-
     return MemorySaver()
 
 

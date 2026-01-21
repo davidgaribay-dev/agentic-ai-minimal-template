@@ -36,24 +36,20 @@ from tests.fixtures.mocks import (
 )
 
 __all__ = [
-    # Database fixtures
-    "db_session",
-    "client",
-    "test_engine",
-    # Auth fixtures
-    "sample_user_id",
-    "sample_user",
-    "sample_admin_user",
     "auth_headers",
     "auth_headers_factory",
-    # Factory functions
-    "create_test_user",
+    "client",
+    "context_vars_cleanup",
     "create_test_organization",
     "create_test_team",
-    # Mock fixtures
-    "mock_session",
-    "mock_secrets_service",
+    "create_test_user",
+    "db_session",
     "mock_audit_service",
     "mock_memory_store",
-    "context_vars_cleanup",
+    "mock_secrets_service",
+    "mock_session",
+    "sample_admin_user",
+    "sample_user",
+    "sample_user_id",
+    "test_engine",
 ]

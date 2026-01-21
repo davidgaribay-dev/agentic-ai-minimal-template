@@ -76,6 +76,7 @@ const MessageCopyButton = memo(function MessageCopyButton({
         className,
       )}
       aria-label={t("aria_copy_message")}
+      data-copied={copied ? "true" : undefined}
     >
       {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
     </button>

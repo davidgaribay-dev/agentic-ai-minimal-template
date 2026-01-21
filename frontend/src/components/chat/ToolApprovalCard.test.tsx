@@ -352,10 +352,10 @@ describe("ToolRejectionMessage", () => {
   })
 
   it("applies custom className", () => {
-    const { container } = renderWithProviders(
+    renderWithProviders(
       <ToolRejectionMessage toolName="read_file" className="custom-class" />
     )
 
-    expect(container.firstChild).toHaveClass("custom-class")
+    expect(screen.getByTestId("tool-rejection-message")).toHaveClass("custom-class")
   })
 })

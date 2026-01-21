@@ -15,14 +15,9 @@ They are skipped when running with SQLite (default test database).
 Run with a PostgreSQL test database for full integration testing.
 """
 
-import pytest
 from fastapi.testclient import TestClient
+import pytest
 from sqlmodel import Session
-
-# Skip all tests in this module - requires PostgreSQL (JSONB columns in audit_logs)
-pytestmark = pytest.mark.skip(
-    reason="Integration tests require PostgreSQL (SQLite doesn't support JSONB)"
-)
 
 from tests.conftest import create_test_user
 from tests.constants import (
@@ -31,6 +26,11 @@ from tests.constants import (
     HTTP_UNAUTHORIZED,
     TEST_USER_EMAIL,
     TEST_USER_PASSWORD,
+)
+
+# Skip all tests in this module - requires PostgreSQL (JSONB columns in audit_logs)
+pytestmark = pytest.mark.skip(
+    reason="Integration tests require PostgreSQL (SQLite doesn't support JSONB)"
 )
 
 

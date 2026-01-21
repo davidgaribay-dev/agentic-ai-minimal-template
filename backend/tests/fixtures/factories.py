@@ -17,7 +17,6 @@ from sqlmodel import Session
 from backend.auth import User, UserCreate, create_user
 from backend.organizations import Organization, OrganizationMember, OrgRole
 from backend.teams import Team, TeamMember, TeamRole
-
 from tests.constants import (
     TEST_ADMIN_EMAIL,
     TEST_ADMIN_FULL_NAME,
@@ -159,10 +158,14 @@ def create_test_team(
     if members:
         for user, role in members:
             # Get the org membership for this user
-            org_member = session.query(OrganizationMember).filter(
-                OrganizationMember.organization_id == org.id,  # noqa: E711
-                OrganizationMember.user_id == user.id,  # noqa: E711
-            ).first()
+            org_member = (
+                session.query(OrganizationMember)
+                .filter(
+                    OrganizationMember.organization_id == org.id,
+                    OrganizationMember.user_id == user.id,
+                )
+                .first()
+            )
 
             if org_member:
                 team_member = TeamMember(

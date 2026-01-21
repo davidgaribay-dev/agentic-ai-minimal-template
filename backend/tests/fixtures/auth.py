@@ -9,12 +9,11 @@ Provides fixtures for:
 from collections.abc import Callable
 from uuid import uuid4
 
-import pytest
 from fastapi.testclient import TestClient
+import pytest
 
 from backend.auth import User
 from backend.core.security import get_password_hash
-
 from tests.constants import (
     TEST_ADMIN_EMAIL,
     TEST_ADMIN_FULL_NAME,

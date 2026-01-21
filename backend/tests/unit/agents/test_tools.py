@@ -8,8 +8,8 @@ Tests follow FIRST principles:
 - Timely: Written alongside the code
 """
 
-import pytest
 from freezegun import freeze_time
+import pytest
 
 from backend.agents.tools import (
     calculate,

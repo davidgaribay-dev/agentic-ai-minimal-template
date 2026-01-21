@@ -1,6 +1,5 @@
 """Tests for the core exceptions module."""
 
-
 from backend.core.exceptions import (
     AppException,
     AuthenticationError,

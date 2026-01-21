@@ -15,6 +15,26 @@ All fixtures from these modules are imported here for pytest discovery.
 # Re-export all fixtures from the fixtures package for pytest discovery
 # Note: pytest automatically discovers fixtures from conftest.py files
 
+import pytest
+from sqlmodel import Session
+
+from backend.auth import User
+from tests.constants import (
+    TEST_ADMIN_EMAIL,
+    TEST_ADMIN_PASSWORD,
+    TEST_USER_EMAIL,
+    TEST_USER_PASSWORD,
+)
+from tests.fixtures.agents import (
+    agent_context,
+    fake_llm,
+    fake_llm_responses,
+    in_memory_checkpointer,
+    mock_embeddings,
+    mock_mcp_client,
+    mock_tool_executor,
+    mock_vector_store,
+)
 from tests.fixtures.auth import (
     auth_headers,
     auth_headers_factory,
@@ -43,28 +63,6 @@ from tests.fixtures.mocks import (
     mock_secrets_service,
     mock_session,
 )
-from tests.fixtures.agents import (
-    agent_context,
-    fake_llm,
-    fake_llm_responses,
-    in_memory_checkpointer,
-    mock_embeddings,
-    mock_mcp_client,
-    mock_tool_executor,
-    mock_vector_store,
-)
-
-# Export factory functions as fixtures for convenience
-import pytest
-from sqlmodel import Session
-
-from backend.auth import User
-from tests.constants import (
-    TEST_ADMIN_EMAIL,
-    TEST_ADMIN_PASSWORD,
-    TEST_USER_EMAIL,
-    TEST_USER_PASSWORD,
-)
 
 
 @pytest.fixture
@@ -91,39 +89,34 @@ def test_admin_user(db_session: Session) -> User:
 
 # Re-export all fixtures for pytest discovery
 __all__ = [
-    # Database fixtures
-    "db_session",
-    "client",
-    # Auth fixtures
-    "sample_user_id",
-    "sample_org_id",
-    "sample_team_id",
-    "sample_user",
-    "sample_admin_user",
+    "agent_context",
     "auth_headers",
     "auth_headers_factory",
-    "test_user",
-    "test_admin_user",
-    # Mock fixtures
-    "mock_session",
-    "mock_secrets_service",
-    "mock_audit_service",
-    "mock_memory_store",
+    "client",
     "context_vars_cleanup",
-    # Agent fixtures
+    "create_test_admin_user",
+    "create_test_org_member",
+    "create_test_organization",
+    "create_test_team",
+    "create_test_team_member",
+    "create_test_user",
+    "db_session",
     "fake_llm",
     "fake_llm_responses",
     "in_memory_checkpointer",
-    "mock_vector_store",
+    "mock_audit_service",
     "mock_embeddings",
-    "mock_tool_executor",
     "mock_mcp_client",
-    "agent_context",
-    # Factory functions (not fixtures, but useful)
-    "create_test_user",
-    "create_test_admin_user",
-    "create_test_organization",
-    "create_test_team",
-    "create_test_org_member",
-    "create_test_team_member",
+    "mock_memory_store",
+    "mock_secrets_service",
+    "mock_session",
+    "mock_tool_executor",
+    "mock_vector_store",
+    "sample_admin_user",
+    "sample_org_id",
+    "sample_team_id",
+    "sample_user",
+    "sample_user_id",
+    "test_admin_user",
+    "test_user",
 ]
