@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
+import { testId } from "@/lib/test-id";
 import { useChat, type ChatMessage } from "@/hooks/useChat";
 import { ChatContainer } from "./ChatContainer";
 import { ChatInput } from "./ChatInput";
@@ -143,13 +144,17 @@ export const Chat = React.forwardRef<ChatHandle, ChatProps>(
     if (!hasMessages) {
       return (
         <div
+          {...testId("chat-container")}
           className={cn(
             "flex h-full flex-col items-center justify-start pt-[25vh]",
             className,
           )}
         >
           <div className="w-full max-w-2xl px-4">
-            <h1 className="mb-8 text-center text-2xl font-medium text-foreground">
+            <h1
+              {...testId("chat-welcome")}
+              className="mb-8 text-center text-2xl font-medium text-foreground"
+            >
               {displayWelcome}
             </h1>
             <ChatInput
@@ -175,9 +180,13 @@ export const Chat = React.forwardRef<ChatHandle, ChatProps>(
     }
 
     return (
-      <div className={cn("flex h-full flex-col overflow-hidden", className)}>
+      <div
+        {...testId("chat-container")}
+        className={cn("flex h-full flex-col overflow-hidden", className)}
+      >
         <div
           ref={scrollContainerRef}
+          {...testId("chat-messages-area")}
           className="flex-1 overflow-y-auto overflow-x-hidden"
         >
           <div className="mx-auto w-full max-w-3xl px-4">

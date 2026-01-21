@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Paperclip, Database, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { testId } from "@/lib/test-id";
 import { ragSettingsApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
@@ -192,6 +193,7 @@ export function AttachmentPicker({
             <TooltipTrigger asChild>
               <PopoverTrigger asChild>
                 <Button
+                  {...testId("attachment-picker-button")}
                   variant="ghost"
                   size="icon"
                   disabled={disabled}
@@ -227,6 +229,7 @@ export function AttachmentPicker({
             <div className="p-2">
               {/* Inline attachment option */}
               <button
+                {...testId("attachment-picker-inline")}
                 type="button"
                 onClick={handleInlineClick}
                 className={cn(
@@ -257,6 +260,7 @@ export function AttachmentPicker({
                 </div>
               ) : ragEnabled ? (
                 <button
+                  {...testId("attachment-picker-rag")}
                   type="button"
                   onClick={handleRAGClick}
                   className={cn(

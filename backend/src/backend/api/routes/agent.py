@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import json
 from typing import Annotated
 import uuid
@@ -86,16 +87,76 @@ MAX_MESSAGE_HISTORY = 100
 # This prevents indefinitely hanging connections
 SSE_STREAM_TIMEOUT_SECONDS = 300  # 5 minutes
 
-# Set to track background tasks and prevent garbage collection
-# Note: In asyncio, set operations are atomic within the event loop,
-# but we use a helper function to keep the pattern clean and documented.
-_background_tasks: set[asyncio.Task[None]] = set()
+
+# =============================================================================
+# Background Task Tracking (Testable State Encapsulation)
+# =============================================================================
+
+
+class BackgroundTaskTracker:
+    """Tracks background tasks with lifecycle management for testability.
+
+    Encapsulates the module-level set of background tasks to enable:
+    - Test isolation via cancel_all()
+    - Monitoring via count property
+    - Clean shutdown during app lifecycle
+
+    Tasks are automatically removed when they complete via done callback.
+    """
+
+    def __init__(self) -> None:
+        self._tasks: set[asyncio.Task[None]] = set()
+
+    def track(self, task: asyncio.Task[None]) -> None:
+        """Add a task to tracking and register cleanup callback.
+
+        Args:
+            task: The asyncio task to track
+        """
+        self._tasks.add(task)
+        task.add_done_callback(self._tasks.discard)
+
+    async def cancel_all(self) -> int:
+        """Cancel all tracked tasks and wait for completion.
+
+        Returns:
+            Number of tasks that were cancelled
+        """
+        count = len(self._tasks)
+        for task in list(self._tasks):
+            task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await task
+        self._tasks.clear()
+        return count
+
+    @property
+    def count(self) -> int:
+        """Get number of currently tracked tasks."""
+        return len(self._tasks)
+
+    def get_stats(self) -> dict[str, int]:
+        """Get tracker statistics for monitoring."""
+        return {
+            "active_tasks": len(self._tasks),
+        }
+
+
+# Module-level tracker instance
+_task_tracker = BackgroundTaskTracker()
+
+
+def get_task_tracker() -> BackgroundTaskTracker:
+    """Get the background task tracker instance."""
+    return _task_tracker
 
 
 def _track_background_task(task: asyncio.Task[None]) -> None:
-    """Add a task to the tracked set and register cleanup callback."""
-    _background_tasks.add(task)
-    task.add_done_callback(_background_tasks.discard)
+    """Add a task to the tracked set and register cleanup callback.
+
+    Backward-compatible wrapper for BackgroundTaskTracker.track().
+    """
+    _task_tracker.track(task)
 
 
 @router.get("/health", response_model=HealthResponse)

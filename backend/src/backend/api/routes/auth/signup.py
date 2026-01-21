@@ -123,9 +123,13 @@ async def register_user(
                 )
                 organization.logo_url = final_org_logo_url
                 session.add(organization)
-        except Exception:
-            # Non-critical - keep the original upload
-            pass
+        except Exception as e:
+            # Non-critical - keep the original upload, but log for debugging
+            logger.warning(
+                "org_logo_rename_failed",
+                org_id=str(organization.id),
+                error=str(e),
+            )
 
     # Generate team name if not provided
     team_name_final = team_name if team_name else "General"
@@ -183,9 +187,13 @@ async def register_user(
                 )
                 team.logo_url = final_team_logo_url
                 session.add(team)
-        except Exception:
-            # Non-critical - keep the original upload
-            pass
+        except Exception as e:
+            # Non-critical - keep the original upload, but log for debugging
+            logger.warning(
+                "team_logo_rename_failed",
+                team_id=str(team.id),
+                error=str(e),
+            )
 
     session.commit()
     session.refresh(organization)

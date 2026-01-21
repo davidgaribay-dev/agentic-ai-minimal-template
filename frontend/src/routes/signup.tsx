@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { Sparkles, Upload, X as XIcon, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { testId } from "@/lib/test-id";
 import { useRegister, authKeys } from "@/lib/auth";
 
 export const Route = createFileRoute("/signup")({
@@ -228,15 +229,19 @@ function SignupPage() {
         </div>
 
         {error && (
-          <div className="mb-4 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+          <div
+            {...testId("signup-error")}
+            className="mb-4 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive"
+          >
             {error}
           </div>
         )}
 
         {/* Step 1: Email */}
         {step === "email" && (
-          <form onSubmit={handleEmailSubmit} className="space-y-4">
+          <form {...testId("signup-form-email")} onSubmit={handleEmailSubmit} className="space-y-4">
             <Input
+              {...testId("signup-email-input")}
               id="email"
               type="email"
               value={email}
@@ -248,6 +253,7 @@ function SignupPage() {
             />
 
             <Button
+              {...testId("signup-continue-button")}
               type="submit"
               className="h-11 w-full rounded-md text-sm font-medium"
             >
@@ -268,9 +274,10 @@ function SignupPage() {
 
         {/* Step 2: Password */}
         {step === "password" && (
-          <form onSubmit={handlePasswordSubmit} className="space-y-4">
+          <form {...testId("signup-form-password")} onSubmit={handlePasswordSubmit} className="space-y-4">
             <div className="mb-4 text-sm text-muted-foreground">{email}</div>
             <Input
+              {...testId("signup-password-input")}
               id="password"
               type="password"
               value={password}
@@ -416,7 +423,7 @@ function SignupPage() {
 
         {/* Step 5: Team */}
         {step === "team" && (
-          <form onSubmit={handleTeamSubmit} className="space-y-4">
+          <form {...testId("signup-form-team")} onSubmit={handleTeamSubmit} className="space-y-4">
             <div className="space-y-4">
               <div>
                 <label
@@ -479,6 +486,7 @@ function SignupPage() {
             </div>
 
             <Button
+              {...testId("signup-submit-button")}
               type="submit"
               disabled={register.isPending}
               className="h-11 w-full rounded-md text-sm font-medium"

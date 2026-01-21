@@ -21,6 +21,20 @@ from backend.agents.factory import (
     init_agent_factory,
     reset_agent_factory,
 )
+from backend.agents.llm_interface import (
+    LLMFactory,
+    LLMFactoryDep,
+    LLMProvider,
+    get_llm_factory,
+    get_llm_factory_dep,
+)
+from backend.agents.manager import (
+    AgentManager,
+    AgentManagerDep,
+    AgentState,
+    get_agent_manager,
+    get_agent_manager_dep,
+)
 from backend.agents.react_agent import (
     get_react_agent,
     run_react_agent,
@@ -29,22 +43,27 @@ from backend.agents.react_agent import (
 from backend.agents.tools import get_available_tools
 
 __all__ = [
-    # Agent factory (preferred for new code)
     "AgentConfig",
     "AgentFactory",
     "AgentInstance",
-    # Context management
+    "AgentManager",
+    "AgentManagerDep",
+    "AgentState",
     "LLMContext",
+    "LLMFactory",
+    "LLMFactoryDep",
+    "LLMProvider",
     "RequestContext",
-    # Base agent
     "get_agent",
     "get_agent_factory",
-    # Tools
+    "get_agent_manager",
+    "get_agent_manager_dep",
     "get_available_tools",
     "get_conversation_history",
     "get_llm_context",
     "get_llm_context_dict",
-    # ReAct agent with tools
+    "get_llm_factory",
+    "get_llm_factory_dep",
     "get_react_agent",
     "get_request_context",
     "init_agent_factory",

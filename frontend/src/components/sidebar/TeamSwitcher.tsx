@@ -14,6 +14,7 @@ import {
   Settings2,
 } from "lucide-react";
 
+import { testId, getTestId } from "@/lib/test-id";
 import { useWorkspace } from "@/lib/workspace";
 import { CreateTeamDialog } from "@/components/create-team-dialog";
 import {
@@ -67,6 +68,7 @@ export function TeamSwitcher() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton
+                  {...testId("team-switcher-button")}
                   tooltip={currentTeam?.name ?? t("team_select")}
                   className={cn(
                     "data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground h-8",
@@ -122,6 +124,7 @@ export function TeamSwitcher() {
                   teams.map((team) => (
                     <DropdownMenuItem
                       key={team.id}
+                      data-testid={getTestId(`team-item-${team.id}`)}
                       onClick={() => switchTeam(team.id)}
                       className={cn(
                         "gap-2 p-2 group/team-item",

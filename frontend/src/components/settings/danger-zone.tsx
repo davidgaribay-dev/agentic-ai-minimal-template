@@ -9,6 +9,7 @@ import {
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
+import { testId } from "@/lib/test-id";
 import { organizationsApi, teamsApi } from "@/lib/api";
 import { workspaceKeys } from "@/lib/workspace";
 import { Button } from "@/components/ui/button";
@@ -69,7 +70,7 @@ export function OrgDangerZone({
   });
 
   return (
-    <Collapsible open={dangerOpen} onOpenChange={setDangerOpen}>
+    <Collapsible {...testId("danger-zone-org")} open={dangerOpen} onOpenChange={setDangerOpen}>
       <CollapsibleTrigger className="flex items-center gap-2 text-xs text-muted-foreground hover:text-destructive py-2">
         {dangerOpen ? (
           <ChevronDown className="size-3" />
@@ -92,6 +93,7 @@ export function OrgDangerZone({
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
+                    {...testId("danger-leave-org-button")}
                     variant="outline"
                     size="sm"
                     className="h-7 text-xs border-destructive/50 text-destructive hover:bg-destructive hover:text-white"
@@ -135,6 +137,7 @@ export function OrgDangerZone({
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
+                    {...testId("danger-delete-org-button")}
                     variant="destructive"
                     size="sm"
                     className="h-7 text-xs"

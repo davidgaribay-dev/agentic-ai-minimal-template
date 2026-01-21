@@ -237,6 +237,76 @@ class CachingWrapper:
         self._cache.clear()
 
 
-# Global cache instances for common use cases
+# =============================================================================
+# Cache Registry (Testable State Management)
+# =============================================================================
+
+
+class CacheRegistry:
+    """Registry of application caches with test support.
+
+    Encapsulates global cache instances to enable:
+    - Test isolation via clear_all()
+    - Consistent access pattern
+    - Cache statistics for monitoring
+
+    Example usage:
+        registry = get_cache_registry()
+        registry.settings_cache.get("key")
+        registry.clear_all()  # In tests
+    """
+
+    def __init__(
+        self,
+        settings_ttl_seconds: int = 60,
+        secrets_ttl_seconds: int = 300,
+    ) -> None:
+        self.settings_cache = TTLCache(ttl_seconds=settings_ttl_seconds)
+        self.secrets_cache = TTLCache(ttl_seconds=secrets_ttl_seconds)
+
+    def clear_all(self) -> None:
+        """Clear all caches. Use in tests for isolation."""
+        self.settings_cache.clear()
+        self.secrets_cache.clear()
+
+    def cleanup_all_expired(self) -> dict[str, int]:
+        """Clean up expired entries in all caches.
+
+        Returns:
+            Dict with count of removed entries per cache
+        """
+        return {
+            "settings": self.settings_cache.cleanup_expired(),
+            "secrets": self.secrets_cache.cleanup_expired(),
+        }
+
+    def get_stats(self) -> dict[str, dict[str, int]]:
+        """Get statistics for all caches."""
+        return {
+            "settings": {
+                "size": len(self.settings_cache._cache),
+                "ttl_seconds": self.settings_cache.ttl_seconds,
+            },
+            "secrets": {
+                "size": len(self.secrets_cache._cache),
+                "ttl_seconds": self.secrets_cache.ttl_seconds,
+            },
+        }
+
+
+# Singleton registry instance
+_cache_registry: CacheRegistry | None = None
+
+
+def get_cache_registry() -> CacheRegistry:
+    """Get the singleton cache registry instance."""
+    global _cache_registry
+    if _cache_registry is None:
+        _cache_registry = CacheRegistry()
+    return _cache_registry
+
+
+# Backward-compatible global cache instances
+# These reference the registry's caches for compatibility with existing code
 settings_cache = TTLCache(ttl_seconds=60)  # 1 minute for settings
 secrets_cache = TTLCache(ttl_seconds=300)  # 5 minutes for secrets

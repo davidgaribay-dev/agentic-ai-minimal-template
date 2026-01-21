@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { testId } from "@/lib/test-id";
 import { useLogin, authQueryOptions, isLoggedIn } from "@/lib/auth";
 
 export const Route = createFileRoute("/login")({
@@ -56,15 +57,19 @@ function LoginPage() {
           </h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form {...testId("login-form")} onSubmit={handleSubmit} className="space-y-4">
           {login.error && (
-            <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+            <div
+              {...testId("login-error")}
+              className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive"
+            >
               {login.error.message}
             </div>
           )}
 
           <div className="space-y-3">
             <Input
+              {...testId("login-email-input")}
               id="email"
               type="email"
               placeholder={t("auth_email_placeholder")}
@@ -75,6 +80,7 @@ function LoginPage() {
               className="h-11 rounded-xl border-border/50 bg-muted/30 px-4 text-[15px] placeholder:text-muted-foreground/60"
             />
             <Input
+              {...testId("login-password-input")}
               id="password"
               type="password"
               placeholder={t("auth_password_placeholder")}
@@ -88,6 +94,7 @@ function LoginPage() {
           </div>
 
           <Button
+            {...testId("login-submit-button")}
             type="submit"
             className="h-11 w-full rounded-xl text-[15px] font-medium"
             disabled={login.isPending}

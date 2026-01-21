@@ -241,6 +241,39 @@ class Settings(BaseSettings):
     AUDIT_LOG_RETENTION_DAYS: int = 90
     APP_LOG_RETENTION_DAYS: int = 30
 
+    # ==========================================================================
+    # Agent Configuration (Phase 5: Externalized Constants)
+    # ==========================================================================
+
+    # Maximum number of messages to return in conversation history
+    AGENT_MAX_MESSAGE_HISTORY: int = 100
+
+    # Maximum time (in seconds) for SSE streaming before timeout
+    AGENT_SSE_TIMEOUT_SECONDS: int = 300  # 5 minutes
+
+    # Maximum steps for agent execution before stopping
+    AGENT_MAX_STEPS: int = 25
+
+    # ==========================================================================
+    # Cache Configuration (Phase 5: Externalized Constants)
+    # ==========================================================================
+
+    # TTL for settings cache (effective settings resolution)
+    SETTINGS_CACHE_TTL_SECONDS: int = 60  # 1 minute
+
+    # TTL for secrets cache (API keys, encrypted secrets)
+    SECRETS_CACHE_TTL_SECONDS: int = 300  # 5 minutes
+
+    # Maximum size for request-scoped cache (prevents memory DoS)
+    REQUEST_CACHE_MAX_SIZE: int = 1000
+
+    # ==========================================================================
+    # API Configuration (Phase 5: Externalized Constants)
+    # ==========================================================================
+
+    # Minimum characters to display for API key previews
+    API_KEY_DISPLAY_LENGTH: int = 8
+
 
 @lru_cache
 def get_settings() -> Settings:

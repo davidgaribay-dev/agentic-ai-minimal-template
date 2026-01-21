@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Trash2, Eye, EyeOff, Check, Building2 } from "lucide-react";
+import { testId, getTestId } from "@/lib/test-id";
 import { apiKeysApi, type APIKeyStatus, type LLMProvider } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -175,7 +176,10 @@ export function ProviderRow({ provider, status, scope }: ProviderRowProps) {
   const hasOwnKey = scope.type === "team" ? level === "team" : level === "org";
 
   return (
-    <div className="flex items-center justify-between rounded-md bg-muted/30 px-3 py-2">
+    <div
+      data-testid={getTestId(`api-key-row-${provider}`)}
+      className="flex items-center justify-between rounded-md bg-muted/30 px-3 py-2"
+    >
       <div className="flex items-center gap-2.5">
         <div className="flex size-7 items-center justify-center rounded bg-background font-bold text-xs">
           {info.icon}
@@ -301,6 +305,7 @@ export function SetApiKeyDialog({
               </Label>
               <div className="relative">
                 <Input
+                  {...testId("api-key-input")}
                   id="api-key"
                   type={showKey ? "text" : "password"}
                   {...register("api_key")}
@@ -343,7 +348,7 @@ export function SetApiKeyDialog({
             >
               {t("com_cancel")}
             </Button>
-            <Button type="submit" size="sm" disabled={mutation.isPending}>
+            <Button {...testId("api-key-save-button")} type="submit" size="sm" disabled={mutation.isPending}>
               {mutation.isPending && (
                 <Loader2 className="mr-1.5 size-3 animate-spin" />
               )}

@@ -1,10 +1,10 @@
 import asyncio
 import contextlib
 from datetime import UTC, datetime
-from typing import Any
+from typing import Annotated, Any
 import uuid
 
-from fastapi import Request
+from fastapi import Depends, Request
 
 from backend.audit.client import (
     APP_INDEX_PREFIX,
@@ -481,3 +481,41 @@ class AuditService:
 
 # Global service instance
 audit_service = AuditService()
+
+# Singleton instance for DI
+_audit_service: AuditService | None = None
+
+
+def get_audit_service() -> AuditService:
+    """Get the singleton audit service instance.
+
+    Provides lazy initialization and a consistent access pattern.
+    """
+    global _audit_service
+    if _audit_service is None:
+        _audit_service = audit_service  # Use the existing global instance
+    return _audit_service
+
+
+# =============================================================================
+# FastAPI Dependency Injection
+# =============================================================================
+
+
+def get_audit_service_dep() -> AuditService:
+    """FastAPI dependency for audit service.
+
+    Use this with Depends() in route handlers for testable code:
+
+        @router.post("/action")
+        async def do_action(audit: AuditServiceDep):
+            await audit.log(AuditAction.USER_LOGIN_SUCCESS, ...)
+
+    Tests can override via app.dependency_overrides:
+
+        app.dependency_overrides[get_audit_service_dep] = lambda: mock_audit
+    """
+    return get_audit_service()
+
+
+AuditServiceDep = Annotated[AuditService, Depends(get_audit_service_dep)]

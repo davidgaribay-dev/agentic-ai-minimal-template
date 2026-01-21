@@ -6,6 +6,7 @@ import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { ChevronUp, LogOut, Settings } from "lucide-react";
 
+import { testId } from "@/lib/test-id";
 import { useAuth } from "@/lib/auth";
 import {
   SidebarMenu,
@@ -36,11 +37,12 @@ export function NavUser() {
   const isExpanded = isMobile || state === "expanded";
 
   return (
-    <SidebarMenu>
+    <SidebarMenu {...testId("nav-user")}>
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
+              {...testId("nav-user-button")}
               size="lg"
               tooltip={user.full_name || user.email}
               className={cn(
@@ -116,13 +118,13 @@ export function NavUser() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link to="/settings" className="cursor-pointer">
+              <Link {...testId("nav-user-settings")} to="/settings" className="cursor-pointer">
                 <Settings className="mr-2 size-4" />
                 {t("nav_settings")}
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={logout} className="cursor-pointer">
+            <DropdownMenuItem {...testId("nav-user-logout")} onClick={logout} className="cursor-pointer">
               <LogOut className="mr-2 size-4" />
               {t("nav_log_out")}
             </DropdownMenuItem>

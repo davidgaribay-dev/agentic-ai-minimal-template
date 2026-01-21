@@ -18,14 +18,14 @@ This project uses a hierarchical agent structure with **team leads** that coordi
 │  Orchestrator │      │  Orchestrator │      │  Orchestrator │
 └───────┬───────┘      └───────┬───────┘      └───────┬───────┘
         │                      │                      │
-   ┌────┼────┬────┐       ┌────┼────┐           ┌────┼────┐
-   ▼    ▼    ▼    ▼       ▼    ▼    ▼           ▼    ▼    ▼
-┌─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┐
-│rbac │ api │ db  │agent│core │state│comp │route│i18n │sec  │
-│     │     │     │     │     │     │     │     │     │     │
-│ snt │ snt │ snt │ snt │ snt │ snt │ snt │ snt │ snt │ snt │
-└─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┘
-         Backend Specialists      Frontend       Review
+   ┌────┼────┬────┐       ┌────┼────┐           ┌────┼────┬────┐
+   ▼    ▼    ▼    ▼       ▼    ▼    ▼           ▼    ▼    ▼    ▼
+┌─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┐
+│rbac │ api │ db  │agent│core │state│comp │route│i18n │sec  │btest│ftest│
+│     │     │     │     │     │     │     │     │     │     │     │     │
+│ snt │ snt │ snt │ snt │ snt │ snt │ snt │ snt │ snt │ snt │ snt │ snt │
+└─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┘
+         Backend Specialists      Frontend       Review + Testing
                             (all sonnet)
 ```
 
@@ -70,6 +70,12 @@ This project uses a hierarchical agent structure with **team leads** that coordi
 | `review-frontend.md` | sonnet | TypeScript, React patterns |
 | `review-security.md` | sonnet | OWASP, secrets, auth |
 
+### Testing Specialists
+| Agent | Model | Focus |
+|-------|-------|-------|
+| `backend-testing.md` | sonnet | pytest, FastAPI TestClient, SQLModel fixtures |
+| `frontend-testing.md` | sonnet | Vitest, React Testing Library, MSW mocking |
+
 ## Usage Examples
 
 ### Implementing a New Feature
@@ -104,6 +110,17 @@ Claude delegates to: frontend-lead
   → frontend-lead requests: frontend-state (for API hooks)
   → frontend-lead requests: frontend-components (for UI)
   → frontend-lead requests: frontend-i18n (for translations)
+```
+
+### Writing Tests
+```
+User: "Write tests for the auth module"
+
+Claude delegates to: code-reviewer (coordinates testing)
+  → code-reviewer requests: backend-testing (for Python tests)
+  → code-reviewer requests: frontend-testing (for React tests)
+  → backend-testing writes: pytest fixtures, API tests, mocks
+  → frontend-testing writes: Vitest tests, MSW handlers, hook tests
 ```
 
 ## Key Benefits

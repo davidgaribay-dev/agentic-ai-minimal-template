@@ -7,9 +7,10 @@ Uses the application's SECRET_KEY for encryption key derivation via PBKDF2.
 """
 
 from datetime import UTC, datetime
-from typing import Literal, cast
+from typing import Annotated, Literal, cast
 
 from cryptography.fernet import InvalidToken
+from fastapi import Depends
 from sqlmodel import Session, select
 
 from backend.core.cache import secrets_cache
@@ -851,3 +852,27 @@ def get_secrets_service() -> SecretsService:
     if _secrets_service is None:
         _secrets_service = SecretsService()
     return _secrets_service
+
+
+# =============================================================================
+# FastAPI Dependency Injection
+# =============================================================================
+
+
+def get_secrets_service_dep() -> SecretsService:
+    """FastAPI dependency for secrets service.
+
+    Use this with Depends() in route handlers for testable code:
+
+        @router.get("/keys")
+        async def list_keys(secrets: SecretsServiceDep):
+            return secrets.list_api_key_status(...)
+
+    Tests can override via app.dependency_overrides:
+
+        app.dependency_overrides[get_secrets_service_dep] = lambda: mock_secrets
+    """
+    return get_secrets_service()
+
+
+SecretsServiceDep = Annotated[SecretsService, Depends(get_secrets_service_dep)]

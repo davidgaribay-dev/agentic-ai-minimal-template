@@ -10,6 +10,9 @@ The memory store uses:
 - Namespace-based multi-tenant isolation
 """
 
+from typing import Annotated
+
+from fastapi import Depends
 from langchain_openai import OpenAIEmbeddings
 from langgraph.store.postgres import AsyncPostgresStore
 
@@ -113,3 +116,27 @@ def get_memory_namespace(org_id: str, team_id: str, user_id: str) -> tuple[str, 
         Tuple namespace for LangGraph store operations
     """
     return ("memories", org_id, team_id, user_id)
+
+
+# =============================================================================
+# FastAPI Dependency Injection
+# =============================================================================
+
+
+async def get_memory_store_dep() -> AsyncPostgresStore:
+    """FastAPI dependency for memory store.
+
+    Use this with Depends() in route handlers for testable code:
+
+        @router.get("/memories")
+        async def list_memories(store: MemoryStoreDep):
+            return await store.search(namespace, ...)
+
+    Tests can override via app.dependency_overrides:
+
+        app.dependency_overrides[get_memory_store_dep] = lambda: mock_store
+    """
+    return await get_memory_store()
+
+
+MemoryStoreDep = Annotated[AsyncPostgresStore, Depends(get_memory_store_dep)]

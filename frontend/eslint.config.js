@@ -2,6 +2,7 @@ import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
+import testingLibrary from 'eslint-plugin-testing-library'
 import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
@@ -40,6 +41,32 @@ export default defineConfig([
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
+    },
+  },
+  // Testing Library rules for test files
+  {
+    files: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
+    plugins: {
+      'testing-library': testingLibrary,
+    },
+    rules: {
+      ...testingLibrary.configs['flat/react'].rules,
+      // Ensure await is used with async queries
+      'testing-library/await-async-queries': 'error',
+      // Ensure await is used with async utils (waitFor, etc.)
+      'testing-library/await-async-utils': 'error',
+      // Prefer screen queries over destructured queries
+      'testing-library/prefer-screen-queries': 'warn',
+      // Prefer user-event over fireEvent
+      'testing-library/prefer-user-event': 'warn',
+      // Avoid using container to query elements
+      'testing-library/no-container': 'warn',
+      // Avoid debugging test files
+      'testing-library/no-debugging-utils': 'warn',
+      // Ensure render result is not stored in a variable
+      'testing-library/no-render-in-lifecycle': 'error',
+      // Prefer findBy over waitFor + getBy
+      'testing-library/prefer-find-by': 'warn',
     },
   },
   {

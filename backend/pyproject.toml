@@ -66,6 +66,7 @@ dev = [
     "pytest>=8.4.2",
     "pytest-asyncio>=1.2.0",
     "pytest-cov>=6.0.0",
+    "freezegun>=1.4.0",
     "mypy>=1.13.0",
     "ruff>=0.8.0",
     "pre-commit>=4.0.0",
@@ -86,6 +87,14 @@ addopts = [
     "--cov-report=term-missing:skip-covered",
     "--cov-report=html",
     "--cov-report=xml",
+]
+markers = [
+    "unit: Fast unit tests without external dependencies",
+    "integration: Tests requiring database or external services",
+    "slow: Tests that take more than 1 second",
+    "agents: LangGraph agent system tests",
+    "auth: Authentication and authorization tests",
+    "rbac: Role-based access control tests",
 ]
 
 [tool.coverage.run]
@@ -198,6 +207,9 @@ ignore = [
 ]
 "src/backend/core/secrets.py" = [
     "PLW0603", # Global statement (secrets service singleton)
+]
+"src/backend/core/cache.py" = [
+    "PLW0603", # Global statement (cache registry singleton)
 ]
 "src/backend/core/encrypted_secrets.py" = [
     "PLW0603", # Global statement (Fernet cipher singleton)
@@ -326,6 +338,7 @@ disable_error_code = ["union-attr", "attr-defined", "arg-type", "unreachable"]
 [[tool.mypy.overrides]]
 module = [
     "backend.agents.llm",
+    "backend.agents.llm_interface",
     "backend.agents.tools",
     "backend.mcp.client",
 ]
@@ -335,6 +348,7 @@ disable_error_code = ["call-arg", "operator", "arg-type", "dict-item", "unreacha
 [[tool.mypy.overrides]]
 module = [
     "backend.agents.base",
+    "backend.agents.manager",
     "backend.agents.react_agent",
     "backend.agents.factory",
 ]

@@ -22,6 +22,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { testId } from "@/lib/test-id";
 import { Button } from "@/components/ui/button";
 
 export interface ToolApprovalData {
@@ -177,6 +178,7 @@ export const ToolApprovalCard = memo(function ToolApprovalCard({
 
   return (
     <div
+      {...testId("tool-approval-card")}
       className={cn(
         "w-full rounded-lg border border-border bg-card overflow-hidden",
         className,
@@ -189,7 +191,10 @@ export const ToolApprovalCard = memo(function ToolApprovalCard({
             <Play className="size-3" />
           </div>
           <div className="min-w-0">
-            <div className="text-sm font-medium text-foreground truncate">
+            <div
+              {...testId("tool-approval-name")}
+              className="text-sm font-medium text-foreground truncate"
+            >
               {data.tool_name}
             </div>
             {data.tool_description && (
@@ -203,6 +208,7 @@ export const ToolApprovalCard = memo(function ToolApprovalCard({
         {/* Action buttons */}
         <div className="flex items-center gap-1.5 shrink-0">
           <Button
+            {...testId("tool-reject-button")}
             variant="ghost"
             size="sm"
             onClick={handleReject}
@@ -213,6 +219,7 @@ export const ToolApprovalCard = memo(function ToolApprovalCard({
             <span className="hidden sm:inline">{t("com_cancel")}</span>
           </Button>
           <Button
+            {...testId("tool-approve-button")}
             variant="default"
             size="sm"
             onClick={handleApprove}

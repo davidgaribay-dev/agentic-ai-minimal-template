@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 
+import { testId } from "@/lib/test-id";
 import { useWorkspace } from "@/lib/workspace";
 import { type Conversation } from "@/lib/api";
 import {
@@ -158,10 +159,14 @@ export function RecentChats() {
 
   return (
     <>
-      <SidebarGroup>
+      <SidebarGroup {...testId("recent-chats")}>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleNewChat} className="gap-2">
+            <SidebarMenuButton
+              {...testId("new-chat-button")}
+              onClick={handleNewChat}
+              className="gap-2"
+            >
               <div className="flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
                 <Plus className="size-3" />
               </div>
