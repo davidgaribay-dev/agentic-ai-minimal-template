@@ -15,6 +15,8 @@ export interface ChatRequest {
   stream?: boolean;
   /** Media IDs to attach to the message */
   media_ids?: string[];
+  /** Model ID for per-request model selection */
+  model?: string;
 }
 
 export interface ChatResponse {

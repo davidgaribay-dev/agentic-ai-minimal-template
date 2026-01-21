@@ -15,6 +15,7 @@ from backend.core.base_models import (
 if TYPE_CHECKING:
     from backend.conversations.models import Conversation
     from backend.invitations.models import Invitation
+    from backend.llm_settings.models import CustomLLMProvider, TeamLLMSettings
     from backend.organizations.models import (
         Organization,
         OrganizationMember,
@@ -74,6 +75,14 @@ class Team(TeamBase, OptionalAuditedTable, OrgScopedMixin, table=True):
         back_populates="team",
         sa_relationship_kwargs={"cascade": "all, delete-orphan", "uselist": False},
     )
+    llm_settings: "TeamLLMSettings" = Relationship(
+        back_populates="team",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan", "uselist": False},
+    )
+    custom_llm_providers: list["CustomLLMProvider"] = Relationship(
+        back_populates="team",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
+    )
 
 
 class TeamCreate(SQLModel):
@@ -97,6 +106,15 @@ class TeamPublic(TeamBase, TimestampResponseMixin):
 
 # TeamsPublic is now PaginatedResponse[TeamPublic]
 TeamsPublic = PaginatedResponse[TeamPublic]
+
+
+class TeamWithMyRole(TeamPublic):
+    """Team with the current user's role in that team."""
+
+    my_role: "TeamRole"
+
+
+TeamsWithMyRole = PaginatedResponse[TeamWithMyRole]
 
 
 class TeamMemberBase(SQLModel):

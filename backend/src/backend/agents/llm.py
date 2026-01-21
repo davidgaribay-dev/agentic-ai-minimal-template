@@ -1,18 +1,21 @@
 from functools import lru_cache
 from typing import Literal
+import uuid
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
+from sqlmodel import Session
 
 from backend.core.config import settings
+from backend.core.db import engine
 from backend.core.logging import get_logger
 from backend.core.secrets import get_secrets_service
 
 logger = get_logger(__name__)
 
-LLMProvider = Literal["anthropic", "openai", "google"]
+LLMProvider = Literal["anthropic", "openai", "google", "custom"]
 
 # Maximum length for generated conversation titles
 MAX_TITLE_LENGTH = 50
@@ -73,10 +76,16 @@ def get_chat_model_with_context(
     org_id: str,
     team_id: str | None = None,
     provider: LLMProvider | None = None,
+    model: str | None = None,
+    temperature: float | None = None,
+    max_tokens: int | None = None,
+    user_id: str | None = None,
+    session: Session | None = None,
 ) -> BaseChatModel:
     """Get a chat model with API key from encrypted storage (multi-tenant).
 
-    This function fetches the API key from encrypted database with the following
+    This function resolves model settings from the hierarchy (org → team → user)
+    and fetches the API key from encrypted database with the following
     fallback chain:
     1. Team-level key (if team_id provided)
     2. Org-level key
@@ -85,7 +94,12 @@ def get_chat_model_with_context(
     Args:
         org_id: Organization ID for scoping
         team_id: Optional team ID for team-level override
-        provider: LLM provider to use. If None, uses the org/team default
+        provider: LLM provider to use (override). If None, uses effective settings
+        model: Model ID to use (override). If None, uses effective settings
+        temperature: Temperature (override). If None, uses effective settings
+        max_tokens: Max tokens (override). If None, uses effective settings
+        user_id: User ID for user-level preferences
+        session: Database session for querying settings. If not provided, creates one.
 
     Returns:
         A configured chat model instance
@@ -95,8 +109,69 @@ def get_chat_model_with_context(
     """
     secrets = get_secrets_service()
 
+    # Use hierarchical settings system when we have user_id
+    # Create a session if one isn't provided
+    if user_id is not None:
+        from backend.llm_settings.service import get_model_for_chat
+
+        def _resolve_settings(
+            sess: Session,
+        ) -> tuple[str, str, float, int | None]:
+            return get_model_for_chat(
+                session=sess,
+                organization_id=uuid.UUID(org_id),
+                team_id=uuid.UUID(team_id) if team_id else None,
+                user_id=uuid.UUID(user_id),
+                model_override=model,
+                provider_override=provider,
+                temperature_override=temperature,
+            )
+
+        if session is not None:
+            resolved_provider, resolved_model, resolved_temp, resolved_max = (
+                _resolve_settings(session)
+            )
+        else:
+            # Create a session to query settings
+            with Session(engine) as new_session:
+                resolved_provider, resolved_model, resolved_temp, resolved_max = (
+                    _resolve_settings(new_session)
+                )
+
+        # Use explicit overrides if provided, otherwise use resolved values
+        provider = provider or resolved_provider  # type: ignore[assignment]
+        model = model or resolved_model
+        temperature = temperature if temperature is not None else resolved_temp
+        max_tokens = max_tokens if max_tokens is not None else resolved_max
+    else:
+        # Fallback to legacy behavior when no user_id
+        if provider is None:
+            provider = secrets.get_default_provider(org_id, team_id)
+        # Use legacy default models
+        if model is None:
+            if provider == "anthropic":
+                model = "claude-haiku-4-5-20251001"
+            elif provider == "openai":
+                model = "gpt-4o"
+            elif provider == "google":
+                model = "gemini-2.0-flash"
+        if temperature is None:
+            temperature = 0.7
+
+    # Get API key based on provider
     if provider is None:
-        provider = secrets.get_default_provider(org_id, team_id)
+        raise ValueError(
+            "No LLM provider configured. Set a default model in organization settings."
+        )
+
+    if provider == "custom":
+        # Custom provider - needs special handling
+        # The model ID should help identify which custom provider to use
+        # For now, raise an error - full implementation requires custom provider lookup
+        raise ValueError(
+            "Custom providers require session context. "
+            "Pass session and user_id to use custom providers."
+        )
 
     api_key = secrets.get_llm_api_key(provider, org_id, team_id)
 
@@ -109,6 +184,7 @@ def get_chat_model_with_context(
     logger.info(
         "initializing_llm",
         provider=provider,
+        model=model,
         org_id=org_id,
         team_id=team_id,
         source="encrypted_db",
@@ -116,21 +192,26 @@ def get_chat_model_with_context(
 
     if provider == "anthropic":
         return ChatAnthropic(
-            model="claude-haiku-4-5-20251001",
+            model=model,
             api_key=api_key,
-            max_tokens=4096,
+            max_tokens=max_tokens or 4096,
+            temperature=temperature,
         )
 
     if provider == "openai":
         return ChatOpenAI(
-            model="gpt-4o",
+            model=model,
             api_key=api_key,
+            max_tokens=max_tokens,
+            temperature=temperature,
         )
 
     if provider == "google":
         return ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash",
+            model=model,
             google_api_key=api_key,
+            max_output_tokens=max_tokens,
+            temperature=temperature,
         )
 
     raise ValueError(f"Unsupported LLM provider: {provider}")

@@ -35,6 +35,8 @@ from backend.organizations.models import (
     OrganizationsPublic,
     OrganizationUpdate,
     OrgRole,
+    SidebarPreferencesUpdate,
+    TeamOrderUpdate,
 )
 from backend.rbac import (
     OrgContextDep,
@@ -602,3 +604,85 @@ async def delete_organization_logo(
     )
 
     return OrganizationPublic.model_validate(org_context.organization)
+
+
+@router.put("/{org_id}/team-order", response_model=Message)
+async def update_team_order(
+    request: Request,
+    session: SessionDep,
+    current_user: CurrentUser,
+    org_id: Annotated[uuid.UUID, Path(description="Organization ID")],
+    team_order_update: TeamOrderUpdate,
+) -> Message:
+    """Update the user's preferred team order for an organization."""
+    # Get the organization member record
+    org_member = crud.get_org_membership(
+        session=session, organization_id=org_id, user_id=current_user.id
+    )
+    if not org_member:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Not a member of this organization",
+        )
+
+    # Update the team_order
+    org_member.team_order = team_order_update.team_order
+    session.add(org_member)
+    session.commit()
+
+    await audit_service.log(
+        AuditAction.USER_SETTINGS_UPDATED,
+        actor=current_user,
+        request=request,
+        organization_id=org_id,
+        metadata={
+            "setting": "team_order",
+            "team_count": len(team_order_update.team_order),
+        },
+    )
+
+    return Message(message="Team order updated successfully")
+
+
+@router.put("/{org_id}/sidebar-preferences", response_model=Message)
+async def update_sidebar_preferences(
+    request: Request,
+    session: SessionDep,
+    current_user: CurrentUser,
+    org_id: Annotated[uuid.UUID, Path(description="Organization ID")],
+    preferences_update: SidebarPreferencesUpdate,
+) -> Message:
+    """Update the user's sidebar preferences for an organization."""
+    org_member = crud.get_org_membership(
+        session=session, organization_id=org_id, user_id=current_user.id
+    )
+    if not org_member:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Not a member of this organization",
+        )
+
+    # Merge with existing preferences or create new
+    current_prefs = org_member.sidebar_preferences or {}
+    update_data = preferences_update.model_dump(exclude_unset=True)
+
+    for key, value in update_data.items():
+        if value is not None:
+            current_prefs[key] = value
+
+    org_member.sidebar_preferences = current_prefs
+    session.add(org_member)
+    session.commit()
+
+    await audit_service.log(
+        AuditAction.USER_SETTINGS_UPDATED,
+        actor=current_user,
+        request=request,
+        organization_id=org_id,
+        metadata={
+            "setting": "sidebar_preferences",
+            "updated_fields": list(update_data.keys()),
+        },
+    )
+
+    return Message(message="Sidebar preferences updated successfully")

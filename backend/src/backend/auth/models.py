@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from backend.conversations.models import Conversation
     from backend.invitations.models import Invitation
     from backend.items.models import Item
+    from backend.llm_settings.models import UserLLMSettings
     from backend.organizations.models import OrganizationMember
     from backend.rag_settings.models import UserRAGSettings
     from backend.settings.models import UserSettings
@@ -66,6 +67,10 @@ class User(UserBase, BaseTable, table=True):
     )
 
     rag_settings: "UserRAGSettings" = Relationship(
+        back_populates="user",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan", "uselist": False},
+    )
+    llm_settings: "UserLLMSettings" = Relationship(
         back_populates="user",
         sa_relationship_kwargs={"cascade": "all, delete-orphan", "uselist": False},
     )

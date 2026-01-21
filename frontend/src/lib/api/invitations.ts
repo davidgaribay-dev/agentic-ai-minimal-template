@@ -61,19 +61,54 @@ export interface InvitationCreatedResponse {
   token: string;
 }
 
+export interface BulkInvitationCreate {
+  emails: string[];
+  team_ids?: string[] | null;
+  org_role?: OrgRole;
+  team_role?: TeamRole;
+}
+
+export interface BulkInvitationResult {
+  email: string;
+  success: boolean;
+  invitation_id?: string | null;
+  token?: string | null;
+  error?: string | null;
+}
+
+export interface BulkInvitationResponse {
+  results: BulkInvitationResult[];
+  total_sent: number;
+  total_failed: number;
+}
+
 export const invitationsApi = {
   /** Get organization invitations */
-  getInvitations: (orgId: string, skip = 0, limit = 100) =>
-    apiClient.get<InvitationsPublic>(
-      `/v1/organizations/${orgId}/invitations?skip=${skip}&limit=${limit}`,
+  getInvitations: (orgId: string, skip = 0, limit = 100, status?: string) => {
+    const params = new URLSearchParams({
+      skip: String(skip),
+      limit: String(limit),
+    });
+    if (status) params.append("status", status);
+    return apiClient.get<InvitationsPublic>(
+      `/v1/organizations/${orgId}/invitations?${params.toString()}`,
       { headers: getAuthHeader() },
-    ),
+    );
+  },
 
   /** Create an invitation */
   createInvitation: (orgId: string, invitation: InvitationCreate) =>
     apiClient.post<InvitationCreatedResponse>(
       `/v1/organizations/${orgId}/invitations`,
       invitation,
+      { headers: getAuthHeader() },
+    ),
+
+  /** Create bulk invitations */
+  createBulkInvitations: (orgId: string, bulkInvite: BulkInvitationCreate) =>
+    apiClient.post<BulkInvitationResponse>(
+      `/v1/organizations/${orgId}/invitations/bulk`,
+      bulkInvite,
       { headers: getAuthHeader() },
     ),
 

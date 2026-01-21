@@ -4,10 +4,9 @@
 
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Building2, ChevronUp, LogOut, Settings } from "lucide-react";
+import { ChevronUp, LogOut, Settings } from "lucide-react";
 
 import { useAuth } from "@/lib/auth";
-import { useWorkspace } from "@/lib/workspace";
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -28,12 +27,10 @@ export function NavUser() {
   const { t } = useTranslation();
   const { state, isMobile } = useSidebar();
   const { user, logout } = useAuth();
-  const { currentOrgRole } = useWorkspace();
 
   if (!user) return null;
 
   const initials = getInitials(user.full_name, user.email);
-  const isAdmin = currentOrgRole === "owner" || currentOrgRole === "admin";
 
   // On mobile, always show expanded state since the drawer is full width
   const isExpanded = isMobile || state === "expanded";
@@ -51,7 +48,7 @@ export function NavUser() {
                 !isExpanded && "!size-8 !p-0 flex items-center justify-center",
               )}
             >
-              <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground text-xs font-medium overflow-hidden">
+              <div className="flex size-7 items-center justify-center rounded-md bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-[10px] font-semibold overflow-hidden">
                 {isValidImageUrl(user.profile_image_url) ? (
                   <img
                     src={user.profile_image_url}
@@ -67,15 +64,15 @@ export function NavUser() {
               </div>
               {isExpanded && (
                 <>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">
+                  <div className="grid flex-1 text-left text-xs leading-tight">
+                    <span className="truncate font-medium text-[13px]">
                       {user.full_name || user.email}
                     </span>
-                    <span className="truncate text-xs text-muted-foreground">
+                    <span className="truncate text-[11px] text-sidebar-foreground/50">
                       {user.email}
                     </span>
                   </div>
-                  <ChevronUp className="ml-auto size-4" />
+                  <ChevronUp className="ml-auto size-3.5 text-sidebar-foreground/50" />
                 </>
               )}
             </SidebarMenuButton>
@@ -92,8 +89,8 @@ export function NavUser() {
             sideOffset={4}
           >
             <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground text-xs font-medium overflow-hidden">
+              <div className="flex items-center gap-2 px-2 py-2 text-left text-sm">
+                <div className="flex size-7 items-center justify-center rounded-md bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-[10px] font-semibold overflow-hidden">
                   {isValidImageUrl(user.profile_image_url) ? (
                     <img
                       src={user.profile_image_url}
@@ -108,24 +105,16 @@ export function NavUser() {
                   )}
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">
+                  <span className="truncate font-medium text-[13px]">
                     {user.full_name || user.email}
                   </span>
-                  <span className="truncate text-xs text-muted-foreground">
+                  <span className="truncate text-[11px] text-muted-foreground">
                     {user.email}
                   </span>
                 </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {isAdmin && (
-              <DropdownMenuItem asChild>
-                <Link to="/organizations" className="cursor-pointer">
-                  <Building2 className="mr-2 size-4" />
-                  {t("nav_organizations")}
-                </Link>
-              </DropdownMenuItem>
-            )}
             <DropdownMenuItem asChild>
               <Link to="/settings" className="cursor-pointer">
                 <Settings className="mr-2 size-4" />

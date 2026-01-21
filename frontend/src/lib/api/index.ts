@@ -97,13 +97,18 @@ export {
   type OrganizationUpdate,
   type OrganizationMember,
   type OrganizationMembersPublic,
+  type SidebarItemVisibility,
+  type SidebarPreferences,
+  type SidebarPreferencesUpdate,
 } from "./organizations";
 
 // Teams module
 export {
   teamsApi,
   type Team,
+  type TeamWithMyRole,
   type TeamsPublic,
+  type TeamsWithMyRole,
   type TeamCreate,
   type TeamUpdate,
   type TeamMember,
@@ -118,6 +123,9 @@ export {
   type InvitationCreate,
   type InvitationInfo,
   type InvitationCreatedResponse,
+  type BulkInvitationCreate,
+  type BulkInvitationResult,
+  type BulkInvitationResponse,
 } from "./invitations";
 
 // API Keys module
@@ -210,6 +218,28 @@ export {
   type UserRAGSettingsUpdate,
   type EffectiveRAGSettings,
 } from "./rag-settings";
+
+// LLM Settings module
+export {
+  llmSettingsApi,
+  type LLMProvider as LLMSettingsProvider,
+  type ModelCapability,
+  type ModelInfo,
+  type LLMSettingsBase,
+  type OrganizationLLMSettings,
+  type TeamLLMSettings,
+  type UserLLMSettings,
+  type OrganizationLLMSettingsUpdate,
+  type TeamLLMSettingsUpdate,
+  type UserLLMSettingsUpdate,
+  type SettingsSource,
+  type EffectiveLLMSettings,
+  type CustomLLMProvider,
+  type CustomLLMProviderCreate,
+  type CustomLLMProviderUpdate,
+  type TestConnectionResult,
+  type BuiltInModels,
+} from "./llm-settings";
 
 // Documents module
 export {

@@ -73,6 +73,16 @@ class ChatRequest(BaseModel):
         default=None,
         description="Optional list of media IDs (images/documents) to attach to the message",
     )
+    model: str | None = Field(
+        default=None,
+        description="Optional model override for this request (if per-request selection allowed)",
+    )
+    temperature: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=2.0,
+        description="Optional temperature override (0.0-2.0)",
+    )
 
 
 class ChatResponse(BaseModel):

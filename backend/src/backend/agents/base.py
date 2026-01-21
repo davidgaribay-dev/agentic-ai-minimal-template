@@ -544,6 +544,10 @@ def create_agent_graph(checkpointer: AsyncPostgresSaver | None = None) -> Any:
                 org_id=ctx.org_id,
                 team_id=ctx.team_id,
                 provider=ctx.provider,
+                model=ctx.model,
+                temperature=ctx.temperature,
+                max_tokens=ctx.max_tokens,
+                user_id=ctx.user_id,
             )
         else:
             llm = get_chat_model(settings.DEFAULT_LLM_PROVIDER)
@@ -911,6 +915,10 @@ def create_agent_graph_with_tools(
                 org_id=ctx.org_id,
                 team_id=ctx.team_id,
                 provider=ctx.provider,
+                model=ctx.model,
+                temperature=ctx.temperature,
+                max_tokens=ctx.max_tokens,
+                user_id=ctx.user_id,
             )
         else:
             llm = get_chat_model(settings.DEFAULT_LLM_PROVIDER)
@@ -1112,6 +1120,10 @@ def create_agent_graph_with_tool_approval(
                 org_id=ctx.org_id,
                 team_id=ctx.team_id,
                 provider=ctx.provider,
+                model=ctx.model,
+                temperature=ctx.temperature,
+                max_tokens=ctx.max_tokens,
+                user_id=ctx.user_id,
             )
         else:
             llm = get_chat_model(settings.DEFAULT_LLM_PROVIDER)
@@ -1708,6 +1720,7 @@ async def stream_agent_with_context(
     team_id: str | None = None,
     thread_id: str | None = None,
     provider: str | None = None,
+    model: str | None = None,
     user_id: str | None = None,
     media_ids: list[str] | None = None,
 ) -> AsyncGenerator[dict | str, None]:
@@ -1728,6 +1741,7 @@ async def stream_agent_with_context(
         team_id: Optional team ID for team-level API key override
         thread_id: Optional thread ID for conversation persistence
         provider: Optional LLM provider override
+        model: Optional model ID override for per-request model selection
         user_id: Optional user ID for tracing and system prompt lookup
         media_ids: Optional list of media IDs (images) to include in the message
 
@@ -1739,6 +1753,7 @@ async def stream_agent_with_context(
             org_id=org_id,
             team_id=team_id,
             provider=provider,
+            model=model,
             user_id=user_id,
             has_media=bool(media_ids),  # Skip memory when inline attachments present
         )

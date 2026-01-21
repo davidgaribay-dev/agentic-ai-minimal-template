@@ -27,23 +27,37 @@ import {
   organizationsApi,
   teamsApi,
   type Organization,
-  type Team,
+  type TeamWithMyRole,
   type OrgRole,
+  type SidebarPreferences,
 } from "./api";
 import { isLoggedIn, useCurrentUser } from "./auth";
 import { queryDefaults } from "./query-defaults";
+
+export interface MyMembership {
+  id: string;
+  organization_id: string;
+  user_id: string;
+  role: OrgRole;
+  team_order: string[];
+  sidebar_preferences: SidebarPreferences | null;
+  created_at: string;
+  updated_at: string;
+}
 
 export interface WorkspaceState {
   /** Currently selected organization */
   currentOrg: Organization | null;
   /** Currently selected team (within the current org) */
-  currentTeam: Team | null;
+  currentTeam: TeamWithMyRole | null;
   /** User's role in the current organization */
   currentOrgRole: OrgRole | null;
   /** All organizations the user belongs to */
   organizations: Organization[];
-  /** Teams in the current organization */
-  teams: Team[];
+  /** Teams in the current organization (with user's role in each) */
+  teams: TeamWithMyRole[];
+  /** Current user's membership data including preferences */
+  myMembership: MyMembership | null;
   /** Loading states */
   isLoadingOrgs: boolean;
   isLoadingTeams: boolean;
@@ -177,6 +191,21 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     [teams, currentTeamId],
   );
 
+  // Sort teams based on saved team order
+  const sortedTeams = useMemo(() => {
+    const teamOrder = myMembership?.team_order ?? [];
+    if (teamOrder.length === 0) {
+      return teams;
+    }
+    // Create a map of team id to index for quick lookup
+    const orderMap = new Map(teamOrder.map((id, index) => [id, index]));
+    return [...teams].sort((a, b) => {
+      const aIndex = orderMap.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+      const bIndex = orderMap.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+      return aIndex - bIndex;
+    });
+  }, [teams, myMembership?.team_order]);
+
   const switchOrganization = useCallback((orgId: string) => {
     setCurrentOrgId(orgId);
     localStorage.setItem(STORAGE_KEYS.currentOrgId, orgId);
@@ -214,7 +243,8 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
       currentTeam,
       currentOrgRole,
       organizations,
-      teams,
+      teams: sortedTeams,
+      myMembership: myMembership ?? null,
       isLoadingOrgs,
       isLoadingTeams,
       orgsError: orgsError instanceof Error ? orgsError : null,
@@ -228,7 +258,8 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
       currentTeam,
       currentOrgRole,
       organizations,
-      teams,
+      sortedTeams,
+      myMembership,
       isLoadingOrgs,
       isLoadingTeams,
       orgsError,
@@ -273,6 +304,7 @@ const defaultWorkspaceState: WorkspaceState = {
   currentOrgRole: null,
   organizations: [],
   teams: [],
+  myMembership: null,
   isLoadingOrgs: true,
   isLoadingTeams: true,
   orgsError: null,

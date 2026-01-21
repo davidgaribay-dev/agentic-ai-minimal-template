@@ -303,6 +303,7 @@ async def chat(
                 current_user=current_user,
                 session=session,
                 media_ids=chat_request.media_ids,
+                model=chat_request.model,
             ),
             media_type="text/event-stream",
         )
@@ -631,6 +632,7 @@ async def stream_response(
     current_user=None,
     session=None,
     media_ids: list[str] | None = None,
+    model: str | None = None,
 ):
     """Generate SSE events for streaming response.
 
@@ -733,6 +735,7 @@ async def stream_response(
                 org_id=org_id,
                 team_id=team_id,
                 thread_id=conversation_id,
+                model=model,
                 user_id=user_id,
                 media_ids=media_ids,
             )

@@ -5,8 +5,9 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException, Path, status
 from fastapi.responses import Response
 
+from backend.core.config import settings
 from backend.core.logging import get_logger
-from backend.core.storage import get_s3_client, settings
+from backend.core.storage import get_s3_client
 
 router = APIRouter(prefix="/storage", tags=["storage"])
 logger = get_logger(__name__)

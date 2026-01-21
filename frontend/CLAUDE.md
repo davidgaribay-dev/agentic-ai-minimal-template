@@ -25,9 +25,9 @@ src/
 │   ├── chat/            # Chat, ChatInput, ChatMessage, MessageMedia, ToolApprovalCard
 │   │   └── citations/   # CitationBadge, InlineCitationBadge, SourcesHeader, utils
 │   ├── documents/       # DocumentUpload, DocumentList, DocumentViewer (RAG)
-│   ├── settings/        # MemorySettings, MemoryViewer, ApiKeys, RAG, Theme, Guardrails
+│   ├── settings/        # MemorySettings, MemoryViewer, ApiKeys, RAG, Theme, Guardrails, SettingsLayout
 │   │   └── prompts/     # PromptRow, CreatePromptDialog, EditPromptDialog, DeletePromptButton
-│   ├── sidebar/         # AppSidebar, NavUser, TeamSwitcher, RecentChats
+│   ├── sidebar/         # AppSidebar, SettingsSidebar, NavUser, CustomizeSidebarDialog, SortableTeamItem
 │   ├── search-conversations.tsx  # Full-text conversation search with debouncing
 │   └── side-panel.tsx   # Collapsible chat panel with dual-pane support
 ├── hooks/
@@ -739,6 +739,51 @@ const { isOpen, toggle, width, setWidth } = useSidePanel()
 // 450-600px, resizable, closes on Escape, persisted via Zustand
 ```
 
+## Sidebar Customization
+
+User-configurable sidebar with drag-and-drop reordering and visibility controls.
+
+Components (`components/sidebar/`):
+- `AppSidebar` - Main sidebar with Personal/Workspace sections and team list
+- `SettingsSidebar` - Dedicated sidebar for settings pages (user, org, team)
+- `CustomizeSidebarDialog` - Modal for configuring item visibility and order
+- `SortableTeamItem` - Draggable team item with expand/collapse
+- `navigation-items.ts` - Navigation item definitions (personalNavItems, workspaceNavItems, teamNavItems)
+
+Sidebar Preferences (stored on OrganizationMember):
+```typescript
+interface SidebarPreferences {
+  personal_items: Record<string, SidebarItemVisibility>;  // inbox, my_issues, drafts
+  personal_order: string[];                                // Item order
+  workspace_items: Record<string, SidebarItemVisibility>; // projects, views, teams, members
+  workspace_order: string[];                               // Item order
+  default_badge_style: "count" | "dot";
+}
+
+type SidebarItemVisibility = "always_show" | "when_badged" | "hide_in_more";
+```
+
+API (`lib/api/organizations.ts`):
+```typescript
+organizationsApi.updateTeamOrder(orgId, teamIds)        // Reorder teams
+organizationsApi.updateSidebarPreferences(orgId, prefs) // Update visibility/order
+```
+
+Workspace context includes membership:
+```typescript
+const { myMembership } = useWorkspace();
+// myMembership.team_order - ordered team IDs
+// myMembership.sidebar_preferences - visibility settings
+```
+
+Drag-and-drop: Uses `@dnd-kit/core` and `@dnd-kit/sortable` for reordering teams and sidebar items.
+
+Navigation structure:
+- **Personal**: Inbox, My Issues, Drafts (user-scoped)
+- **Workspace**: Projects, Views, Teams, Members (org-scoped)
+- **Your Teams**: List of teams with expand/collapse for team-specific nav (Issues, Projects, Views, Chat)
+- **More**: Hidden items based on visibility settings
+
 ## Theme System
 
 ```typescript
@@ -756,9 +801,15 @@ const { sidebarOpen, sidePanelOpen, sidePanelWidth, toggleSidebar, toggleSidePan
 
 ## App Sidebar
 
-- TeamSwitcher: Team selector, "All Teams" option, gear icon for team settings (admins)
-- NavUser: Organizations page, Settings, Logout
+- **Personal section**: Inbox, My Issues, Drafts (visibility customizable)
+- **Workspace section**: Projects, Views, Teams, Members (visibility customizable)
+- **Your Teams**: Expandable team list with drag-and-drop reordering
+- **Team sub-nav**: Issues, Projects, Views, Chat (when team expanded)
+- **More menu**: Hidden items based on visibility settings
+- **NavUser**: Avatar dropdown with Settings, Organizations, Logout
+- **Customize button**: Opens `CustomizeSidebarDialog` for sidebar preferences
 - Collapsed state persisted via Zustand
+- Settings pages use `SettingsSidebar` instead of `AppSidebar`
 
 ## Permission-Based Access
 
@@ -769,19 +820,36 @@ const { sidebarOpen, sidePanelOpen, sidePanelWidth, toggleSidebar, toggleSidePan
 ## Routes Reference
 
 ```
-/                          # Landing → /chat if authenticated
-/login, /signup            # Auth pages
-/chat                      # Main chat (?id=conversationId)
-/invite?token=...          # Invitation acceptance
-/settings                  # User settings (tabs: profile, account, system-prompts, templates, preferences)
-/organizations             # Org management (admin/owner)
-/org/settings              # Org settings
-/org/api-keys              # Org LLM API keys
-/org/prompts               # Org prompts
-/org/team/:teamId/settings # Team settings
-/org/team/:teamId/api-keys # Team LLM API keys
-/org/team/:teamId/prompts  # Team prompts
-/org/mcp-servers           # Org MCP servers
+/                              # Landing → redirects based on auth
+/login, /signup                # Auth pages
+/invite?token=...              # Invitation acceptance
+
+# Team-scoped routes (primary navigation)
+/team/:teamId/chat             # Team chat (?id=conversationId)
+/team/:teamId/issues           # Team issues
+/team/:teamId/projects         # Team projects
+/team/:teamId/views            # Team views
+
+# Workspace routes (organization-scoped)
+/inbox                         # User inbox
+/my-issues                     # User's assigned issues
+/projects                      # All projects
+/views                         # All views
+/issues                        # All issues
+/more                          # Hidden sidebar items
+
+# Settings routes (path-based sections)
+/settings/:section             # User settings (profile, theme, memory, mcp, etc.)
+/org/settings/:section         # Org settings (general, people, teams, mcp, etc.)
+/org/team/:teamId/settings/:section  # Team settings (general, people, mcp, etc.)
+
+# Legacy/admin routes
+/organizations                 # Org management (admin/owner)
+/org/api-keys                  # Org LLM API keys
+/org/prompts                   # Org prompts
+/org/team/:teamId/api-keys     # Team LLM API keys
+/org/team/:teamId/prompts      # Team prompts
+/org/mcp-servers               # Org MCP servers
 /org/team/:teamId/mcp-servers  # Team MCP servers
 /org/team/:teamId/documents    # Team document management (RAG)
 /search                        # Conversation search
@@ -790,6 +858,19 @@ const { sidebarOpen, sidePanelOpen, sidePanelWidth, toggleSidebar, toggleSidePan
 ## Common Tasks
 
 New route: Add file to `src/routes/` (`foo.tsx` → `/foo`, `$id.tsx` → `/:id`)
+
+Settings page routing uses the TanStack Router index route pattern:
+- **Layout route** (`settings.tsx`): Renders `<Outlet />`, handles auth check
+- **Index route** (`settings.index.tsx`): Redirects to default section (e.g., `/settings/profile`)
+- **Section route** (`settings.$section.tsx`): Contains all section components
+
+Example file structure for team settings:
+```
+routes/org/team/
+├── $teamId.settings.tsx           # Layout: <Outlet />
+├── $teamId.settings.index.tsx     # Redirects to /org/team/:teamId/settings/general
+└── $teamId.settings.$section.tsx  # Section content (general, people, mcp, etc.)
+```
 
 New shadcn component: `npx shadcn@latest add <name>`
 

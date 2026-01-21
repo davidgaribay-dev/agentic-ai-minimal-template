@@ -1,9 +1,9 @@
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 import uuid
 
-from sqlalchemy import Index, UniqueConstraint
-from sqlmodel import Field, Relationship, SQLModel
+from sqlalchemy import JSON, Index, UniqueConstraint
+from sqlmodel import Column, Field, Relationship, SQLModel
 
 from backend.core.base_models import (
     PaginatedResponse,
@@ -14,6 +14,7 @@ from backend.core.base_models import (
 if TYPE_CHECKING:
     from backend.auth.models import User
     from backend.invitations.models import Invitation
+    from backend.llm_settings.models import CustomLLMProvider, OrganizationLLMSettings
     from backend.rag_settings.models import OrganizationRAGSettings
     from backend.settings.models import OrganizationSettings
     from backend.teams.models import Team, TeamMember
@@ -73,6 +74,14 @@ class Organization(OrganizationBase, TimestampedTable, table=True):
         back_populates="organization",
         sa_relationship_kwargs={"cascade": "all, delete-orphan", "uselist": False},
     )
+    llm_settings: "OrganizationLLMSettings" = Relationship(
+        back_populates="organization",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan", "uselist": False},
+    )
+    custom_llm_providers: list["CustomLLMProvider"] = Relationship(
+        back_populates="organization",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
+    )
 
 
 class OrganizationCreate(SQLModel):
@@ -96,8 +105,40 @@ class OrganizationPublic(OrganizationBase, TimestampResponseMixin):
 OrganizationsPublic = PaginatedResponse[OrganizationPublic]
 
 
+class SidebarItemVisibility(str, Enum):
+    """Visibility options for sidebar items."""
+
+    ALWAYS_SHOW = "always_show"
+    WHEN_BADGED = "when_badged"
+    HIDE_IN_MORE = "hide_in_more"
+
+
+class SidebarPreferences(SQLModel):
+    """User's sidebar customization preferences."""
+
+    # Personal section items with visibility and order
+    personal_items: dict[str, str] = Field(
+        default_factory=lambda: {
+            "inbox": "always_show",
+            "drafts": "when_badged",
+        }
+    )
+    personal_order: list[str] = Field(default_factory=lambda: ["inbox", "drafts"])
+
+    # Workspace section items with visibility and order
+    workspace_items: dict[str, str] = Field(default_factory=dict)
+    workspace_order: list[str] = Field(default_factory=list)
+
+    # Default badge style: "count" or "dot"
+    default_badge_style: str = Field(default="count")
+
+
 class OrganizationMemberBase(SQLModel):
     role: OrgRole = Field(default=OrgRole.MEMBER)
+    team_order: list[str] = Field(default_factory=list, sa_column=Column(JSON))
+    sidebar_preferences: dict[str, Any] | None = Field(
+        default=None, sa_column=Column(JSON)
+    )
 
 
 class OrganizationMember(OrganizationMemberBase, TimestampedTable, table=True):
@@ -142,11 +183,39 @@ class OrganizationMemberUpdate(SQLModel):
     role: OrgRole | None = None
 
 
+class TeamOrderUpdate(SQLModel):
+    """Schema for updating user's team order preference."""
+
+    team_order: list[str] = Field(description="Ordered list of team IDs")
+
+
+class SidebarPreferencesUpdate(SQLModel):
+    """Schema for updating user's sidebar preferences."""
+
+    personal_items: dict[str, str] | None = Field(
+        default=None, description="Personal section visibility settings"
+    )
+    personal_order: list[str] | None = Field(
+        default=None, description="Personal section item order"
+    )
+    workspace_items: dict[str, str] | None = Field(
+        default=None, description="Workspace section visibility settings"
+    )
+    workspace_order: list[str] | None = Field(
+        default=None, description="Workspace section item order"
+    )
+    default_badge_style: str | None = Field(
+        default=None, description="Badge style: 'count' or 'dot'"
+    )
+
+
 class OrganizationMemberPublic(TimestampResponseMixin):
     id: uuid.UUID
     organization_id: uuid.UUID
     user_id: uuid.UUID
     role: OrgRole
+    team_order: list[str] = Field(default_factory=list)
+    sidebar_preferences: dict[str, Any] | None = Field(default=None)
 
 
 class OrganizationMemberWithUser(OrganizationMemberPublic):

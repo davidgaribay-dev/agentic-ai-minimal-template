@@ -1,7 +1,10 @@
+import logging
+import re
 from typing import Annotated
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, status
+from sqlalchemy.exc import IntegrityError
 
 from backend.audit.schemas import AuditAction, Target
 from backend.audit.service import audit_service
@@ -9,6 +12,9 @@ from backend.auth.deps import CurrentUser, SessionDep
 from backend.auth.models import Message
 from backend.invitations import crud
 from backend.invitations.models import (
+    BulkInvitationCreate,
+    BulkInvitationResponse,
+    BulkInvitationResult,
     InvitationAccept,
     InvitationCreate,
     InvitationCreatedResponse,
@@ -26,6 +32,11 @@ from backend.rbac import (
 )
 from backend.teams import crud as team_crud
 from backend.teams.models import TeamRole
+
+logger = logging.getLogger(__name__)
+
+# Email validation pattern
+EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
 
 router = APIRouter(tags=["invitations"])
 
@@ -131,6 +142,166 @@ async def create_invitation(
     response_data = InvitationPublic.model_validate(invitation).model_dump()
     response_data["token"] = token
     return InvitationCreatedResponse(**response_data)
+
+
+@org_router.post(
+    "/bulk",
+    response_model=BulkInvitationResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_org_permission(OrgPermission.INVITATIONS_CREATE))],
+)
+async def create_bulk_invitations(
+    request: Request,
+    session: SessionDep,
+    org_context: OrgContextDep,
+    bulk_invite: BulkInvitationCreate,
+) -> BulkInvitationResponse:
+    """Create multiple invitations at once.
+
+    Requires invitations:create permission.
+    Accepts multiple emails and optionally multiple team IDs.
+    If team_ids are provided, invitees will be added to all specified teams.
+
+    Returns a summary of successful and failed invitations.
+    """
+    # Validate all team IDs belong to this org
+    valid_team_ids: list[uuid.UUID] = []
+    if bulk_invite.team_ids:
+        for team_id in bulk_invite.team_ids:
+            team = team_crud.get_team_by_id(session=session, team_id=team_id)
+            if team and team.organization_id == org_context.org_id:
+                valid_team_ids.append(team_id)
+
+    results: list[BulkInvitationResult] = []
+    total_sent = 0
+    total_failed = 0
+
+    for raw_email in bulk_invite.emails:
+        email = raw_email.strip().lower()
+        if not email:
+            continue
+
+        # Validate email format
+        if not EMAIL_REGEX.match(email):
+            results.append(
+                BulkInvitationResult(
+                    email=email,
+                    success=False,
+                    error="Invalid email format",
+                )
+            )
+            total_failed += 1
+            continue
+
+        # Check for existing pending invitation
+        existing = crud.get_pending_invitation_for_email(
+            session=session,
+            organization_id=org_context.org_id,
+            email=email,
+        )
+        if existing:
+            results.append(
+                BulkInvitationResult(
+                    email=email,
+                    success=False,
+                    error="A pending invitation already exists for this email",
+                )
+            )
+            total_failed += 1
+            continue
+
+        # Create invitation for the first team (or no team)
+        first_team_id = valid_team_ids[0] if valid_team_ids else None
+        invitation_in = InvitationCreate(
+            email=email,
+            org_role=bulk_invite.org_role,
+            team_id=first_team_id,
+            team_role=bulk_invite.team_role if first_team_id else None,
+            expires_in_days=bulk_invite.expires_in_days,
+        )
+
+        try:
+            invitation, token = crud.create_invitation(
+                session=session,
+                organization_id=org_context.org_id,
+                invited_by_id=org_context.user.id,
+                invitation_in=invitation_in,
+            )
+
+            # If there are additional teams, create separate invitations for them
+            # (This is a simplified approach - in production you might want a
+            # many-to-many relationship between invitations and teams)
+            for additional_team_id in valid_team_ids[1:]:
+                additional_invite_in = InvitationCreate(
+                    email=email,
+                    org_role=bulk_invite.org_role,
+                    team_id=additional_team_id,
+                    team_role=bulk_invite.team_role,
+                    expires_in_days=bulk_invite.expires_in_days,
+                )
+                crud.create_invitation(
+                    session=session,
+                    organization_id=org_context.org_id,
+                    invited_by_id=org_context.user.id,
+                    invitation_in=additional_invite_in,
+                )
+
+            results.append(
+                BulkInvitationResult(
+                    email=email,
+                    success=True,
+                    invitation_id=invitation.id,
+                    token=token,
+                )
+            )
+            total_sent += 1
+
+            await audit_service.log(
+                AuditAction.INVITATION_CREATED,
+                actor=org_context.user,
+                request=request,
+                organization_id=org_context.org_id,
+                team_id=first_team_id,
+                targets=[
+                    Target(
+                        type="invitation", id=str(invitation.id), name=invitation.email
+                    )
+                ],
+                metadata={
+                    "invitee_email": invitation.email,
+                    "org_role": invitation.org_role,
+                    "team_ids": [str(tid) for tid in valid_team_ids]
+                    if valid_team_ids
+                    else None,
+                    "bulk_invite": True,
+                },
+            )
+
+        except IntegrityError:
+            results.append(
+                BulkInvitationResult(
+                    email=email,
+                    success=False,
+                    error="Database constraint violation",
+                )
+            )
+            total_failed += 1
+        except Exception:
+            logger.exception("Unexpected error creating invitation for %s", email)
+            results.append(
+                BulkInvitationResult(
+                    email=email,
+                    success=False,
+                    error="Internal error",
+                )
+            )
+            total_failed += 1
+
+    return BulkInvitationResponse(
+        results=results,
+        total_sent=total_sent,
+        total_failed=total_failed,
+    )
 
 
 @org_router.get(

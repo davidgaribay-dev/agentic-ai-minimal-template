@@ -19,6 +19,7 @@ import {
   memoryApi,
   mcpServersApi,
   themeSettingsApi,
+  invitationsApi,
   type ChatRequest,
   type ChatMessage,
   type OrgSettingsUpdate,
@@ -51,6 +52,10 @@ export const queryKeys = {
     list: (teamId?: string, searchQuery?: string) =>
       ["conversations", "list", teamId, searchQuery] as const,
     detail: (id: string) => ["conversations", "detail", id] as const,
+  },
+  invitations: {
+    org: (orgId: string, status?: string) =>
+      ["invitations", "org", orgId, status] as const,
   },
   chatSettings: {
     org: (orgId: string) => ["chatSettings", "org", orgId] as const,
@@ -95,6 +100,10 @@ export const queryKeys = {
     list: (orgId?: string, teamId?: string, status?: string) =>
       ["documents", "list", orgId, teamId, status] as const,
     detail: (id: string) => ["documents", "detail", id] as const,
+  },
+  llmSettings: {
+    effective: (orgId: string, teamId?: string) =>
+      ["llm-effective-settings", orgId, teamId] as const,
   },
 };
 
@@ -431,6 +440,52 @@ export function useClearAllMemories(orgId?: string, teamId?: string) {
     },
     onError: (error) => {
       console.error("Failed to clear memories:", error);
+    },
+  });
+}
+
+// =============================================================================
+// Invitations Hooks
+// =============================================================================
+
+/** Hook to fetch organization invitations, optionally filtered by status. */
+export function useOrganizationInvitations(
+  orgId: string | undefined,
+  status?: string,
+) {
+  return useQuery({
+    queryKey: queryKeys.invitations.org(orgId ?? "", status),
+    queryFn: () => invitationsApi.getInvitations(orgId!, 0, 100, status),
+    enabled: !!orgId,
+  });
+}
+
+/** Mutation hook for canceling (deleting) an invitation. */
+export function useCancelInvitation(orgId: string | undefined) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (invitationId: string) =>
+      invitationsApi.revokeInvitation(orgId!, invitationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["invitations", "org", orgId],
+      });
+    },
+  });
+}
+
+/** Mutation hook for resending an invitation. */
+export function useResendInvitation(orgId: string | undefined) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (invitationId: string) =>
+      invitationsApi.resendInvitation(orgId!, invitationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["invitations", "org", orgId],
+      });
     },
   });
 }

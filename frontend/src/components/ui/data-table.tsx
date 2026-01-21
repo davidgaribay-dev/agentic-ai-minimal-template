@@ -138,14 +138,20 @@ export function DataTable<TData, TValue>({
           noResultsText={t("table_no_results")}
         />
       ) : (
-        <div className="rounded-lg border border-border overflow-x-auto">
+        <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id} className="hover:bg-transparent">
+                <TableRow
+                  key={headerGroup.id}
+                  className="hover:bg-transparent border-b"
+                >
                   {headerGroup.headers.map((header) => {
                     return (
-                      <TableHead key={header.id}>
+                      <TableHead
+                        key={header.id}
+                        className="h-8 text-xs font-medium text-muted-foreground"
+                      >
                         {header.isPlaceholder
                           ? null
                           : flexRender(
@@ -164,9 +170,10 @@ export function DataTable<TData, TValue>({
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
+                    className="border-b last:border-0 hover:bg-muted/30"
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
+                      <TableCell key={cell.id} className="py-2.5">
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext(),

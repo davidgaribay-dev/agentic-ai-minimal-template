@@ -142,20 +142,29 @@ export function OrgDetailsSection({ org, onUpdate }: OrgDetailsSectionProps) {
     uploadLogoMutation.isPending || deleteLogoMutation.isPending;
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-start gap-4">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/gif,image/webp"
-          onChange={handleFileSelect}
-          className="hidden"
-        />
+    <div className="space-y-6">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/gif,image/webp"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+
+      {/* Logo Row - Linear style */}
+      <div className="flex items-center justify-between py-2">
+        <div className="space-y-1">
+          <Label className="text-sm font-medium">{t("workspace_logo")}</Label>
+          <p className="text-xs text-muted-foreground">
+            {t("workspace_logo_hint")}
+          </p>
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="group relative size-16 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring flex-shrink-0"
+              className="group relative size-12 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring flex-shrink-0"
               disabled={isLogoLoading}
             >
               {isValidImageUrl(org.logo_url) ? (
@@ -166,19 +175,19 @@ export function OrgDetailsSection({ org, onUpdate }: OrgDetailsSectionProps) {
                 />
               ) : (
                 <div className="flex size-full items-center justify-center rounded-lg bg-gradient-to-br from-primary/80 to-primary">
-                  <Building2 className="size-7 text-primary-foreground" />
+                  <Building2 className="size-5 text-primary-foreground" />
                 </div>
               )}
               <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
                 {isLogoLoading ? (
-                  <Loader2 className="size-5 animate-spin text-white" />
+                  <Loader2 className="size-4 animate-spin text-white" />
                 ) : (
-                  <Camera className="size-5 text-white" />
+                  <Camera className="size-4 text-white" />
                 )}
               </div>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-40">
+          <DropdownMenuContent align="end" className="w-40">
             <DropdownMenuItem onClick={handleUploadClick}>
               <Camera className="mr-2 size-4" />
               {org.logo_url ? t("com_change") : t("com_upload")}
@@ -194,36 +203,50 @@ export function OrgDetailsSection({ org, onUpdate }: OrgDetailsSectionProps) {
             )}
           </DropdownMenuContent>
         </DropdownMenu>
+      </div>
 
-        <div className="flex-1 space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="org-name" className="text-xs">
-              {t("com_name")}
-            </Label>
-            <Input
-              id="org-name"
-              {...register("name")}
-              placeholder={t("entity_org_name")}
-              className="h-8 text-sm"
-            />
-            {errors.name?.message && (
-              <p className="text-xs text-destructive">
-                {t(errors.name.message as "prompts_name_required")}
-              </p>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="org-description" className="text-xs">
-              {t("com_description")}
-            </Label>
-            <Textarea
-              id="org-description"
-              {...register("description")}
-              placeholder={t("entity_optional_description")}
-              rows={2}
-              className="text-sm resize-none"
-            />
-          </div>
+      {logoError && <p className="text-xs text-destructive">{logoError}</p>}
+
+      {/* Name Row */}
+      <div className="flex items-center justify-between py-2">
+        <div className="space-y-1">
+          <Label htmlFor="org-name" className="text-sm font-medium">
+            {t("com_name")}
+          </Label>
+        </div>
+        <div className="w-64">
+          <Input
+            id="org-name"
+            {...register("name")}
+            placeholder={t("entity_org_name")}
+            className="h-8 text-sm"
+          />
+          {errors.name?.message && (
+            <p className="text-xs text-destructive mt-1">
+              {t(errors.name.message as "prompts_name_required")}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Description Row */}
+      <div className="flex items-start justify-between py-2">
+        <div className="space-y-1 pt-1.5">
+          <Label htmlFor="org-description" className="text-sm font-medium">
+            {t("com_description")}
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            {t("workspace_description_hint")}
+          </p>
+        </div>
+        <div className="w-64">
+          <Textarea
+            id="org-description"
+            {...register("description")}
+            placeholder={t("entity_optional_description")}
+            rows={2}
+            className="text-sm resize-none"
+          />
         </div>
       </div>
 
@@ -234,18 +257,18 @@ export function OrgDetailsSection({ org, onUpdate }: OrgDetailsSectionProps) {
         />
       )}
 
-      {logoError && <p className="text-xs text-destructive">{logoError}</p>}
-
-      <Button
-        size="sm"
-        onClick={onSubmit}
-        disabled={!isDirty || updateMutation.isPending}
-      >
-        {updateMutation.isPending && (
-          <Loader2 className="mr-1.5 size-3 animate-spin" />
-        )}
-        {t("com_save_changes")}
-      </Button>
+      <div className="flex justify-end pt-2">
+        <Button
+          size="sm"
+          onClick={onSubmit}
+          disabled={!isDirty || updateMutation.isPending}
+        >
+          {updateMutation.isPending && (
+            <Loader2 className="mr-1.5 size-3 animate-spin" />
+          )}
+          {t("com_save_changes")}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -364,20 +387,27 @@ export function TeamDetailsSection({
     uploadLogoMutation.isPending || deleteLogoMutation.isPending;
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-start gap-4">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/gif,image/webp"
-          onChange={handleFileSelect}
-          className="hidden"
-        />
+    <div className="space-y-6">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/gif,image/webp"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+
+      {/* Logo Row - Linear style */}
+      <div className="flex items-center justify-between py-2">
+        <div className="space-y-1">
+          <Label className="text-sm font-medium">{t("team_logo")}</Label>
+          <p className="text-xs text-muted-foreground">{t("team_logo_hint")}</p>
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="group relative size-16 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring flex-shrink-0"
+              className="group relative size-12 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring flex-shrink-0"
               disabled={isLogoLoading}
             >
               {isValidImageUrl(team.logo_url) ? (
@@ -388,19 +418,19 @@ export function TeamDetailsSection({
                 />
               ) : (
                 <div className="flex size-full items-center justify-center rounded-lg bg-gradient-to-br from-primary/80 to-primary">
-                  <Users className="size-7 text-primary-foreground" />
+                  <Users className="size-5 text-primary-foreground" />
                 </div>
               )}
               <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
                 {isLogoLoading ? (
-                  <Loader2 className="size-5 animate-spin text-white" />
+                  <Loader2 className="size-4 animate-spin text-white" />
                 ) : (
-                  <Camera className="size-5 text-white" />
+                  <Camera className="size-4 text-white" />
                 )}
               </div>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-40">
+          <DropdownMenuContent align="end" className="w-40">
             <DropdownMenuItem onClick={handleUploadClick}>
               <Camera className="mr-2 size-4" />
               {team.logo_url ? t("com_change") : t("com_upload")}
@@ -416,36 +446,50 @@ export function TeamDetailsSection({
             )}
           </DropdownMenuContent>
         </DropdownMenu>
+      </div>
 
-        <div className="flex-1 space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="team-name" className="text-xs">
-              {t("com_name")}
-            </Label>
-            <Input
-              id="team-name"
-              {...register("name")}
-              placeholder={t("entity_team_name")}
-              className="h-8 text-sm"
-            />
-            {errors.name?.message && (
-              <p className="text-xs text-destructive">
-                {t(errors.name.message as "prompts_name_required")}
-              </p>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="team-description" className="text-xs">
-              {t("com_description")}
-            </Label>
-            <Textarea
-              id="team-description"
-              {...register("description")}
-              placeholder={t("entity_optional_description")}
-              rows={2}
-              className="text-sm resize-none"
-            />
-          </div>
+      {logoError && <p className="text-xs text-destructive">{logoError}</p>}
+
+      {/* Name Row */}
+      <div className="flex items-center justify-between py-2">
+        <div className="space-y-1">
+          <Label htmlFor="team-name" className="text-sm font-medium">
+            {t("com_name")}
+          </Label>
+        </div>
+        <div className="w-64">
+          <Input
+            id="team-name"
+            {...register("name")}
+            placeholder={t("entity_team_name")}
+            className="h-8 text-sm"
+          />
+          {errors.name?.message && (
+            <p className="text-xs text-destructive mt-1">
+              {t(errors.name.message as "prompts_name_required")}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Description Row */}
+      <div className="flex items-start justify-between py-2">
+        <div className="space-y-1 pt-1.5">
+          <Label htmlFor="team-description" className="text-sm font-medium">
+            {t("com_description")}
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            {t("team_description_hint")}
+          </p>
+        </div>
+        <div className="w-64">
+          <Textarea
+            id="team-description"
+            {...register("description")}
+            placeholder={t("entity_optional_description")}
+            rows={2}
+            className="text-sm resize-none"
+          />
         </div>
       </div>
 
@@ -456,18 +500,18 @@ export function TeamDetailsSection({
         />
       )}
 
-      {logoError && <p className="text-xs text-destructive">{logoError}</p>}
-
-      <Button
-        size="sm"
-        onClick={onSubmit}
-        disabled={!isDirty || updateMutation.isPending}
-      >
-        {updateMutation.isPending && (
-          <Loader2 className="mr-1.5 size-3 animate-spin" />
-        )}
-        {t("com_save_changes")}
-      </Button>
+      <div className="flex justify-end pt-2">
+        <Button
+          size="sm"
+          onClick={onSubmit}
+          disabled={!isDirty || updateMutation.isPending}
+        >
+          {updateMutation.isPending && (
+            <Loader2 className="mr-1.5 size-3 animate-spin" />
+          )}
+          {t("com_save_changes")}
+        </Button>
+      </div>
     </div>
   );
 }

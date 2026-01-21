@@ -19,8 +19,17 @@ export interface Team {
   updated_at: string;
 }
 
+export interface TeamWithMyRole extends Team {
+  my_role: TeamRole;
+}
+
 export interface TeamsPublic {
   data: Team[];
+  count: number;
+}
+
+export interface TeamsWithMyRole {
+  data: TeamWithMyRole[];
   count: number;
 }
 
@@ -61,9 +70,9 @@ export const teamsApi = {
       { headers: getAuthHeader() },
     ),
 
-  /** Get teams the current user is a member of in an organization */
+  /** Get teams the current user is a member of in an organization (with role) */
   getMyTeams: (orgId: string, skip = 0, limit = 100) =>
-    apiClient.get<TeamsPublic>(
+    apiClient.get<TeamsWithMyRole>(
       `/v1/organizations/${orgId}/teams/my-teams?skip=${skip}&limit=${limit}`,
       { headers: getAuthHeader() },
     ),

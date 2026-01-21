@@ -14,6 +14,7 @@ from backend.teams.models import (
     TeamMemberWithUser,
     TeamRole,
     TeamUpdate,
+    TeamWithMyRole,
 )
 
 
@@ -219,6 +220,68 @@ def get_user_teams_in_org(
     teams = session.exec(statement).all()
 
     return list(teams), count
+
+
+def get_user_teams_with_role_in_org(
+    session: Session,
+    organization_id: uuid.UUID,
+    org_member_id: uuid.UUID,
+    skip: int = 0,
+    limit: int = 100,
+) -> tuple[list[TeamWithMyRole], int]:
+    """Get all teams a user is a member of within an organization, including their role.
+
+    Args:
+        session: Database session
+        organization_id: Organization UUID
+        org_member_id: OrganizationMember UUID
+        skip: Number of records to skip
+        limit: Maximum number of records to return
+
+    Returns:
+        Tuple of (list of TeamWithMyRole, total count)
+    """
+    count_statement = (
+        select(func.count())
+        .select_from(TeamMember)
+        .join(Team, TeamMember.team_id == Team.id)  # type: ignore[arg-type]
+        .where(
+            Team.organization_id == organization_id,
+            TeamMember.org_member_id == org_member_id,
+        )
+    )
+    count = session.exec(count_statement).one()
+
+    statement = (
+        select(Team, TeamMember.role)
+        .join(TeamMember, TeamMember.team_id == Team.id)  # type: ignore[arg-type]
+        .where(
+            Team.organization_id == organization_id,
+            TeamMember.org_member_id == org_member_id,
+        )
+        .offset(skip)
+        .limit(limit)
+        .order_by(Team.name)
+    )
+    results = session.exec(statement).all()
+
+    teams_with_role = [
+        TeamWithMyRole(
+            id=team.id,
+            name=team.name,
+            slug=team.slug,
+            description=team.description,
+            logo_url=team.logo_url,
+            organization_id=team.organization_id,
+            created_by_id=team.created_by_id,
+            created_at=team.created_at,
+            updated_at=team.updated_at,
+            my_role=TeamRole(role),
+        )
+        for team, role in results
+    ]
+
+    return teams_with_role, count
 
 
 def update_team(

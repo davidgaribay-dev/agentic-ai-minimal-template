@@ -9,6 +9,7 @@ import { PromptPicker } from "./PromptPicker";
 import { ToolPicker } from "./ToolPicker";
 import { AttachmentPicker } from "./AttachmentPicker";
 import { AttachmentPreviewList } from "./AttachmentPreviewList";
+import { ChatModelSelector } from "./ChatModelSelector";
 import {
   useMediaUpload,
   mediaToAttachment,
@@ -20,7 +21,7 @@ import type { ChatMediaAttachment } from "@/lib/chat-store";
 interface ChatInputProps {
   onSubmit: (
     message: string,
-    options?: { media?: ChatMediaAttachment[] },
+    options?: { media?: ChatMediaAttachment[]; model?: string },
   ) => void;
   onStop?: () => void;
   placeholder?: string;
@@ -47,6 +48,7 @@ export function ChatInput({
   const { t } = useTranslation();
   const [value, setValue] = useState("");
   const [isPending, setIsPending] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<string | undefined>();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const defaultPlaceholder = t("chat_placeholder");
 
@@ -100,7 +102,7 @@ export function ChatInput({
         }
       }
 
-      onSubmit(trimmed, { media: mediaAttachments });
+      onSubmit(trimmed, { media: mediaAttachments, model: selectedModel });
       setValue("");
       mediaUpload.clearUploads();
       textareaRef.current?.focus();
@@ -111,7 +113,15 @@ export function ChatInput({
     // Reset pending state after a short timeout as fallback
     // (in case streaming never starts due to an error)
     setTimeout(() => setIsPending(false), 2000);
-  }, [value, disabled, isPending, isStreaming, onSubmit, mediaUpload]);
+  }, [
+    value,
+    disabled,
+    isPending,
+    isStreaming,
+    onSubmit,
+    mediaUpload,
+    selectedModel,
+  ]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -251,6 +261,15 @@ export function ChatInput({
       />
       <div className="flex items-center justify-between px-2 pb-2 pt-1">
         <div className="flex items-center gap-1">
+          {organizationId && (
+            <ChatModelSelector
+              orgId={organizationId}
+              teamId={teamId}
+              selectedModel={selectedModel}
+              onModelChange={setSelectedModel}
+              disabled={disabled || isStreaming || isPending}
+            />
+          )}
           <PromptPicker
             organizationId={organizationId}
             teamId={teamId}

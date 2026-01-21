@@ -250,8 +250,9 @@ class SecretsService:
 
         Fallback chain (priority order):
         1. Team-level key (if team_id provided)
-        2. Org-level key
-        3. Environment variable
+        2. Org-level key (new LLM settings path)
+        3. Org-level key (legacy path)
+        4. Environment variable
 
         Args:
             provider: The LLM provider (openai, anthropic, google)
@@ -261,11 +262,15 @@ class SecretsService:
         Returns:
             API key string or None if not configured
         """
-        secret_name = f"{provider}_api_key"
+        # New LLM settings path uses just the provider name
+        new_secret_name = provider
+        # Legacy path used {provider}_api_key format
+        legacy_secret_name = f"{provider}_api_key"
 
+        # Check team-level first (new path)
         if team_id:
-            team_path = self._get_secret_path(org_id, team_id)
-            key = self._get_secret(secret_name, team_path)
+            team_llm_path = f"/organizations/{org_id}/teams/{team_id}/llm_provider_keys"
+            key = self._get_secret(new_secret_name, team_llm_path)
             if key:
                 logger.debug(
                     "api_key_resolved",
@@ -273,20 +278,50 @@ class SecretsService:
                     level="team",
                     org_id=org_id,
                     team_id=team_id,
+                    path_type="llm_settings",
+                )
+                return key
+            # Also check legacy team path
+            team_path = self._get_secret_path(org_id, team_id)
+            key = self._get_secret(legacy_secret_name, team_path)
+            if key:
+                logger.debug(
+                    "api_key_resolved",
+                    provider=provider,
+                    level="team",
+                    org_id=org_id,
+                    team_id=team_id,
+                    path_type="legacy",
                 )
                 return key
 
-        org_path = self._get_secret_path(org_id)
-        key = self._get_secret(secret_name, org_path)
+        # Check org-level (new LLM settings path)
+        org_llm_path = f"/organizations/{org_id}/llm_provider_keys"
+        key = self._get_secret(new_secret_name, org_llm_path)
         if key:
             logger.debug(
                 "api_key_resolved",
                 provider=provider,
                 level="org",
                 org_id=org_id,
+                path_type="llm_settings",
             )
             return key
 
+        # Check org-level (legacy path)
+        org_path = self._get_secret_path(org_id)
+        key = self._get_secret(legacy_secret_name, org_path)
+        if key:
+            logger.debug(
+                "api_key_resolved",
+                provider=provider,
+                level="org",
+                org_id=org_id,
+                path_type="legacy",
+            )
+            return key
+
+        # Fall back to environment variable
         env_key = self._get_env_fallback(provider)
         if env_key:
             logger.debug(
@@ -382,8 +417,12 @@ class SecretsService:
         Returns:
             Dict with is_configured, level, and has_fallback info
         """
-        secret_name = f"{provider}_api_key"
-        result = {
+        # New LLM settings path uses just the provider name
+        new_secret_name = provider
+        # Legacy path used {provider}_api_key format
+        legacy_secret_name = f"{provider}_api_key"
+
+        result: dict[str, LLMProvider | str | bool | None] = {
             "provider": provider,
             "is_configured": False,
             "level": None,
@@ -392,15 +431,23 @@ class SecretsService:
             "has_env_fallback": False,
         }
 
+        # Check team-level (both paths)
         if team_id:
+            team_llm_path = f"/organizations/{org_id}/teams/{team_id}/llm_provider_keys"
             team_path = self._get_secret_path(org_id, team_id)
-            if self._get_secret(secret_name, team_path):
+            if self._get_secret(new_secret_name, team_llm_path) or self._get_secret(
+                legacy_secret_name, team_path
+            ):
                 result["has_team_override"] = True
                 result["is_configured"] = True
                 result["level"] = "team"
 
+        # Check org-level (both paths)
+        org_llm_path = f"/organizations/{org_id}/llm_provider_keys"
         org_path = self._get_secret_path(org_id)
-        if self._get_secret(secret_name, org_path):
+        if self._get_secret(new_secret_name, org_llm_path) or self._get_secret(
+            legacy_secret_name, org_path
+        ):
             result["has_org_key"] = True
             if not result["is_configured"]:
                 result["is_configured"] = True
@@ -595,6 +642,204 @@ class SecretsService:
                 path=path,
             )
         return success
+
+    # =========================================================================
+    # Custom LLM Provider Secrets
+    # =========================================================================
+
+    def _get_custom_provider_secret_path(self, org_id: str) -> str:
+        """Get the database path for custom LLM provider secrets."""
+        return f"/organizations/{org_id}/custom_providers"
+
+    def set_custom_provider_api_key(
+        self,
+        provider_id: str,
+        api_key: str,
+        org_id: str,
+    ) -> bool:
+        """Store an API key for a custom LLM provider.
+
+        Args:
+            provider_id: The custom provider ID
+            api_key: The API key to store
+            org_id: Organization ID
+
+        Returns:
+            True if successful, False otherwise
+        """
+        path = self._get_custom_provider_secret_path(org_id)
+        success = self._set_secret(provider_id, api_key, path)
+        if success:
+            logger.info(
+                "custom_provider_api_key_stored",
+                provider_id=provider_id,
+                org_id=org_id,
+            )
+        return success
+
+    def get_custom_provider_api_key(
+        self,
+        provider_id: str,
+        org_id: str,
+    ) -> str | None:
+        """Retrieve an API key for a custom LLM provider.
+
+        Args:
+            provider_id: The custom provider ID
+            org_id: Organization ID
+
+        Returns:
+            The API key value if found, None otherwise
+        """
+        path = self._get_custom_provider_secret_path(org_id)
+        return self._get_secret(provider_id, path)
+
+    def delete_custom_provider_api_key(
+        self,
+        provider_id: str,
+        org_id: str,
+    ) -> bool:
+        """Delete an API key for a custom LLM provider.
+
+        Args:
+            provider_id: The custom provider ID
+            org_id: Organization ID
+
+        Returns:
+            True if deleted, False otherwise
+        """
+        path = self._get_custom_provider_secret_path(org_id)
+        success = self._delete_secret(provider_id, path)
+        if success:
+            logger.info(
+                "custom_provider_api_key_deleted",
+                provider_id=provider_id,
+                org_id=org_id,
+            )
+        return success
+
+    def has_custom_provider_api_key(
+        self,
+        provider_id: str,
+        org_id: str,
+    ) -> bool:
+        """Check if an API key is configured for a custom LLM provider.
+
+        Args:
+            provider_id: The custom provider ID
+            org_id: Organization ID
+
+        Returns:
+            True if configured, False otherwise
+        """
+        return self.get_custom_provider_api_key(provider_id, org_id) is not None
+
+    # =========================================================================
+    # LLM Provider API Keys (new paths for LLM settings)
+    # =========================================================================
+
+    def _get_llm_provider_key_path(
+        self,
+        org_id: str,
+        team_id: str | None = None,
+    ) -> str:
+        """Get the database path for LLM provider API keys."""
+        if team_id:
+            return f"/organizations/{org_id}/teams/{team_id}/llm_provider_keys"
+        return f"/organizations/{org_id}/llm_provider_keys"
+
+    def set_llm_provider_key(
+        self,
+        provider: str,
+        api_key: str,
+        org_id: str,
+        team_id: str | None = None,
+    ) -> bool:
+        """Store an API key for a built-in LLM provider (new path).
+
+        Args:
+            provider: The LLM provider name
+            api_key: The API key to store
+            org_id: Organization ID
+            team_id: Optional team ID for team-level storage
+
+        Returns:
+            True if successful, False otherwise
+        """
+        path = self._get_llm_provider_key_path(org_id, team_id)
+        success = self._set_secret(provider, api_key, path)
+        if success:
+            logger.info(
+                "llm_provider_key_stored",
+                provider=provider,
+                org_id=org_id,
+                team_id=team_id,
+            )
+        return success
+
+    def get_llm_provider_key(
+        self,
+        provider: str,
+        org_id: str,
+        team_id: str | None = None,
+    ) -> str | None:
+        """Retrieve an API key for a built-in LLM provider (new path).
+
+        Args:
+            provider: The LLM provider name
+            org_id: Organization ID
+            team_id: Optional team ID for team-level retrieval
+
+        Returns:
+            The API key value if found, None otherwise
+        """
+        path = self._get_llm_provider_key_path(org_id, team_id)
+        return self._get_secret(provider, path)
+
+    def delete_llm_provider_key(
+        self,
+        provider: str,
+        org_id: str,
+        team_id: str | None = None,
+    ) -> bool:
+        """Delete an API key for a built-in LLM provider (new path).
+
+        Args:
+            provider: The LLM provider name
+            org_id: Organization ID
+            team_id: Optional team ID for team-level deletion
+
+        Returns:
+            True if deleted, False otherwise
+        """
+        path = self._get_llm_provider_key_path(org_id, team_id)
+        success = self._delete_secret(provider, path)
+        if success:
+            logger.info(
+                "llm_provider_key_deleted",
+                provider=provider,
+                org_id=org_id,
+                team_id=team_id,
+            )
+        return success
+
+    def has_llm_provider_key(
+        self,
+        provider: str,
+        org_id: str,
+        team_id: str | None = None,
+    ) -> bool:
+        """Check if an API key is configured for a built-in LLM provider (new path).
+
+        Args:
+            provider: The LLM provider name
+            org_id: Organization ID
+            team_id: Optional team ID for team-level check
+
+        Returns:
+            True if configured, False otherwise
+        """
+        return self.get_llm_provider_key(provider, org_id, team_id) is not None
 
 
 _secrets_service: SecretsService | None = None

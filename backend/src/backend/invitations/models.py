@@ -136,6 +136,34 @@ class InvitationCreate(SQLModel):
     expires_in_days: int = Field(default=7, ge=1, le=30)
 
 
+class BulkInvitationCreate(SQLModel):
+    """Schema for creating multiple invitations at once."""
+
+    emails: list[str] = Field(min_length=1, max_length=50)
+    team_ids: list[uuid.UUID] | None = None
+    org_role: str = Field(default="member")
+    team_role: str = Field(default="member")
+    expires_in_days: int = Field(default=7, ge=1, le=30)
+
+
+class BulkInvitationResult(SQLModel):
+    """Result for a single email in bulk invitation."""
+
+    email: str
+    success: bool
+    invitation_id: uuid.UUID | None = None
+    token: str | None = None
+    error: str | None = None
+
+
+class BulkInvitationResponse(SQLModel):
+    """Response for bulk invitation creation."""
+
+    results: list[BulkInvitationResult]
+    total_sent: int
+    total_failed: int
+
+
 class InvitationPublic(InvitationBase):
     id: uuid.UUID
     organization_id: uuid.UUID

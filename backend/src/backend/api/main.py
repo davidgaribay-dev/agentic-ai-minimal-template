@@ -10,6 +10,7 @@ from backend.api.routes import (
     guardrails,
     invitations,
     items,
+    llm_settings,
     mcp,
     media,
     memory,
@@ -40,6 +41,7 @@ api_router.include_router(audit.router, tags=["audit"])
 api_router.include_router(settings.router)
 api_router.include_router(theme_settings.router)
 api_router.include_router(rag_settings.router)
+api_router.include_router(llm_settings.router)
 api_router.include_router(documents.router)
 api_router.include_router(memory.router)
 api_router.include_router(mcp.org_router)

@@ -25,7 +25,7 @@ from backend.invitations.models import InvitationStatus
 from backend.organizations import crud as org_crud
 from backend.organizations.models import OrganizationCreate, OrgRole
 from backend.teams import crud as team_crud
-from backend.teams.models import TeamRole
+from backend.teams.models import TeamCreate, TeamRole
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -116,7 +116,8 @@ async def register_user(
                 organization_logo.file.seek(0)
                 final_org_logo_url = upload_file(
                     file=organization_logo.file,
-                    content_type=organization_logo.content_type,  # type: ignore[union-attr]
+                    content_type=organization_logo.content_type
+                    or "application/octet-stream",
                     folder="org-logos",
                     filename=str(organization.id),
                 )
@@ -156,8 +157,6 @@ async def register_user(
             ) from e
 
     # Create default team with logo
-    from backend.teams.models import TeamCreate
-
     team_create = TeamCreate(
         name=team_name_final,
         logo_url=team_logo_url,
@@ -178,7 +177,7 @@ async def register_user(
                 team_logo.file.seek(0)
                 final_team_logo_url = upload_file(
                     file=team_logo.file,
-                    content_type=team_logo.content_type,  # type: ignore[union-attr]
+                    content_type=team_logo.content_type or "application/octet-stream",
                     folder="team-logos",
                     filename=str(team.id),
                 )

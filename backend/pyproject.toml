@@ -186,6 +186,7 @@ ignore = [
 ]
 "src/backend/agents/*.py" = [
     "ARG001",  # Unused function argument (API compatibility: user_id for future use)
+    "PLC0415", # Lazy import (avoid circular imports with llm_settings)
     "PLW0603", # Global statement (singleton pattern for checkpointer/factory)
     "PLR0912", # Too many branches (complex agent logic)
     "PLR0915", # Too many statements (complex agent logic)
@@ -244,6 +245,9 @@ ignore = [
 "src/backend/guardrails/service.py" = [
     "PLR0912", # Too many branches (complex guardrails hierarchy resolution)
     "PLR0915", # Too many statements (complex guardrails hierarchy resolution)
+]
+"src/backend/llm_settings/service.py" = [
+    "PLR0912", # Too many branches (complex LLM settings hierarchy resolution)
 ]
 "src/backend/core/tasks.py" = [
     "PLR0915", # Too many statements (document processing pipeline)

@@ -20,12 +20,16 @@ class LLMContext:
     - System prompt lookup
     - Memory retrieval
     - MCP tool loading
+    - Model configuration (provider, model, temperature)
     """
 
     org_id: str | None = None
     team_id: str | None = None
     user_id: str | None = None
     provider: str | None = None
+    model: str | None = None  # Model ID for chat (e.g., "claude-sonnet-4-20250514")
+    temperature: float | None = None  # Temperature override
+    max_tokens: int | None = None  # Max tokens override
     has_media: bool = False  # Skip memory retrieval when inline attachments present
 
     def to_dict(self) -> dict[str, Any]:
@@ -35,6 +39,9 @@ class LLMContext:
             "team_id": self.team_id,
             "user_id": self.user_id,
             "provider": self.provider,
+            "model": self.model,
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
             "has_media": self.has_media,
         }
 
@@ -65,6 +72,9 @@ def llm_context(
     team_id: str | None = None,
     user_id: str | None = None,
     provider: str | None = None,
+    model: str | None = None,
+    temperature: float | None = None,
+    max_tokens: int | None = None,
 ) -> Generator[LLMContext, None, None]:
     """Context manager for safely scoping LLM context.
 
@@ -76,6 +86,9 @@ def llm_context(
         team_id: Team ID for team-level API key override
         user_id: User ID for user-specific settings
         provider: Optional LLM provider override
+        model: Optional model ID override
+        temperature: Optional temperature override
+        max_tokens: Optional max tokens override
 
     Usage:
         with llm_context(org_id=str(org.id), team_id=str(team.id)):
@@ -91,6 +104,9 @@ def llm_context(
         team_id=team_id,
         user_id=user_id,
         provider=provider,
+        model=model,
+        temperature=temperature,
+        max_tokens=max_tokens,
     )
     token: Token[LLMContext | None] = _llm_context.set(ctx)
     try:
@@ -130,6 +146,9 @@ def request_context(
     team_id: str | None = None,
     user_id: str | None = None,
     provider: str | None = None,
+    model: str | None = None,
+    temperature: float | None = None,
+    max_tokens: int | None = None,
 ) -> Generator[RequestContext, None, None]:
     """Context manager for full request context.
 
@@ -141,6 +160,9 @@ def request_context(
         team_id=team_id,
         user_id=user_id,
         provider=provider,
+        model=model,
+        temperature=temperature,
+        max_tokens=max_tokens,
     )
     ctx = RequestContext(request_id=request_id, llm=llm)
 

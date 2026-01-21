@@ -2,6 +2,7 @@ import {
   createRootRouteWithContext,
   Link,
   Outlet,
+  useLocation,
 } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
@@ -15,10 +16,22 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { useAuth } from "@/lib/auth";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/sidebar";
+import { SettingsSidebar } from "@/components/sidebar/SettingsSidebar";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { PanelRight, PanelLeft } from "lucide-react";
 import { useIsMobile } from "@/hooks";
 import type { RouterContext } from "@/lib/router-context";
+
+/** Check if current path is a settings page */
+function isSettingsPage(pathname: string): boolean {
+  return (
+    pathname === "/settings" ||
+    pathname.startsWith("/settings/") ||
+    pathname === "/org/settings" ||
+    pathname.startsWith("/org/settings/") ||
+    (pathname.includes("/team/") && pathname.includes("/settings"))
+  );
+}
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootComponent,
@@ -52,14 +65,18 @@ function ChatToggleButton() {
 }
 
 function DesktopLayout() {
+  const location = useLocation();
   const { open: sidebarOpen } = useSidebar();
   const { isOpen: panelOpen, width: panelWidth } = useSidePanel();
   const effectiveSettings = useEffectiveSettings();
 
+  const onSettingsPage = isSettingsPage(location.pathname);
   const sidebarWidth = sidebarOpen ? "16rem" : "3rem";
   const chatPanelEnabled = effectiveSettings.chat_panel_enabled;
   const rightPanelWidth =
-    panelOpen && chatPanelEnabled ? `${panelWidth}px` : "0px";
+    panelOpen && chatPanelEnabled && !onSettingsPage
+      ? `${panelWidth}px`
+      : "0px";
 
   return (
     <div
@@ -70,16 +87,16 @@ function DesktopLayout() {
         transition: "grid-template-columns 200ms ease-linear",
       }}
     >
-      <AppSidebar />
+      {onSettingsPage ? <SettingsSidebar /> : <AppSidebar />}
 
       <main className="overflow-auto bg-background border-0">
         <Outlet />
       </main>
 
-      {/* Right panel area - only render if chat panel is enabled */}
-      {panelOpen && chatPanelEnabled && <SidePanel />}
+      {/* Right panel area - only render if chat panel is enabled and not on settings */}
+      {panelOpen && chatPanelEnabled && !onSettingsPage && <SidePanel />}
 
-      <ChatToggleButton />
+      {!onSettingsPage && <ChatToggleButton />}
     </div>
   );
 }
@@ -103,10 +120,13 @@ function MobileSidebarToggle() {
 }
 
 function MobileLayout() {
+  const location = useLocation();
+  const onSettingsPage = isSettingsPage(location.pathname);
+
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden md:hidden">
-      {/* Mobile sidebar (off-canvas drawer) is rendered by AppSidebar when isMobile */}
-      <AppSidebar />
+      {/* Mobile sidebar (off-canvas drawer) */}
+      {onSettingsPage ? <SettingsSidebar /> : <AppSidebar />}
 
       {/* Floating sidebar toggle */}
       <MobileSidebarToggle />

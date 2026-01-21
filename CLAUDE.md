@@ -41,6 +41,10 @@ Organization (tenant boundary)
 
 Critical: TeamMember links to `org_member_id` (not user directly). User must be org member before joining teams.
 
+**User Preferences** (stored on OrganizationMember):
+- `team_order` - Custom ordering of teams in sidebar (drag-and-drop reorderable)
+- `sidebar_preferences` - Visibility and ordering of sidebar navigation items
+
 ## API Integration
 
 Frontend proxy (`frontend/vite.config.ts`): `/api/*` → `VITE_API_URL` (strips `/api` prefix, SSE-enabled)
@@ -121,6 +125,16 @@ LLM key resolution: team-level → org-level → environment variable (secrets s
 - Backend: `backend/theme_settings/` module with themes.py (38KB of predefined themes)
 - Frontend: `themeSettingsApi`, theme settings components at org/team/user levels
 
+**Sidebar Customization**: Per-user sidebar layout preferences
+- Personal section items (Inbox, My Issues, Drafts) with visibility controls
+- Workspace section items (Projects, Views, Teams, Members) with visibility controls
+- Visibility options: `always_show`, `when_badged`, `hide_in_more`
+- Drag-and-drop reordering within sections
+- Team order customization with drag-and-drop in sidebar
+- Badge style preference: count or dot
+- Backend: `PUT /v1/organizations/{id}/team-order`, `PUT /v1/organizations/{id}/sidebar-preferences`
+- Frontend: `CustomizeSidebarDialog`, `SortableTeamItem` components with @dnd-kit
+
 ## MCP (Model Context Protocol)
 
 External tool integration via MCP servers. Supports HTTP, SSE, and Streamable HTTP transports.
@@ -200,10 +214,11 @@ Auth secrets stored encrypted in PostgreSQL (never exposed in API responses).
 │   └── alembic/            # Database migrations
 └── frontend/               # React 19 + TanStack + Tailwind v4 + i18next
     └── src/
-        ├── routes/         # File-based routing (including /org/team/:teamId/documents)
+        ├── routes/         # File-based routing (team.$teamId.chat, /org/team/:teamId/documents, etc.)
         ├── components/
         │   ├── ui/         # shadcn/ui base components
         │   ├── chat/       # ChatInput, ChatMessage, ToolApprovalCard, AttachmentPicker, CitationBadge
+        │   ├── sidebar/    # AppSidebar, SettingsSidebar, CustomizeSidebarDialog, SortableTeamItem
         │   ├── settings/   # Org/team/user settings panels (RAG, theme, guardrails, MCP)
         │   └── documents/  # DocumentUpload, DocumentList, DocumentViewer
         ├── hooks/          # useChat, useMediaUpload, useDocumentUpload, useIsMobile
@@ -212,7 +227,7 @@ Auth secrets stored encrypted in PostgreSQL (never exposed in API responses).
             ├── api/        # Modular API client (agent, auth, orgs, teams, documents, rag-settings, theme-settings, etc.)
             ├── auth.ts     # Token management & auth hooks
             ├── queries.ts  # TanStack Query hooks
-            └── workspace.tsx  # Org/team context
+            └── workspace.tsx  # Org/team context + myMembership (includes sidebar_preferences)
 ```
 
 ## Development Commands
@@ -316,7 +331,10 @@ See `backend/.env.example` for full list.
 
 New API route: Create in `backend/api/routes/`, add to `api/main.py`, use typed deps (`SessionDep`, `CurrentUser`, `OrgContextDep`)
 
-New frontend page: Add file to `frontend/src/routes/` (auto-generates to routeTree)
+New frontend page: Add file to `frontend/src/routes/` (auto-generates to routeTree). For settings pages, use path-based routing pattern:
+- Layout route: `settings.tsx` (renders `<Outlet />`)
+- Index route: `settings.index.tsx` (redirects to default section)
+- Section route: `settings.$section.tsx` (renders section content)
 
 New database model: Add SQLModel class, import in `alembic/env.py`, run migrations
 

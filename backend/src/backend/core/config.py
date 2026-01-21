@@ -203,6 +203,12 @@ class Settings(BaseSettings):
         """Return the public base URL for S3 objects."""
         return self.S3_PUBLIC_URL or self.S3_ENDPOINT_URL
 
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def server_host(self) -> str:
+        """Return the server host URL for API endpoints."""
+        return f"http://{self.HOST}:{self.PORT}"
+
     ANTHROPIC_API_KEY: str | None = None
     OPENAI_API_KEY: str | None = None
     GOOGLE_API_KEY: str | None = None

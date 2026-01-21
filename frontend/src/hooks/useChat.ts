@@ -82,6 +82,8 @@ interface UseChatOptions {
 interface SendMessageOptions {
   /** Media attachments to include with the message */
   media?: ChatMediaAttachment[];
+  /** Model ID for per-request model selection */
+  model?: string;
 }
 
 interface UseChatReturn {
@@ -267,6 +269,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
             organization_id: organizationId,
             team_id: teamId,
             media_ids: options?.media?.map((m) => m.id),
+            model: options?.model,
           },
           abortControllerRef.current.signal,
         )) {

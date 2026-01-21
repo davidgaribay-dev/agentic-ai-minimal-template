@@ -42,6 +42,7 @@ from backend.teams.models import (
     TeamPublic,
     TeamRole,
     TeamsPublic,
+    TeamsWithMyRole,
     TeamUpdate,
 )
 
@@ -79,24 +80,24 @@ def list_organization_teams(
 
 @router.get(
     "/my-teams",
-    response_model=TeamsPublic,
+    response_model=TeamsWithMyRole,
 )
 def list_my_teams(
     session: SessionDep,
     org_context: OrgContextDep,
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=100),
-) -> TeamsPublic:
-    """List teams the current user is a member of in this organization."""
-    teams, count = crud.get_user_teams_in_org(
+) -> TeamsWithMyRole:
+    """List teams the current user is a member of in this organization, with their role."""
+    teams_with_role, count = crud.get_user_teams_with_role_in_org(
         session=session,
         organization_id=org_context.org_id,
         org_member_id=org_context.membership.id,
         skip=skip,
         limit=limit,
     )
-    return TeamsPublic(
-        data=[TeamPublic.model_validate(team) for team in teams],
+    return TeamsWithMyRole(
+        data=teams_with_role,
         count=count,
     )
 

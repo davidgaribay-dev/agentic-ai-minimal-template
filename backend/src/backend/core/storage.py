@@ -145,9 +145,9 @@ def delete_file(url: str) -> bool:
     s3_prefix = f"{settings.s3_public_base_url}/{settings.S3_BUCKET_NAME}/"
 
     if url.startswith(api_prefix):
-        object_key = url[len(api_prefix):]
+        object_key = url[len(api_prefix) :]
     elif url.startswith(s3_prefix):
-        object_key = url[len(s3_prefix):]
+        object_key = url[len(s3_prefix) :]
     else:
         logger.warning("invalid_url_for_deletion", url=url)
         return False

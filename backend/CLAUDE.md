@@ -282,6 +282,34 @@ Permission Mapping (see `rbac/permissions.py`):
 
 Important: Members use `GET /organizations/{id}/my-membership` for their role (doesn't require `MEMBERS_READ`).
 
+## User Preferences
+
+Per-user settings stored on `OrganizationMember` model.
+
+Fields:
+- `team_order` - JSON list of team UUIDs in preferred display order
+- `sidebar_preferences` - JSON object with sidebar visibility and ordering settings
+
+Sidebar preferences schema:
+```python
+class SidebarPreferences(SQLModel):
+    personal_items: dict[str, str]  # {"inbox": "always_show", "my_issues": "when_badged", ...}
+    personal_order: list[str]        # ["inbox", "my_issues", "drafts"]
+    workspace_items: dict[str, str]  # {"projects": "always_show", "views": "hide_in_more", ...}
+    workspace_order: list[str]       # ["projects", "views", "teams", "members"]
+    default_badge_style: str         # "count" or "dot"
+
+class SidebarItemVisibility(str, Enum):
+    ALWAYS_SHOW = "always_show"
+    WHEN_BADGED = "when_badged"
+    HIDE_IN_MORE = "hide_in_more"
+```
+
+API endpoints:
+- `PUT /v1/organizations/{org_id}/team-order` - Update team display order
+- `PUT /v1/organizations/{org_id}/sidebar-preferences` - Update sidebar preferences
+- Both endpoints audit log under `USER_SETTINGS_UPDATED` action
+
 ## Agent System
 
 Multi-provider LLM (`agents/llm.py`):
@@ -639,8 +667,9 @@ Note: Rate-limited endpoints require `Request` as first parameter for the limite
 - Auth: `/v1/auth/*` (login, signup, refresh, forgot-password)
 - Agent: `/v1/agent/chat` (POST, SSE streaming)
 - Conversations: `/v1/conversations/*` (CRUD + star/soft-delete + search)
-- Organizations: `/v1/organizations/*` (CRUD + members)
+- Organizations: `/v1/organizations/*` (CRUD + members + team-order + sidebar-preferences)
 - Teams: `/v1/organizations/{id}/teams/*`
+- Invitations: `/v1/organizations/{id}/invitations/*` (create, list, cancel, resend)
 - Prompts: org/team/user scopes with separate routers
 - Memory: `/v1/memory/*` (list, delete, clear)
 - Settings: `/v1/settings/*` (effective settings with hierarchy)

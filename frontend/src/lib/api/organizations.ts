@@ -49,6 +49,27 @@ export interface OrganizationMembersPublic {
   count: number;
 }
 
+export type SidebarItemVisibility =
+  | "always_show"
+  | "when_badged"
+  | "hide_in_more";
+
+export interface SidebarPreferences {
+  personal_items: Record<string, SidebarItemVisibility>;
+  personal_order: string[];
+  workspace_items: Record<string, SidebarItemVisibility>;
+  workspace_order: string[];
+  default_badge_style: "count" | "dot";
+}
+
+export interface SidebarPreferencesUpdate {
+  personal_items?: Record<string, SidebarItemVisibility>;
+  personal_order?: string[];
+  workspace_items?: Record<string, SidebarItemVisibility>;
+  workspace_order?: string[];
+  default_badge_style?: "count" | "dot";
+}
+
 export const organizationsApi = {
   /** Get user's organizations */
   getOrganizations: (skip = 0, limit = 100) =>
@@ -132,6 +153,8 @@ export const organizationsApi = {
       organization_id: string;
       user_id: string;
       role: OrgRole;
+      team_order: string[];
+      sidebar_preferences: SidebarPreferences | null;
       created_at: string;
       updated_at: string;
     }>(`/v1/organizations/${orgId}/my-membership`, {
@@ -168,4 +191,23 @@ export const organizationsApi = {
     apiClient.delete<Organization>(`/v1/organizations/${orgId}/logo`, {
       headers: getAuthHeader(),
     }),
+
+  /** Update team order preference */
+  updateTeamOrder: (orgId: string, teamOrder: string[]) =>
+    apiClient.put<Message>(
+      `/v1/organizations/${orgId}/team-order`,
+      { team_order: teamOrder },
+      { headers: getAuthHeader() },
+    ),
+
+  /** Update sidebar preferences */
+  updateSidebarPreferences: (
+    orgId: string,
+    preferences: SidebarPreferencesUpdate,
+  ) =>
+    apiClient.put<Message>(
+      `/v1/organizations/${orgId}/sidebar-preferences`,
+      preferences,
+      { headers: getAuthHeader() },
+    ),
 };
