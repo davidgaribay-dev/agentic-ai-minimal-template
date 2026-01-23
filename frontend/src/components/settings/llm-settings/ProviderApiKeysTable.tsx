@@ -42,6 +42,7 @@ import {
 import { DataTable } from "@/components/ui/data-table";
 import { llmSettingsApi, type OrganizationLLMSettingsUpdate } from "@/lib/api";
 import { EditApiKeyDialog } from "./EditApiKeyDialog";
+import { testId } from "@/lib/test-id";
 
 // Provider configuration with icons and display info
 const PROVIDER_CONFIG = {
@@ -206,6 +207,7 @@ export function ProviderApiKeysTable({
           const provider = row.original;
           return (
             <Switch
+              {...testId(`provider-${provider.id}-enabled-switch`)}
               checked={provider.isEnabled}
               onCheckedChange={(checked) =>
                 handleToggleEnabled(provider.id, checked)
@@ -226,12 +228,18 @@ export function ProviderApiKeysTable({
             <div className="flex justify-end">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="size-8">
+                  <Button
+                    {...testId(`api-key-actions-button-${provider.id}`)}
+                    variant="ghost"
+                    size="icon"
+                    className="size-8"
+                  >
                     <MoreHorizontal className="size-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem
+                    {...testId(`api-key-edit-button-${provider.id}`)}
                     onClick={() => setEditingProvider(provider.id)}
                   >
                     <Edit className="mr-2 size-4" />
@@ -241,6 +249,7 @@ export function ProviderApiKeysTable({
                   </DropdownMenuItem>
                   {!provider.isDefault && provider.hasApiKey && (
                     <DropdownMenuItem
+                      {...testId(`api-key-set-default-button-${provider.id}`)}
                       onClick={() => handleSetDefault(provider.id)}
                     >
                       <Star className="mr-2 size-4" />
@@ -251,6 +260,7 @@ export function ProviderApiKeysTable({
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
+                        {...testId(`api-key-delete-button-${provider.id}`)}
                         className="text-destructive focus:text-destructive"
                         onClick={() => setDeletingProvider(provider.id)}
                       >
@@ -279,6 +289,7 @@ export function ProviderApiKeysTable({
   return (
     <>
       <DataTable
+        {...testId("provider-api-keys-table")}
         columns={columns}
         data={providerRows}
         searchKey="name"
@@ -311,7 +322,7 @@ export function ProviderApiKeysTable({
         open={!!deletingProvider}
         onOpenChange={(open) => !open && setDeletingProvider(null)}
       >
-        <AlertDialogContent>
+        <AlertDialogContent {...testId("delete-api-key-alert-dialog")}>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("llm_remove_api_key_title")}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -323,8 +334,11 @@ export function ProviderApiKeysTable({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("com_cancel")}</AlertDialogCancel>
+            <AlertDialogCancel {...testId("delete-api-key-cancel")}>
+              {t("com_cancel")}
+            </AlertDialogCancel>
             <AlertDialogAction
+              {...testId("delete-api-key-confirm")}
               onClick={() =>
                 deletingProvider && deleteKeyMutation.mutate(deletingProvider)
               }

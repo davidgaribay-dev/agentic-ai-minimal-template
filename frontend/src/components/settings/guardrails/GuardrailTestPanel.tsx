@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { testId } from "@/lib/test-id";
 
 interface GuardrailTestPanelProps {
   orgId?: string;
@@ -51,12 +52,16 @@ export function GuardrailTestPanel({ orgId, teamId }: GuardrailTestPanelProps) {
   };
 
   return (
-    <div className="space-y-3 p-3 border rounded-lg bg-muted/30">
+    <div
+      className="space-y-3 p-3 border rounded-lg bg-muted/30"
+      {...testId("guardrail-test-panel")}
+    >
       <div className="flex items-center gap-2 text-sm font-medium">
         <FlaskConical className="size-4" />
         {t("guardrails_test")}
       </div>
       <Textarea
+        {...testId("guardrail-test-input")}
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder={t("guardrails_test_placeholder")}
@@ -69,7 +74,10 @@ export function GuardrailTestPanel({ orgId, teamId }: GuardrailTestPanelProps) {
             value={direction}
             onValueChange={(v) => setDirection(v as "input" | "output")}
           >
-            <SelectTrigger className="w-24 h-8">
+            <SelectTrigger
+              {...testId("guardrail-test-direction-select")}
+              className="w-24 h-8"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -83,6 +91,7 @@ export function GuardrailTestPanel({ orgId, teamId }: GuardrailTestPanelProps) {
           </Select>
         </div>
         <Button
+          {...testId("guardrail-test-submit-button")}
           size="sm"
           onClick={handleTest}
           disabled={!content.trim() || testMutation.isPending}
@@ -96,6 +105,7 @@ export function GuardrailTestPanel({ orgId, teamId }: GuardrailTestPanelProps) {
 
       {result && (
         <div
+          {...testId("guardrail-test-result")}
           className={cn(
             "p-2 rounded text-sm",
             result.passed

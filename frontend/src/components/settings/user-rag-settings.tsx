@@ -39,6 +39,7 @@ import { DocumentUpload } from "@/components/documents/document-upload";
 import { DocumentList } from "@/components/documents/document-list";
 import { SettingsCard } from "./settings-layout";
 import type { UserRAGSettingsUpdate } from "@/lib/api";
+import { testId } from "@/lib/test-id";
 
 export function UserRAGSettings() {
   const { t } = useTranslation();
@@ -78,7 +79,7 @@ export function UserRAGSettings() {
   const ragEnabled = userSettings.rag_enabled;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" {...testId("user-rag-settings")}>
       {/* Master toggle card */}
       <SettingsCard>
         <div className="p-4 space-y-4">

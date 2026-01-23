@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DocumentUpload } from "@/components/documents/document-upload";
 import { DocumentList } from "@/components/documents/document-list";
 import { useWorkspace } from "@/lib/workspace";
+import { testId } from "@/lib/test-id";
 
 export const Route = createFileRoute("/org/team/$teamId/documents")({
   beforeLoad: ({ context }) => {
@@ -26,7 +27,10 @@ function DocumentsPage() {
 
   if (!currentOrg || !team) {
     return (
-      <div className="bg-background min-h-screen">
+      <div
+        {...testId("team-documents-page")}
+        className="bg-background min-h-screen"
+      >
         <div className="mx-auto max-w-5xl px-6 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <p className="text-muted-foreground">{t("docs_team_not_found")}</p>
@@ -37,7 +41,10 @@ function DocumentsPage() {
   }
 
   return (
-    <div className="bg-background min-h-screen">
+    <div
+      {...testId("team-documents-page")}
+      className="bg-background min-h-screen"
+    >
       <div className="mx-auto max-w-5xl px-6 py-8 space-y-8">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
@@ -59,21 +66,40 @@ function DocumentsPage() {
         />
 
         <div>
-          <h2 className="text-xl font-semibold mb-4">
+          <h2
+            {...testId("team-documents-heading")}
+            className="text-xl font-semibold mb-4"
+          >
             {t("docs_your_documents")}
           </h2>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList variant="underline">
-              <TabsTrigger variant="underline" value="all">
+              <TabsTrigger
+                {...testId("team-documents-tab-all")}
+                variant="underline"
+                value="all"
+              >
                 {t("docs_tab_all")}
               </TabsTrigger>
-              <TabsTrigger variant="underline" value="completed">
+              <TabsTrigger
+                {...testId("team-documents-tab-completed")}
+                variant="underline"
+                value="completed"
+              >
                 {t("docs_status_ready")}
               </TabsTrigger>
-              <TabsTrigger variant="underline" value="processing">
+              <TabsTrigger
+                {...testId("team-documents-tab-processing")}
+                variant="underline"
+                value="processing"
+              >
                 {t("docs_status_processing")}
               </TabsTrigger>
-              <TabsTrigger variant="underline" value="failed">
+              <TabsTrigger
+                {...testId("team-documents-tab-failed")}
+                variant="underline"
+                value="failed"
+              >
                 {t("docs_status_failed")}
               </TabsTrigger>
             </TabsList>

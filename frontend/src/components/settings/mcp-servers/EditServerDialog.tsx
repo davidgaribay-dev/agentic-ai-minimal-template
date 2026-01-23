@@ -42,6 +42,7 @@ import {
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import type { Scope } from "./types";
 import { getQueryKeyForScope } from "./hooks";
+import { testId } from "@/lib/test-id";
 
 const editServerSchema = z.object({
   name: z.string().min(1, "prompts_name_required"),
@@ -135,12 +136,18 @@ export function EditServerDialog({ server, scope }: EditServerDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+        <DropdownMenuItem
+          {...testId(`mcp-edit-server-${server.id}`)}
+          onSelect={(e) => e.preventDefault()}
+        >
           <Pencil className="mr-2 size-3.5" />
           {t("mcp_edit")}
         </DropdownMenuItem>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent
+        {...testId("mcp-edit-server-dialog")}
+        className="sm:max-w-lg"
+      >
         <DialogHeader>
           <DialogTitle>{t("mcp_edit_server")}</DialogTitle>
           <DialogDescription>{t("mcp_edit_server_desc")}</DialogDescription>
@@ -151,7 +158,11 @@ export function EditServerDialog({ server, scope }: EditServerDialogProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-name">{t("com_name")}</Label>
-                <Input id="edit-name" {...form.register("name")} />
+                <Input
+                  id="edit-name"
+                  {...testId("edit-server-name-input")}
+                  {...form.register("name")}
+                />
                 {form.formState.errors.name?.message && (
                   <p className="text-sm text-destructive">
                     {t(
@@ -169,7 +180,7 @@ export function EditServerDialog({ server, scope }: EditServerDialogProps) {
                     form.setValue("transport", v as MCPTransport)
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger {...testId("edit-server-transport-select")}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -189,7 +200,12 @@ export function EditServerDialog({ server, scope }: EditServerDialogProps) {
 
             <div className="space-y-2">
               <Label htmlFor="edit-url">{t("mcp_url")}</Label>
-              <Input id="edit-url" type="url" {...form.register("url")} />
+              <Input
+                id="edit-url"
+                {...testId("edit-server-url-input")}
+                type="url"
+                {...form.register("url")}
+              />
               {form.formState.errors.url?.message && (
                 <p className="text-sm text-destructive">
                   {t(form.formState.errors.url.message as "error_invalid_url")}
@@ -201,6 +217,7 @@ export function EditServerDialog({ server, scope }: EditServerDialogProps) {
               <Label htmlFor="edit-description">{t("com_description")}</Label>
               <Textarea
                 id="edit-description"
+                {...testId("edit-server-description-input")}
                 {...form.register("description")}
                 rows={2}
               />
@@ -217,7 +234,7 @@ export function EditServerDialog({ server, scope }: EditServerDialogProps) {
                     form.setValue("auth_type", v as MCPAuthType)
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger {...testId("edit-server-auth-type-select")}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -238,6 +255,7 @@ export function EditServerDialog({ server, scope }: EditServerDialogProps) {
                   </Label>
                   <Input
                     id="edit-auth_header_name"
+                    {...testId("edit-server-auth-header-input")}
                     {...form.register("auth_header_name")}
                     placeholder={
                       authType === "bearer"
@@ -258,6 +276,7 @@ export function EditServerDialog({ server, scope }: EditServerDialogProps) {
                 </Label>
                 <Input
                   id="edit-auth_secret"
+                  {...testId("edit-server-auth-secret-input")}
                   type="password"
                   {...form.register("auth_secret")}
                   placeholder={
@@ -303,7 +322,11 @@ export function EditServerDialog({ server, scope }: EditServerDialogProps) {
             >
               {t("com_cancel")}
             </Button>
-            <Button type="submit" disabled={updateMutation.isPending}>
+            <Button
+              {...testId("mcp-edit-server-submit")}
+              type="submit"
+              disabled={updateMutation.isPending}
+            >
               {updateMutation.isPending && (
                 <Loader2 className="mr-2 size-4 animate-spin" />
               )}

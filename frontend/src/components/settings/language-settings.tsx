@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { authApi } from "@/lib/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authKeys } from "@/lib/auth";
+import { testId } from "@/lib/test-id";
 
 export function LanguageSettings() {
   const { t, i18n } = useTranslation();
@@ -44,7 +45,7 @@ export function LanguageSettings() {
   );
 
   return (
-    <div className="space-y-6">
+    <div {...testId("language-settings")} className="space-y-6">
       <div>
         <h3 className="text-lg font-medium">{t("language_title")}</h3>
         <p className="text-sm text-muted-foreground">{t("language_desc")}</p>
@@ -64,7 +65,11 @@ export function LanguageSettings() {
             onValueChange={handleLanguageChange}
             disabled={updateLanguageMutation.isPending}
           >
-            <SelectTrigger id="language-select" className="w-full max-w-xs">
+            <SelectTrigger
+              {...testId("language-select")}
+              id="language-select"
+              className="w-full max-w-xs"
+            >
               <SelectValue>
                 {currentLanguage?.nativeName ||
                   currentLanguage?.name ||

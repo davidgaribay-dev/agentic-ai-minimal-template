@@ -18,6 +18,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { testId } from "@/lib/test-id";
 
 export function DisabledChatSection() {
   const { t } = useTranslation();
@@ -40,7 +41,10 @@ export function DisabledChatSection() {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="flex items-center justify-center size-8 opacity-50 cursor-not-allowed">
+                  <div
+                    {...testId("disabled-chat-section")}
+                    className="flex items-center justify-center size-8 opacity-50 cursor-not-allowed"
+                  >
                     <MessageSquare className="size-4 text-muted-foreground" />
                   </div>
                 </TooltipTrigger>
@@ -57,7 +61,10 @@ export function DisabledChatSection() {
 
   return (
     <SidebarGroup>
-      <div className="px-2 py-3 text-sm text-muted-foreground flex items-center gap-2">
+      <div
+        {...testId("disabled-chat-section")}
+        className="px-2 py-3 text-sm text-muted-foreground flex items-center gap-2"
+      >
         <Info className="size-4" />
         <span>{tooltipMessage}</span>
       </div>

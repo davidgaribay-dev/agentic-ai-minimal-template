@@ -74,6 +74,20 @@ async def login_access_token(
             detail="Inactive user",
         )
 
+    if not user.email_verified:
+        await audit_service.log(
+            AuditAction.USER_LOGIN_FAILED,
+            actor=user,
+            request=request,
+            outcome="failure",
+            error_code="EMAIL_NOT_VERIFIED",
+            error_message="Email address not verified",
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email not verified. Please verify your email address before logging in.",
+        )
+
     access_token, refresh_token, expires_in = create_token_pair(str(user.id))
     logger.info("user_login", email=user.email)
 

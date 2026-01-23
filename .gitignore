@@ -29,3 +29,28 @@ logs/
 *.tmp
 *.temp
 .cache/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Coverage
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Test results
+test-results/
+.playwright-mcp/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/

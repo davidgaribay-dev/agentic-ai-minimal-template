@@ -5,11 +5,15 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, status
 from sqlalchemy.exc import IntegrityError
+from sqlmodel import select
 
 from backend.audit.schemas import AuditAction, Target
 from backend.audit.service import audit_service
 from backend.auth.deps import CurrentUser, SessionDep
 from backend.auth.models import Message
+from backend.core.config import settings
+from backend.email.schemas import InvitationEmailData
+from backend.email.service import email_service
 from backend.invitations import crud
 from backend.invitations.models import (
     BulkInvitationCreate,
@@ -17,7 +21,6 @@ from backend.invitations.models import (
     BulkInvitationResult,
     InvitationAccept,
     InvitationCreate,
-    InvitationCreatedResponse,
     InvitationInfo,
     InvitationPublic,
     InvitationsPublic,
@@ -31,7 +34,7 @@ from backend.rbac import (
     require_org_permission,
 )
 from backend.teams import crud as team_crud
-from backend.teams.models import TeamRole
+from backend.teams.models import Team, TeamRole
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +78,7 @@ def list_organization_invitations(
 
 @org_router.post(
     "/",
-    response_model=InvitationCreatedResponse,
+    response_model=InvitationPublic,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_org_permission(OrgPermission.INVITATIONS_CREATE))],
 )
@@ -84,14 +87,13 @@ async def create_invitation(
     session: SessionDep,
     org_context: OrgContextDep,
     invitation_in: InvitationCreate,
-) -> InvitationCreatedResponse:
+) -> InvitationPublic:
     """Create a new invitation.
 
     Requires invitations:create permission.
     If team_id is provided, the invitee will also be added to that team.
 
-    Returns the invitation with token for self-serve invite links.
-    In production with email service, the token would be sent via email instead.
+    The invitation token is sent to the invitee via email.
     """
     existing = crud.get_pending_invitation_for_email(
         session=session,
@@ -104,6 +106,7 @@ async def create_invitation(
             detail="A pending invitation already exists for this email",
         )
 
+    team_name: str | None = None
     if invitation_in.team_id:
         team = team_crud.get_team_by_id(session=session, team_id=invitation_in.team_id)
         if not team or team.organization_id != org_context.org_id:
@@ -111,6 +114,7 @@ async def create_invitation(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Team not found in this organization",
             )
+        team_name = team.name
 
     invitation, token = crud.create_invitation(
         session=session,
@@ -118,6 +122,35 @@ async def create_invitation(
         invited_by_id=org_context.user.id,
         invitation_in=invitation_in,
     )
+
+    # Send invitation email
+    org = org_crud.get_organization_by_id(
+        session=session, organization_id=org_context.org_id
+    )
+    if org and email_service.is_configured:
+        invitation_link = f"{settings.FRONTEND_URL}/invite?token={token}"
+        inviter_name = org_context.user.full_name or org_context.user.email
+
+        email_data = InvitationEmailData(
+            email=invitation.email,
+            organization_name=org.name,
+            team_name=team_name,
+            org_role=invitation.org_role,
+            team_role=invitation.team_role,
+            inviter_name=inviter_name,
+            code=email_service.generate_verification_code(),
+            invitation_link=invitation_link,
+            expires_in_days=invitation_in.expires_in_days,
+            locale=org_context.user.language or "en",
+        )
+
+        await email_service.send_invitation_email(
+            data=email_data,
+            request=request,
+            actor=org_context.user,
+            organization_id=str(org_context.org_id),
+            team_id=str(invitation_in.team_id) if invitation_in.team_id else None,
+        )
 
     await audit_service.log(
         AuditAction.INVITATION_CREATED,
@@ -136,12 +169,11 @@ async def create_invitation(
             "expires_at": invitation.expires_at.isoformat()
             if invitation.expires_at
             else None,
+            "email_sent": email_service.is_configured,
         },
     )
 
-    response_data = InvitationPublic.model_validate(invitation).model_dump()
-    response_data["token"] = token
-    return InvitationCreatedResponse(**response_data)
+    return InvitationPublic.model_validate(invitation)
 
 
 @org_router.post(
@@ -163,18 +195,36 @@ async def create_bulk_invitations(
     If team_ids are provided, invitees will be added to all specified teams.
 
     Returns a summary of successful and failed invitations.
+    Invitation tokens are sent via email.
     """
-    # Validate all team IDs belong to this org
+    # Get organization for email
+    org = org_crud.get_organization_by_id(
+        session=session, organization_id=org_context.org_id
+    )
+    if not org:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Organization not found",
+        )
+
+    # Validate all team IDs belong to this org and build name map
+    # Batch fetch all teams in one query to avoid N+1
     valid_team_ids: list[uuid.UUID] = []
+    team_names: dict[uuid.UUID, str] = {}
     if bulk_invite.team_ids:
-        for team_id in bulk_invite.team_ids:
-            team = team_crud.get_team_by_id(session=session, team_id=team_id)
-            if team and team.organization_id == org_context.org_id:
-                valid_team_ids.append(team_id)
+        teams = session.exec(
+            select(Team).where(
+                Team.id.in_(bulk_invite.team_ids),  # type: ignore[attr-defined]
+                Team.organization_id == org_context.org_id,
+            )
+        ).all()
+        valid_team_ids = [team.id for team in teams]
+        team_names = {team.id: team.name for team in teams}
 
     results: list[BulkInvitationResult] = []
     total_sent = 0
     total_failed = 0
+    inviter_name = org_context.user.full_name or org_context.user.email
 
     for raw_email in bulk_invite.emails:
         email = raw_email.strip().lower()
@@ -246,12 +296,39 @@ async def create_bulk_invitations(
                     invitation_in=additional_invite_in,
                 )
 
+            # Send invitation email
+            if email_service.is_configured:
+                invitation_link = f"{settings.FRONTEND_URL}/invite?token={token}"
+                first_team_name = (
+                    team_names.get(first_team_id) if first_team_id else None
+                )
+
+                email_data = InvitationEmailData(
+                    email=invitation.email,
+                    organization_name=org.name,
+                    team_name=first_team_name,
+                    org_role=invitation.org_role,
+                    team_role=invitation.team_role,
+                    inviter_name=inviter_name,
+                    code=email_service.generate_verification_code(),
+                    invitation_link=invitation_link,
+                    expires_in_days=bulk_invite.expires_in_days,
+                    locale=org_context.user.language or "en",
+                )
+
+                await email_service.send_invitation_email(
+                    data=email_data,
+                    request=request,
+                    actor=org_context.user,
+                    organization_id=str(org_context.org_id),
+                    team_id=str(first_team_id) if first_team_id else None,
+                )
+
             results.append(
                 BulkInvitationResult(
                     email=email,
                     success=True,
                     invitation_id=invitation.id,
-                    token=token,
                 )
             )
             total_sent += 1
@@ -274,10 +351,14 @@ async def create_bulk_invitations(
                     if valid_team_ids
                     else None,
                     "bulk_invite": True,
+                    "email_sent": email_service.is_configured,
                 },
             )
 
-        except IntegrityError:
+        except IntegrityError as e:
+            logger.warning(
+                "Database constraint violation for invitation: %s - %s", email, str(e)
+            )
             results.append(
                 BulkInvitationResult(
                     email=email,
@@ -389,6 +470,7 @@ async def resend_invitation(
 
     Requires invitations:create permission.
     The old invitation is deleted and a new one is created.
+    The new token is sent via email.
     """
     invitation = crud.get_invitation_by_id(session=session, invitation_id=invitation_id)
     if not invitation or invitation.organization_id != org_context.org_id:
@@ -403,11 +485,48 @@ async def resend_invitation(
             detail="Cannot resend an accepted invitation",
         )
 
-    new_invitation, _token = crud.resend_invitation(
+    new_invitation, token = crud.resend_invitation(
         session=session,
         invitation=invitation,
         expires_in_days=expires_in_days,
     )
+
+    # Send invitation email
+    org = org_crud.get_organization_by_id(
+        session=session, organization_id=org_context.org_id
+    )
+    if org and email_service.is_configured:
+        team_name: str | None = None
+        if new_invitation.team_id:
+            team = team_crud.get_team_by_id(
+                session=session, team_id=new_invitation.team_id
+            )
+            if team:
+                team_name = team.name
+
+        invitation_link = f"{settings.FRONTEND_URL}/invite?token={token}"
+        inviter_name = org_context.user.full_name or org_context.user.email
+
+        email_data = InvitationEmailData(
+            email=new_invitation.email,
+            organization_name=org.name,
+            team_name=team_name,
+            org_role=new_invitation.org_role,
+            team_role=new_invitation.team_role,
+            inviter_name=inviter_name,
+            code=email_service.generate_verification_code(),
+            invitation_link=invitation_link,
+            expires_in_days=expires_in_days,
+            locale=org_context.user.language or "en",
+        )
+
+        await email_service.send_invitation_email(
+            data=email_data,
+            request=request,
+            actor=org_context.user,
+            organization_id=str(org_context.org_id),
+            team_id=str(new_invitation.team_id) if new_invitation.team_id else None,
+        )
 
     await audit_service.log(
         AuditAction.INVITATION_RESENT,
@@ -424,6 +543,7 @@ async def resend_invitation(
             "old_invitation_id": str(invitation_id),
             "new_invitation_id": str(new_invitation.id),
             "expires_in_days": expires_in_days,
+            "email_sent": email_service.is_configured,
         },
     )
 

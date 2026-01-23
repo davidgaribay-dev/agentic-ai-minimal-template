@@ -131,5 +131,6 @@
   "email_new_account_email_label": "邮箱：",
   "email_new_account_password_label": "密码：",
   "email_new_account_change_password": "请在首次登录后更改密码。",
-  "email_new_account_button": "前往%{project_name}"
+  "email_new_account_button": "前往%{project_name}",
+  "email_new_account_link_trouble": "如果按钮无法使用，请复制并粘贴此链接到浏览器："
 }

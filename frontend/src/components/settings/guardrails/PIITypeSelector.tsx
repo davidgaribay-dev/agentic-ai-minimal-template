@@ -9,6 +9,7 @@ import { PII_TYPES, PII_TYPE_LABEL_KEYS, type PIIType } from "@/lib/api";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { testId } from "@/lib/test-id";
 
 interface PIITypeSelectorProps {
   selectedTypes: PIIType[];
@@ -35,10 +36,11 @@ export function PIITypeSelector({
   );
 
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div {...testId("pii-type-selector")} className="grid grid-cols-2 gap-2">
       {PII_TYPES.map((type) => (
         <div key={type} className="flex items-center gap-2">
           <Checkbox
+            {...testId(`pii-type-${type}-checkbox`)}
             id={`pii-${type}`}
             checked={selectedTypes.includes(type)}
             onCheckedChange={(checked) => handleToggle(type, checked === true)}

@@ -6,6 +6,7 @@ import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Pencil } from "lucide-react";
 import type { Prompt } from "@/lib/api";
+import { testId } from "@/lib/test-id";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -112,7 +113,7 @@ export function EditPromptDialog({
           <Pencil className={compact ? "size-2.5" : "size-3"} />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent {...testId("edit-prompt-dialog")} className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-base">{t("prompts_edit")}</DialogTitle>
           <DialogDescription>{t("prompts_edit_desc")}</DialogDescription>
@@ -125,6 +126,7 @@ export function EditPromptDialog({
               </Label>
               <Input
                 id="edit-name"
+                {...testId("edit-prompt-name-input")}
                 {...register("name")}
                 className="h-8 text-sm"
               />
@@ -140,6 +142,7 @@ export function EditPromptDialog({
               </Label>
               <Input
                 id="edit-description"
+                {...testId("edit-prompt-description-input")}
                 {...register("description")}
                 className="h-8 text-sm"
               />
@@ -150,6 +153,7 @@ export function EditPromptDialog({
               </Label>
               <Textarea
                 id="edit-content"
+                {...testId("edit-prompt-content-input")}
                 {...register("content")}
                 rows={4}
                 className="font-mono text-sm"
@@ -176,7 +180,12 @@ export function EditPromptDialog({
             >
               {t("com_cancel")}
             </Button>
-            <Button type="submit" size="sm" disabled={updateMutation.isPending}>
+            <Button
+              {...testId("edit-prompt-submit")}
+              type="submit"
+              size="sm"
+              disabled={updateMutation.isPending}
+            >
               {updateMutation.isPending && (
                 <Loader2 className="mr-1.5 size-3 animate-spin" />
               )}

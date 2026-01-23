@@ -46,6 +46,7 @@ import {
   RotateCw,
   Mail,
   Clock,
+  KeyRound,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import {
@@ -145,6 +146,7 @@ import {
 import { isValidImageUrl, getInitials } from "@/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/data-table";
+import { testId } from "@/lib/test-id";
 
 const PAGE_SIZES = [25, 50, 100] as const;
 
@@ -241,7 +243,7 @@ function OrgSettingsPage() {
         return (
           <SettingsPageLayout title={t("org_settings_workspace")}>
             <SettingsCard>
-              <div className="p-4">
+              <div {...testId("org-settings-section-general")} className="p-4">
                 <OrgDetailsSection org={currentOrg} onUpdate={refresh} />
               </div>
             </SettingsCard>
@@ -258,28 +260,32 @@ function OrgSettingsPage() {
       case "people":
         return (
           <SettingsPageLayout title={t("org_members")}>
-            <MembersSection
-              orgId={currentOrg.id}
-              orgName={currentOrg.name}
-              members={members}
-              teams={teams}
-              isLoading={isLoadingMembers}
-              isAdmin={isAdmin}
-              isOwner={isOwner}
-              onUpdate={refresh}
-            />
+            <div {...testId("org-settings-section-people")}>
+              <MembersSection
+                orgId={currentOrg.id}
+                orgName={currentOrg.name}
+                members={members}
+                teams={teams}
+                isLoading={isLoadingMembers}
+                isAdmin={isAdmin}
+                isOwner={isOwner}
+                onUpdate={refresh}
+              />
+            </div>
           </SettingsPageLayout>
         );
       case "teams":
         return (
           <SettingsPageLayout title={t("org_teams")}>
-            <TeamsSection
-              orgId={currentOrg.id}
-              teams={teams}
-              isLoading={isLoadingTeams}
-              isAdmin={isAdmin}
-              onUpdate={refresh}
-            />
+            <div {...testId("org-settings-section-teams")}>
+              <TeamsSection
+                orgId={currentOrg.id}
+                teams={teams}
+                isLoading={isLoadingTeams}
+                isAdmin={isAdmin}
+                onUpdate={refresh}
+              />
+            </div>
           </SettingsPageLayout>
         );
       case "system-prompts":
@@ -370,7 +376,10 @@ function OrgSettingsPage() {
   };
 
   return (
-    <div className="bg-background min-h-screen">
+    <div
+      {...testId("org-settings-page")}
+      className="bg-background min-h-screen"
+    >
       <div className="mx-auto max-w-4xl px-4 md:px-6 py-4 md:py-8">
         {renderContent()}
       </div>
@@ -620,7 +629,10 @@ function InviteMemberDialog({
           {t("org_invite")}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent
+        {...testId("invite-member-dialog")}
+        className="sm:max-w-lg"
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
             <span className="flex size-6 items-center justify-center rounded bg-amber-600 text-[10px] font-medium text-white">
@@ -686,6 +698,7 @@ function InviteMemberDialog({
                 {t("com_email")}
               </Label>
               <Textarea
+                {...testId("invite-emails-input")}
                 id="invite-emails"
                 value={emails}
                 onChange={(e) => setEmails(e.target.value)}
@@ -761,6 +774,7 @@ function InviteMemberDialog({
 
             <div className="flex justify-end pt-2">
               <Button
+                {...testId("send-invites-button")}
                 size="sm"
                 onClick={handleInvite}
                 disabled={!emails.trim() || bulkInviteMutation.isPending}
@@ -852,7 +866,7 @@ function PendingInvitationsSection({
   }
 
   return (
-    <SettingsCard>
+    <SettingsCard {...testId("pending-invitations-section")}>
       <div className="p-4 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm font-medium">
@@ -888,6 +902,7 @@ function PendingInvitationsSection({
                 {isAdmin && (
                   <>
                     <Button
+                      {...testId(`invitation-resend-${invitation.id}`)}
                       variant="ghost"
                       size="sm"
                       className="h-7 px-2"
@@ -902,6 +917,7 @@ function PendingInvitationsSection({
                       )}
                     </Button>
                     <Button
+                      {...testId(`invitation-cancel-${invitation.id}`)}
                       variant="ghost"
                       size="sm"
                       className="h-7 px-2 text-destructive hover:text-destructive"
@@ -964,6 +980,20 @@ function MembersTable({
         queryKey: workspaceKeys.membership(orgId),
       });
       onUpdate();
+    },
+  });
+
+  const [passwordResetSuccess, setPasswordResetSuccess] = useState<
+    string | null
+  >(null);
+
+  const sendPasswordResetMutation = useMutation({
+    mutationFn: (memberId: string) =>
+      organizationsApi.sendMemberPasswordReset(orgId, memberId),
+    onSuccess: (_, memberId) => {
+      const member = members.find((m) => m.id === memberId);
+      setPasswordResetSuccess(member?.user_email || null);
+      setTimeout(() => setPasswordResetSuccess(null), 5000);
     },
   });
 
@@ -1064,7 +1094,12 @@ function MembersTable({
             <div className="flex justify-end">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="size-7">
+                  <Button
+                    {...testId(`member-actions-${member.id}`)}
+                    variant="ghost"
+                    size="icon"
+                    className="size-7"
+                  >
                     <MoreHorizontal className="size-3.5" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -1111,6 +1146,44 @@ function MembersTable({
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <DropdownMenuItem
+                        onSelect={(e) => e.preventDefault()}
+                        disabled={sendPasswordResetMutation.isPending}
+                      >
+                        {sendPasswordResetMutation.isPending ? (
+                          <Loader2 className="mr-2 size-3.5 animate-spin" />
+                        ) : (
+                          <KeyRound className="mr-2 size-3.5" />
+                        )}
+                        {t("org_send_password_reset")}
+                      </DropdownMenuItem>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          {t("org_send_password_reset_title")}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {t("org_send_password_reset_confirm", {
+                            email: member.user_email,
+                          })}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>{t("com_cancel")}</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() =>
+                            sendPasswordResetMutation.mutate(member.id)
+                          }
+                        >
+                          {t("org_send_password_reset")}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                  <DropdownMenuSeparator />
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <DropdownMenuItem
                         className="text-destructive focus:text-destructive"
                         onSelect={(e) => e.preventDefault()}
                       >
@@ -1153,6 +1226,7 @@ function MembersTable({
       isOwner,
       updateRoleMutation,
       removeMemberMutation,
+      sendPasswordResetMutation,
       t,
       getRoleBadge,
     ],
@@ -1175,12 +1249,21 @@ function MembersTable({
   }
 
   return (
-    <DataTable
-      columns={columns}
-      data={members}
-      searchKey="user_full_name"
-      searchPlaceholder={t("org_search_members")}
-    />
+    <div className="space-y-4">
+      {passwordResetSuccess && (
+        <div className="rounded-lg border border-green-500/20 bg-green-500/10 p-3 text-sm text-green-600 dark:text-green-400">
+          {t("org_password_reset_sent_success", {
+            email: passwordResetSuccess,
+          })}
+        </div>
+      )}
+      <DataTable
+        columns={columns}
+        data={members}
+        searchKey="user_full_name"
+        searchPlaceholder={t("org_search_members")}
+      />
+    </div>
   );
 }
 
@@ -1233,7 +1316,10 @@ function CreateTeamDialog({
           {t("com_create")}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        {...testId("create-team-dialog-org")}
+        className="sm:max-w-md"
+      >
         <DialogHeader>
           <DialogTitle className="text-base">{t("team_create")}</DialogTitle>
           <DialogDescription className="text-xs">
@@ -1246,6 +1332,7 @@ function CreateTeamDialog({
               {t("com_name")}
             </Label>
             <Input
+              {...testId("create-team-name-input-org")}
               id="team-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -1273,6 +1360,7 @@ function CreateTeamDialog({
             {t("com_cancel")}
           </Button>
           <Button
+            {...testId("create-team-submit-org")}
             size="sm"
             onClick={handleCreate}
             disabled={!name || createMutation.isPending}
@@ -1361,7 +1449,13 @@ function TeamsTable({
           return (
             <div className="flex justify-end gap-1">
               {isAdmin && (
-                <Button variant="ghost" size="icon" className="size-7" asChild>
+                <Button
+                  {...testId(`team-settings-${team.id}`)}
+                  variant="ghost"
+                  size="icon"
+                  className="size-7"
+                  asChild
+                >
                   <Link
                     to="/org/team/$teamId/settings/$section"
                     params={{ teamId: team.id, section: "general" }}
@@ -1374,6 +1468,7 @@ function TeamsTable({
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button
+                      {...testId(`team-delete-${team.id}`)}
                       variant="ghost"
                       size="icon"
                       className="size-7 text-muted-foreground hover:text-destructive"
@@ -1825,7 +1920,7 @@ function AuditLogsSection({ orgId }: { orgId: string }) {
   };
 
   return (
-    <div className="space-y-4">
+    <div {...testId("audit-logs-section")} className="space-y-4">
       <div className="flex items-center gap-2 py-2">
         <FileText className="size-4" />
         <span className="text-sm font-medium">{t("audit_title")}</span>
@@ -2001,6 +2096,7 @@ function AuditLogsSection({ orgId }: { orgId: string }) {
         {/* Refresh and Export */}
         <div className="flex gap-2">
           <Button
+            {...testId("audit-refresh-button")}
             variant="outline"
             size="sm"
             className="h-8"
@@ -2013,6 +2109,7 @@ function AuditLogsSection({ orgId }: { orgId: string }) {
             {t("audit_refresh")}
           </Button>
           <Button
+            {...testId("audit-export-button")}
             variant="outline"
             size="sm"
             className="h-8"
@@ -2098,6 +2195,7 @@ function AuditLogsSection({ orgId }: { orgId: string }) {
             ) : (
               logsData?.events.map((event) => (
                 <TableRow
+                  {...testId(`audit-row-${event.id}`)}
                   key={event.id}
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => setSelectedEvent(event)}
@@ -2242,7 +2340,10 @@ function AuditEventDialog({
 
   return (
     <Dialog open={!!event} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent
+        {...testId("audit-event-dialog")}
+        className="max-w-2xl max-h-[80vh] overflow-y-auto"
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="size-5" />

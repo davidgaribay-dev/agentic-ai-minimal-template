@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { LogOut, Settings } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { testId } from "@/lib/test-id";
 import { useAuth } from "@/lib/auth";
 import { getInitials, isValidImageUrl } from "@/lib/utils";
 import {
@@ -27,6 +28,7 @@ export function UserMenu() {
         <button
           className="flex size-8 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground hover:bg-primary/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 overflow-hidden"
           aria-label={t("com_open_menu")}
+          {...testId("user-menu-trigger")}
         >
           {isValidImageUrl(user.profile_image_url) ? (
             <img
@@ -40,8 +42,15 @@ export function UserMenu() {
           )}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="font-normal">
+      <DropdownMenuContent
+        align="end"
+        className="w-56"
+        {...testId("user-menu-content")}
+      >
+        <DropdownMenuLabel
+          className="font-normal"
+          {...testId("user-menu-profile")}
+        >
           <div className="flex flex-col space-y-1">
             {user.full_name && (
               <p className="text-sm font-medium leading-none">
@@ -55,7 +64,11 @@ export function UserMenu() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link to="/settings" className="cursor-pointer">
+          <Link
+            to="/settings"
+            className="cursor-pointer"
+            {...testId("user-menu-settings")}
+          >
             <Settings className="mr-2" />
             {t("nav_settings")}
           </Link>
@@ -63,7 +76,11 @@ export function UserMenu() {
         <DropdownMenuSeparator />
         <ModeToggle />
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={logout} className="cursor-pointer">
+        <DropdownMenuItem
+          onClick={logout}
+          className="cursor-pointer"
+          {...testId("user-menu-logout")}
+        >
           <LogOut className="mr-2" />
           {t("nav_log_out")}
         </DropdownMenuItem>

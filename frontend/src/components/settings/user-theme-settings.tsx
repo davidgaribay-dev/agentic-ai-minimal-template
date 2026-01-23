@@ -19,6 +19,7 @@ import {
 } from "@/lib/queries";
 import { useWorkspace } from "@/lib/workspace";
 import type { UserThemeSettingsUpdate } from "@/lib/api";
+import { testId } from "@/lib/test-id";
 
 export function UserThemeSettings() {
   const { t } = useTranslation();
@@ -148,7 +149,7 @@ export function UserThemeSettings() {
   );
 
   return (
-    <div className="space-y-6">
+    <div {...testId("user-theme-settings")} className="space-y-6">
       {!customizationAllowed && (
         <Alert>
           <Info className="h-4 w-4" />
@@ -208,13 +209,18 @@ export function UserThemeSettings() {
       {customizationAllowed && hasChanges && (
         <div className="flex justify-end gap-2 sticky bottom-4 bg-background/95 backdrop-blur p-4 border rounded-lg shadow-lg">
           <Button
+            {...testId("user-theme-reset")}
             variant="outline"
             onClick={handleReset}
             disabled={updateMutation.isPending}
           >
             {t("com_reset")}
           </Button>
-          <Button onClick={handleSave} disabled={updateMutation.isPending}>
+          <Button
+            {...testId("user-theme-save")}
+            onClick={handleSave}
+            disabled={updateMutation.isPending}
+          >
             {updateMutation.isPending && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             )}

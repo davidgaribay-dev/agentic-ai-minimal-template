@@ -3,6 +3,7 @@ import os
 import secrets
 from typing import Annotated, Any, Literal
 import warnings
+from zoneinfo import ZoneInfo
 
 from pydantic import (
     AnyUrl,
@@ -36,6 +37,16 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/v1"
     PROJECT_NAME: str = "AI Agent API"
     DEBUG: bool = False
+
+    # Timezone for datetime display and storage (IANA timezone name)
+    # Examples: "UTC", "America/New_York", "Europe/London", "Asia/Tokyo"
+    TIMEZONE: str = "UTC"
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def tz(self) -> ZoneInfo:
+        """Get timezone info object for datetime operations."""
+        return ZoneInfo(self.TIMEZONE)
 
     HOST: str = "0.0.0.0"
     PORT: int = 8000
@@ -188,8 +199,27 @@ class Settings(BaseSettings):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def emails_enabled(self) -> bool:
-        """Check if email sending is properly configured."""
-        return bool(self.SMTP_HOST and self.EMAILS_FROM_EMAIL)
+        """Check if email sending is properly configured (SMTP or Resend)."""
+        return bool(
+            (self.SMTP_HOST and self.EMAILS_FROM_EMAIL)
+            or (self.RESEND_API_KEY and self.EMAILS_FROM_EMAIL)
+        )
+
+    # ==========================================================================
+    # Resend Email Configuration
+    # ==========================================================================
+
+    RESEND_API_KEY: str | None = None
+
+    # Email verification settings
+    EMAIL_VERIFICATION_EXPIRE_MINUTES: int = 30
+    EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS: int = 60
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def resend_enabled(self) -> bool:
+        """Check if Resend email service is configured."""
+        return bool(self.RESEND_API_KEY and self.EMAILS_FROM_EMAIL)
 
     S3_ENDPOINT_URL: str = "http://localhost:8333"
     S3_ACCESS_KEY: str = "any"

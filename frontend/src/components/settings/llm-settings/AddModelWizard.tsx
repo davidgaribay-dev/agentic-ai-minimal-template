@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { llmSettingsApi, type OrganizationLLMSettingsUpdate } from "@/lib/api";
+import { testId } from "@/lib/test-id";
 
 // Provider configuration with icons, branding, and API key links
 const PROVIDERS: Record<
@@ -283,12 +284,15 @@ export function AddModelWizard({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button {...testId("add-model-trigger")}>
           <Plus className="size-4 mr-2" />
           {t("llm_add_model")}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent
+        {...testId("add-model-wizard")}
+        className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="size-5" />
@@ -346,6 +350,7 @@ export function AddModelWizard({
                       <button
                         key={providerId}
                         type="button"
+                        {...testId(`provider-select-${providerId}`)}
                         onClick={() => handleProviderSelect(providerId)}
                         className={cn(
                           "p-4 rounded-lg border-2 text-left transition-all",
@@ -418,6 +423,7 @@ export function AddModelWizard({
                     <Input
                       id="api-key"
                       type="password"
+                      {...testId("api-key-input")}
                       value={apiKey}
                       onChange={(e) => setApiKey(e.target.value)}
                       placeholder={t("llm_api_key_placeholder")}
@@ -446,6 +452,7 @@ export function AddModelWizard({
                   </div>
 
                   <Button
+                    {...testId("save-api-key-button")}
                     onClick={handleSaveApiKey}
                     disabled={!apiKey || savingApiKey}
                     className="w-full"
@@ -484,6 +491,7 @@ export function AddModelWizard({
                     <button
                       key={model.id}
                       type="button"
+                      {...testId(`model-select-${model.id}`)}
                       onClick={() => setSelectedModel(model)}
                       className={cn(
                         "w-full p-3 rounded-lg border text-left transition-all",
@@ -612,6 +620,7 @@ export function AddModelWizard({
             </Button>
             {step === "model" ? (
               <Button
+                {...testId("save-model-button")}
                 onClick={handleSave}
                 disabled={!canProceed() || saveMutation.isPending}
               >

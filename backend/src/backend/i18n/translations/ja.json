@@ -131,5 +131,6 @@
   "email_new_account_email_label": "メールアドレス：",
   "email_new_account_password_label": "パスワード：",
   "email_new_account_change_password": "初回ログイン後にパスワードを変更してください。",
-  "email_new_account_button": "%{project_name}へ移動"
+  "email_new_account_button": "%{project_name}へ移動",
+  "email_new_account_link_trouble": "ボタンが機能しない場合は、このリンクをコピーしてブラウザに貼り付けてください："
 }

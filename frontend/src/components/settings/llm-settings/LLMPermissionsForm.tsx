@@ -13,6 +13,7 @@ import { Shield } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { SettingsCard } from "../settings-layout";
+import { testId } from "@/lib/test-id";
 
 interface LLMPermissionsFormProps {
   allowTeamCustomization: boolean;
@@ -34,7 +35,7 @@ export function LLMPermissionsForm({
 
   return (
     <SettingsCard>
-      <div className="p-4 space-y-4">
+      <div {...testId("llm-permissions-form")} className="p-4 space-y-4">
         <div className="flex items-center gap-2 text-sm font-medium">
           <Shield className="size-4" />
           {t("llm_permissions")}
@@ -55,6 +56,7 @@ export function LLMPermissionsForm({
             </div>
             <Switch
               id="allow-team"
+              {...testId("llm-permission-allow-team-customization")}
               checked={allowTeamCustomization}
               onCheckedChange={(v) => onUpdate({ allow_team_customization: v })}
               disabled={isLoading}
@@ -75,6 +77,7 @@ export function LLMPermissionsForm({
             </div>
             <Switch
               id="allow-per-request"
+              {...testId("llm-permission-allow-per-request-selection")}
               checked={allowPerRequestSelection}
               onCheckedChange={(v) =>
                 onUpdate({ allow_per_request_model_selection: v })

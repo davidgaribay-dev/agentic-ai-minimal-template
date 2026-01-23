@@ -58,6 +58,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { testId } from "@/lib/test-id";
 
 /** Valid user settings sections */
 const VALID_SECTIONS = [
@@ -141,7 +142,10 @@ function UserSettingsPage() {
   };
 
   return (
-    <div className="bg-background min-h-screen">
+    <div
+      {...testId(`page-settings-${section}`)}
+      className="bg-background min-h-screen"
+    >
       <div className="mx-auto max-w-4xl px-4 md:px-6 py-4 md:py-8">
         {renderContent()}
       </div>
@@ -264,7 +268,12 @@ function ProfileSection() {
   return (
     <SettingsPageLayout title={t("settings_profile")}>
       {profileError && (
-        <p className="text-sm text-destructive mb-4">{profileError}</p>
+        <p
+          {...testId("settings-profile-error")}
+          className="text-sm text-destructive mb-4"
+        >
+          {profileError}
+        </p>
       )}
 
       <SettingsCard>
@@ -345,6 +354,7 @@ function ProfileSection() {
             {isEditingEmail ? (
               <div className="flex items-center gap-2">
                 <Input
+                  {...testId("settings-profile-email-input")}
                   type="email"
                   value={editEmail}
                   onChange={(e) => setEditEmail(e.target.value)}
@@ -357,6 +367,7 @@ function ProfileSection() {
                   }}
                 />
                 <Button
+                  {...testId("settings-profile-email-save")}
                   size="icon"
                   variant="ghost"
                   className="size-7"
@@ -370,6 +381,7 @@ function ProfileSection() {
                   )}
                 </Button>
                 <Button
+                  {...testId("settings-profile-email-cancel")}
                   size="icon"
                   variant="ghost"
                   className="size-7"
@@ -381,6 +393,7 @@ function ProfileSection() {
               </div>
             ) : (
               <button
+                {...testId("settings-profile-email-edit")}
                 onClick={() => setIsEditingEmail(true)}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
@@ -402,6 +415,7 @@ function ProfileSection() {
             {isEditingName ? (
               <div className="flex items-center gap-2">
                 <Input
+                  {...testId("settings-profile-name-input")}
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   placeholder={t("settings_enter_name")}
@@ -413,6 +427,7 @@ function ProfileSection() {
                   }}
                 />
                 <Button
+                  {...testId("settings-profile-name-save")}
                   size="icon"
                   variant="ghost"
                   className="size-7"
@@ -426,6 +441,7 @@ function ProfileSection() {
                   )}
                 </Button>
                 <Button
+                  {...testId("settings-profile-name-cancel")}
                   size="icon"
                   variant="ghost"
                   className="size-7"
@@ -437,6 +453,7 @@ function ProfileSection() {
               </div>
             ) : (
               <button
+                {...testId("settings-profile-name-edit")}
                 onClick={() => setIsEditingName(true)}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >

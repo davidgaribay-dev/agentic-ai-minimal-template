@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "@tanstack/react-router";
 import { Home, Search, Settings, Building2, PanelLeft } from "lucide-react";
+import { testId } from "@/lib/test-id";
 import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
@@ -69,7 +70,10 @@ export function MobileBottomNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden">
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden"
+      {...testId("mobile-bottom-nav-container")}
+    >
       <div className="flex h-16 items-center justify-around px-2">
         {navItems.map((item) => {
           const active = isActive(item);
@@ -82,6 +86,9 @@ export function MobileBottomNav() {
                 active
                   ? "text-primary"
                   : "text-muted-foreground hover:text-foreground",
+              )}
+              {...testId(
+                `mobile-nav-item-${item.labelKey.replace("nav_", "").replace("com_", "")}`,
               )}
             >
               <item.icon className={cn("size-5", active && "text-primary")} />
@@ -103,11 +110,15 @@ export function MobileHeader() {
   const { toggleSidebar } = useSidebar();
 
   return (
-    <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden">
+    <header
+      className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden"
+      {...testId("mobile-header-container")}
+    >
       <button
         onClick={toggleSidebar}
         className="flex size-10 items-center justify-center rounded-lg hover:bg-muted active:bg-muted/80"
         aria-label={t("com_open_menu")}
+        {...testId("mobile-header-menu-trigger")}
       >
         <PanelLeft className="size-5" />
       </button>

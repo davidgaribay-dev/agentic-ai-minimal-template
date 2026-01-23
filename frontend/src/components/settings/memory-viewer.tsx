@@ -36,6 +36,7 @@ import {
   useClearAllMemories,
 } from "@/lib/queries";
 import type { Memory, MemoryType } from "@/lib/api";
+import { testId } from "@/lib/test-id";
 
 const memoryTypeColors: Record<MemoryType, string> = {
   preference: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
@@ -149,6 +150,7 @@ function MemoryDataTable({ data, onDelete, deletingId }: MemoryDataTableProps) {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
+                    {...testId(`memory-actions-button-${memory.id}`)}
                     variant="ghost"
                     size="icon"
                     className="size-8"
@@ -164,6 +166,7 @@ function MemoryDataTable({ data, onDelete, deletingId }: MemoryDataTableProps) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-40">
                   <DropdownMenuItem
+                    {...testId(`memory-delete-button-${memory.id}`)}
                     className="text-destructive focus:text-destructive"
                     onClick={() => onDelete(memory.id)}
                   >
@@ -182,6 +185,7 @@ function MemoryDataTable({ data, onDelete, deletingId }: MemoryDataTableProps) {
 
   return (
     <DataTable
+      {...testId("memory-list")}
       columns={columns}
       data={data}
       searchKey="content"
@@ -251,7 +255,7 @@ export function MemoryViewer() {
   }
 
   return (
-    <div className="space-y-4">
+    <div {...testId("memory-viewer")} className="space-y-4">
       <div className="flex justify-between items-center">
         <p className="text-sm text-muted-foreground">
           {t("memory_one", { count: memories.length })} {t("memory_stored")}
@@ -259,6 +263,7 @@ export function MemoryViewer() {
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button
+              {...testId("memory-clear-all-button")}
               variant="destructive"
               size="sm"
               disabled={clearMutation.isPending}
@@ -271,7 +276,7 @@ export function MemoryViewer() {
               {t("memory_clear_all")}
             </Button>
           </AlertDialogTrigger>
-          <AlertDialogContent>
+          <AlertDialogContent {...testId("memory-clear-dialog")}>
             <AlertDialogHeader>
               <AlertDialogTitle>{t("memory_clear_confirm")}</AlertDialogTitle>
               <AlertDialogDescription>
@@ -280,7 +285,10 @@ export function MemoryViewer() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>{t("com_cancel")}</AlertDialogCancel>
-              <AlertDialogAction onClick={handleClearAll}>
+              <AlertDialogAction
+                {...testId("memory-clear-confirm")}
+                onClick={handleClearAll}
+              >
                 {t("memory_clear_all")}
               </AlertDialogAction>
             </AlertDialogFooter>

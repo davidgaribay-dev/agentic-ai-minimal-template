@@ -131,5 +131,6 @@
   "email_new_account_email_label": "ইমেল:",
   "email_new_account_password_label": "পাসওয়ার্ড:",
   "email_new_account_change_password": "প্রথম লগইনের পরে আপনার পাসওয়ার্ড পরিবর্তন করুন।",
-  "email_new_account_button": "%{project_name}-এ যান"
+  "email_new_account_button": "%{project_name}-এ যান",
+  "email_new_account_link_trouble": "বোতামটি কাজ না করলে, এই লিঙ্কটি কপি করে আপনার ব্রাউজারে পেস্ট করুন:"
 }

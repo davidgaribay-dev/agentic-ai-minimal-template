@@ -110,7 +110,7 @@
 
   "email_reset_password_subject": "Password Reset Request - %{project_name}",
   "email_new_account_subject": "Welcome to %{project_name}",
-  "email_invitation_subject": "You've been invited to %{org_name}",
+  "email_invitation_subject": "You've been invited to %{org_name} - %{project_name}",
 
   "email_regards": "Best regards",
   "email_team": "The %{project_name} Team",
@@ -131,5 +131,42 @@
   "email_new_account_email_label": "Email:",
   "email_new_account_password_label": "Password:",
   "email_new_account_change_password": "Please change your password after your first login.",
-  "email_new_account_button": "Go to %{project_name}"
+  "email_new_account_button": "Go to %{project_name}",
+  "email_new_account_link_trouble": "If the button doesn't work, copy and paste this link into your browser:",
+
+  "email_verification_subject": "Verify your email - %{project_name}",
+  "email_verification_title": "Verify your email",
+  "email_verification_greeting": "Hi %{name},",
+  "email_verification_intro": "Enter this code to verify your email address and complete your registration:",
+  "email_verification_expires": "This code expires in %{minutes} minutes.",
+  "email_verification_no_request": "If you didn't create an account, no action is needed.",
+
+  "email_password_reset_subject": "Reset your password - %{project_name}",
+  "email_password_reset_title": "Reset your password",
+  "email_password_reset_greeting": "Hi %{name},",
+  "email_password_reset_intro": "We received a request to reset your password. Click the button below to create a new password:",
+  "email_password_reset_button": "Reset Password",
+  "email_password_reset_expires": "This link expires in %{hours} hours.",
+  "email_password_reset_no_request": "If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.",
+  "email_password_reset_link_trouble": "If the button doesn't work, copy and paste this link into your browser:",
+
+  "email_invitation_title": "You've been invited",
+  "email_invitation_intro": "%{inviter} has invited you to join %{org}.",
+  "email_invitation_team": "You'll be joining the %{team} team.",
+  "email_invitation_click_button": "Click the button below to accept your invitation:",
+  "email_invitation_accept_button": "Accept Invitation",
+  "email_invitation_or_code": "Or enter this code manually:",
+  "email_invitation_code_intro": "Use this code to accept your invitation:",
+  "email_invitation_expires": "This invitation expires in %{days} days.",
+  "email_invitation_no_request": "If you weren't expecting this invitation, you can safely ignore this email.",
+
+  "audit_email_sent": "Email sent",
+  "audit_email_failed": "Email failed to send",
+  "audit_email_verification_sent": "Email verification code sent",
+  "audit_email_verification_completed": "Email verified successfully",
+  "audit_email_verification_failed": "Email verification failed",
+  "audit_email_verification_resent": "Email verification code resent",
+  "audit_email_invitation_sent": "Invitation email sent",
+  "audit_email_password_reset_sent": "Password reset email sent",
+  "audit_admin_password_reset_sent": "Admin initiated password reset email"
 }

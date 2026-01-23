@@ -25,6 +25,7 @@ import {
   FileText,
   type LucideIcon,
 } from "lucide-react";
+import { testId } from "@/lib/test-id";
 import {
   Sidebar,
   SidebarContent,
@@ -36,6 +37,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { useWorkspaceSafe } from "@/lib/workspace";
 
 type SettingsSidebarProps = React.ComponentProps<typeof Sidebar>;
 
@@ -363,6 +365,7 @@ export function SettingsSidebar({ ...props }: SettingsSidebarProps) {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
+  const { currentTeam } = useWorkspaceSafe();
 
   const context = getSettingsContext(location.pathname);
   const activeTab = context.activeSection || getDefaultTab(context.type);
@@ -370,14 +373,16 @@ export function SettingsSidebar({ ...props }: SettingsSidebarProps) {
   const sections = getSettingsSections(context.type);
 
   const handleBackClick = () => {
-    if (context.type === "team" && context.teamId) {
-      // Navigate back to team chat
+    // Get team ID from context (team settings) or workspace (user/org settings)
+    const teamId = context.type === "team" ? context.teamId : currentTeam?.id;
+    if (teamId) {
       navigate({
         to: "/team/$teamId/chat",
-        params: { teamId: context.teamId },
+        params: { teamId },
       });
     } else {
-      navigate({ to: "/search" });
+      // Fallback to /chat which will redirect to the appropriate team
+      navigate({ to: "/chat" });
     }
   };
 
@@ -408,13 +413,19 @@ export function SettingsSidebar({ ...props }: SettingsSidebarProps) {
   };
 
   return (
-    <Sidebar collapsible="none" className="border-r" {...props}>
+    <Sidebar
+      collapsible="none"
+      className="border-r"
+      {...props}
+      {...testId("settings-sidebar")}
+    >
       <SidebarHeader className="px-2 py-2">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={handleBackClick}
               className="cursor-pointer"
+              {...testId("settings-sidebar-back")}
             >
               <ChevronLeft className="size-4" />
               <span>{getBackButtonText()}</span>
@@ -441,6 +452,7 @@ export function SettingsSidebar({ ...props }: SettingsSidebarProps) {
                         isActive={isActive}
                         onClick={() => handleNavClick(item.tab)}
                         className="cursor-pointer"
+                        {...testId(`settings-sidebar-item-${item.tab}`)}
                       >
                         <item.icon className="size-4" />
                         <span>{t(item.titleKey as never)}</span>

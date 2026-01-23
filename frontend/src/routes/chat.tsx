@@ -1,16 +1,11 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { useCallback, useRef, useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
-import { MessageSquareOff } from "lucide-react";
-
-import { Chat, type ChatHandle } from "@/components/chat";
-import { agentApi } from "@/lib/api";
-import { queryKeys } from "@/lib/queries";
-import { useChatSelection } from "@/lib/chat-store";
 import { useWorkspace } from "@/lib/workspace";
-import { useEffectiveSettings } from "@/lib/settings-context";
+import { testId } from "@/lib/test-id";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const chatSearchSchema = z.object({
   id: z.string().optional(),
@@ -18,132 +13,69 @@ const chatSearchSchema = z.object({
 
 export const Route = createFileRoute("/chat")({
   beforeLoad: ({ context }) => {
+    // Redirect unauthenticated users to login
     if (!context.auth.isAuthenticated && !context.auth.isLoading) {
       throw redirect({ to: "/login" });
     }
+
+    // Get the last selected team from localStorage
+    const teamId = localStorage.getItem("workspace_current_team_id");
+    if (teamId) {
+      throw redirect({ to: "/team/$teamId/chat", params: { teamId } });
+    }
+
+    // If no team in localStorage, render component to wait for workspace context
   },
-  component: ChatPage,
+  component: ChatRedirect,
   validateSearch: chatSearchSchema,
 });
 
-function ChatPage() {
+/**
+ * Temporary component that waits for workspace to load,
+ * then redirects to the team-based chat route.
+ */
+function ChatRedirect() {
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
-  const chatRef = useRef<ChatHandle>(null);
-  const { currentOrg, currentTeam } = useWorkspace();
-  const { id: conversationIdFromUrl } = Route.useSearch();
-  const effectiveSettings = useEffectiveSettings();
-
-  const {
-    selectedConversationId,
-    currentTitle,
-    setSelectedConversation,
-    setCurrentTitle,
-  } = useChatSelection();
-
-  const lastLoadedIdRef = useRef<string | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  const teamId = currentTeam?.id;
-  const orgId = currentOrg?.id;
+  const navigate = useNavigate();
+  const { currentTeam, isLoadingTeams, orgsError, teamsError } = useWorkspace();
 
   useEffect(() => {
-    if (conversationIdFromUrl === lastLoadedIdRef.current) {
-      return;
-    }
-
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-    }
-
-    if (!conversationIdFromUrl) {
-      if (lastLoadedIdRef.current) {
-        chatRef.current?.clearMessages();
-        lastLoadedIdRef.current = null;
-      }
-      return;
-    }
-
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
-
-    agentApi
-      .getHistory(conversationIdFromUrl)
-      .then((history) => {
-        if (abortController.signal.aborted) return;
-        chatRef.current?.loadConversation(conversationIdFromUrl, history);
-        // Only mark as loaded after successfully loading
-        lastLoadedIdRef.current = conversationIdFromUrl;
-      })
-      .catch((error) => {
-        if (error instanceof Error && error.name === "AbortError") return;
-        console.error("Failed to load conversation:", error);
-        lastLoadedIdRef.current = null;
+    if (!isLoadingTeams && currentTeam) {
+      // Store in localStorage for future redirects
+      localStorage.setItem("workspace_current_team_id", currentTeam.id);
+      navigate({
+        to: "/team/$teamId/chat",
+        params: { teamId: currentTeam.id },
       });
+    }
+  }, [currentTeam, isLoadingTeams, navigate]);
 
-    return () => {
-      abortController.abort();
-    };
-  }, [conversationIdFromUrl]);
-
-  const handleTitleUpdate = useCallback(
-    (_conversationId: string, title: string) => {
-      setCurrentTitle(title);
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.conversations.list(teamId),
-      });
-    },
-    [queryClient, setCurrentTitle, teamId],
-  );
-
-  const handleStreamEnd = useCallback(
-    (conversationId: string) => {
-      if (conversationId && conversationId !== selectedConversationId) {
-        setSelectedConversation(conversationId, currentTitle);
-      }
-    },
-    [selectedConversationId, currentTitle, setSelectedConversation],
-  );
-
-  if (!effectiveSettings.chat_enabled) {
-    const disabledBy = effectiveSettings.chat_disabled_by;
-    const message =
-      disabledBy === "org"
-        ? t("chat_disabled_by_org")
-        : disabledBy === "team"
-          ? t("chat_disabled_by_team")
-          : t("chat_disabled");
-
+  // Show error if workspace loading failed
+  const error = orgsError || teamsError;
+  if (error) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center max-w-md px-4">
-          <div className="flex justify-center mb-4">
-            <div className="flex size-16 items-center justify-center rounded-full bg-muted">
-              <MessageSquareOff className="size-8 text-muted-foreground" />
-            </div>
-          </div>
-          <h1 className="text-xl font-semibold mb-2">
-            {t("chat_unavailable")}
-          </h1>
-          <p className="text-muted-foreground">{message}</p>
-          <p className="text-sm text-muted-foreground mt-4">
-            {t("chat_contact_admin")}
-          </p>
-        </div>
+      <div
+        {...testId("chat-page")}
+        className="flex h-full items-center justify-center p-4"
+      >
+        <Alert variant="destructive" className="max-w-md">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{t("err_workspace_load")}</AlertDescription>
+        </Alert>
       </div>
     );
   }
 
+  // Show loading while waiting for workspace to initialize
   return (
-    <Chat
-      ref={chatRef}
-      instanceId="page"
-      organizationId={orgId}
-      teamId={teamId}
-      onTitleUpdate={handleTitleUpdate}
-      onStreamEnd={handleStreamEnd}
-      className="h-full border-0"
-    />
+    <div
+      {...testId("chat-page")}
+      className="flex h-full items-center justify-center"
+    >
+      <div role="status" aria-live="polite">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-foreground" />
+        <span className="sr-only">{t("com_loading")}</span>
+      </div>
+    </div>
   );
 }

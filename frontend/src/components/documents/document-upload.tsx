@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
+import { testId } from "@/lib/test-id";
 import { useUploadDocument } from "@/lib/queries";
 import { formatFileSize } from "@/lib/api/media";
 import type { DocumentScope } from "@/lib/api";
@@ -130,7 +131,7 @@ export function DocumentUpload({
   }, []);
 
   return (
-    <div className="space-y-4">
+    <div {...testId("document-upload")} className="space-y-4">
       <Card>
         <CardContent className="pt-6 space-y-6">
           {/* Only show scope selection when not using fixedScope and teamId is provided */}
@@ -140,11 +141,16 @@ export function DocumentUpload({
                 {t("docs_upload_title")}
               </Label>
               <RadioGroup
+                {...testId("document-scope-selector")}
                 value={scope}
                 onValueChange={(value) => setScope(value as DocumentScope)}
               >
                 <div className="flex items-start space-x-3 space-y-0">
-                  <RadioGroupItem value="team" id="scope-team" />
+                  <RadioGroupItem
+                    {...testId("document-scope-team")}
+                    value="team"
+                    id="scope-team"
+                  />
                   <div className="flex-1">
                     <Label
                       htmlFor="scope-team"
@@ -159,7 +165,11 @@ export function DocumentUpload({
                   </div>
                 </div>
                 <div className="flex items-start space-x-3 space-y-0">
-                  <RadioGroupItem value="user" id="scope-user" />
+                  <RadioGroupItem
+                    {...testId("document-scope-user")}
+                    value="user"
+                    id="scope-user"
+                  />
                   <div className="flex-1">
                     <Label
                       htmlFor="scope-user"
@@ -178,6 +188,7 @@ export function DocumentUpload({
           )}
 
           <div
+            {...testId("document-upload-dropzone")}
             className={cn(
               "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
               dragActive
@@ -198,6 +209,7 @@ export function DocumentUpload({
             </div>
 
             <input
+              {...testId("document-file-input")}
               type="file"
               multiple
               accept=".pdf,.txt,.md,.docx,.json,.yaml,.yml,.csv,.py,.js,.ts,.jsx,.tsx,.java,.cpp,.c,.h,.go,.rs,.rb,.php,.sh,.sql,.html,.css"
@@ -205,7 +217,11 @@ export function DocumentUpload({
               id="file-upload"
               onChange={handleChange}
             />
-            <Button asChild className="mt-4">
+            <Button
+              {...testId("document-upload-button")}
+              asChild
+              className="mt-4"
+            >
               <label htmlFor="file-upload" className="cursor-pointer">
                 {t("docs_select_files")}
               </label>
@@ -215,9 +231,12 @@ export function DocumentUpload({
       </Card>
 
       {files.length > 0 && (
-        <div className="space-y-2">
+        <div {...testId("document-upload-progress-list")} className="space-y-2">
           {files.map(({ file, progress, error }) => (
-            <Card key={file.name}>
+            <Card
+              key={file.name}
+              {...testId(`document-upload-progress-${file.name}`)}
+            >
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
@@ -232,6 +251,7 @@ export function DocumentUpload({
                         </p>
                       </div>
                       <Button
+                        {...testId(`document-upload-remove-${file.name}`)}
                         variant="ghost"
                         size="sm"
                         className="h-6 w-6 p-0 flex-shrink-0"
@@ -242,13 +262,18 @@ export function DocumentUpload({
                     </div>
 
                     {error ? (
-                      <Alert variant="destructive" className="py-2">
+                      <Alert
+                        {...testId(`document-upload-error-${file.name}`)}
+                        variant="destructive"
+                        className="py-2"
+                      >
                         <AlertDescription className="text-xs">
                           {error}
                         </AlertDescription>
                       </Alert>
                     ) : (
                       <Progress
+                        {...testId(`document-upload-progress-bar-${file.name}`)}
                         value={uploadMutation.isPending ? 50 : progress}
                         className="h-1.5"
                       />

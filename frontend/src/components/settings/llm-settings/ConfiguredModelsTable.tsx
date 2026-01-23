@@ -47,6 +47,7 @@ import { Slider } from "@/components/ui/slider";
 import { DataTable } from "@/components/ui/data-table";
 import { cn } from "@/lib/utils";
 import type { BuiltInModels } from "@/lib/api";
+import { testId } from "@/lib/test-id";
 
 // Provider styling
 const PROVIDER_STYLES: Record<
@@ -248,12 +249,20 @@ export function ConfiguredModelsTable({
             <div className="flex justify-end">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="size-7">
+                  <Button
+                    {...testId(`model-actions-button-${model.id}`)}
+                    variant="ghost"
+                    size="icon"
+                    className="size-7"
+                  >
                     <MoreHorizontal className="size-3.5" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-40">
-                  <DropdownMenuItem onClick={() => handleOpenEdit(model)}>
+                  <DropdownMenuItem
+                    {...testId(`model-edit-button-${model.id}`)}
+                    onClick={() => handleOpenEdit(model)}
+                  >
                     <Pencil className="mr-2 size-3.5" />
                     {t("llm_edit_model")}
                   </DropdownMenuItem>
@@ -261,6 +270,7 @@ export function ConfiguredModelsTable({
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
+                        {...testId(`model-delete-button-${model.id}`)}
                         className="text-destructive focus:text-destructive"
                         onClick={() => setDeletingModel(model)}
                       >
@@ -290,6 +300,7 @@ export function ConfiguredModelsTable({
   return (
     <>
       <DataTable
+        {...testId("configured-models-table")}
         columns={columns}
         data={configuredModels}
         searchKey="modelName"
@@ -301,7 +312,7 @@ export function ConfiguredModelsTable({
         open={!!editingModel}
         onOpenChange={(open) => !open && setEditingModel(null)}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent {...testId("edit-model-dialog")} className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{t("llm_edit_model")}</DialogTitle>
             <DialogDescription>
@@ -340,6 +351,7 @@ export function ConfiguredModelsTable({
               <div className="space-y-2">
                 <Label htmlFor="displayName">{t("llm_display_name")}</Label>
                 <Input
+                  {...testId("edit-model-display-name-input")}
                   id="displayName"
                   value={editDisplayName}
                   onChange={(e) => setEditDisplayName(e.target.value)}
@@ -359,6 +371,7 @@ export function ConfiguredModelsTable({
                   </span>
                 </div>
                 <Slider
+                  {...testId("edit-model-temperature-slider")}
                   value={[editTemperature]}
                   onValueChange={(values) => setEditTemperature(values[0])}
                   min={0}
@@ -374,10 +387,18 @@ export function ConfiguredModelsTable({
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingModel(null)}>
+            <Button
+              {...testId("edit-model-cancel")}
+              variant="outline"
+              onClick={() => setEditingModel(null)}
+            >
               {t("com_cancel")}
             </Button>
-            <Button onClick={handleSaveEdit} disabled={isUpdating}>
+            <Button
+              {...testId("edit-model-submit")}
+              onClick={handleSaveEdit}
+              disabled={isUpdating}
+            >
               {isUpdating && <Loader2 className="mr-2 size-4 animate-spin" />}
               {t("com_save")}
             </Button>
@@ -390,7 +411,7 @@ export function ConfiguredModelsTable({
         open={!!deletingModel}
         onOpenChange={(open) => !open && setDeletingModel(null)}
       >
-        <AlertDialogContent>
+        <AlertDialogContent {...testId("delete-model-alert-dialog")}>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("llm_delete_model_title")}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -400,8 +421,11 @@ export function ConfiguredModelsTable({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("com_cancel")}</AlertDialogCancel>
+            <AlertDialogCancel {...testId("delete-model-cancel")}>
+              {t("com_cancel")}
+            </AlertDialogCancel>
             <AlertDialogAction
+              {...testId("delete-model-confirm")}
               onClick={handleConfirmDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={isUpdating}

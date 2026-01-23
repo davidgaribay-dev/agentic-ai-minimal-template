@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check } from "lucide-react";
 import type { ThemeColors } from "@/lib/api";
+import { testId } from "@/lib/test-id";
 
 interface ThemePreviewProps {
   themeId: string;
@@ -23,12 +24,14 @@ export function ThemePreview({
   const { t } = useTranslation();
   return (
     <button
+      {...testId("theme-preview")}
       onClick={onSelect}
       disabled={disabled}
       className="relative group w-full text-left"
       type="button"
     >
       <Card
+        {...testId("theme-preview-card")}
         className={`transition-all ${
           isSelected
             ? "ring-2 ring-primary shadow-md"
@@ -39,7 +42,10 @@ export function ThemePreview({
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-medium text-sm">{themeName}</h3>
             {isSelected && (
-              <div className="bg-primary text-primary-foreground rounded-full p-1">
+              <div
+                {...testId("theme-preview-selected-check")}
+                className="bg-primary text-primary-foreground rounded-full p-1"
+              >
                 <Check className="h-3 w-3" />
               </div>
             )}
@@ -65,7 +71,10 @@ export function ThemePreview({
               </div>
             </div>
 
-            <div className="grid grid-cols-5 gap-1">
+            <div
+              {...testId("theme-preview-swatches")}
+              className="grid grid-cols-5 gap-1"
+            >
               <div
                 className="h-6 rounded border"
                 style={{
@@ -146,10 +155,11 @@ export function ThemeModeSelector({
   ];
 
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div {...testId("theme-mode-selector")} className="grid grid-cols-3 gap-3">
       {themeModeOptions.map((option) => (
         <button
           key={option.value}
+          {...testId(`theme-mode-${option.value}-button`)}
           type="button"
           onClick={() => onChange(option.value)}
           disabled={disabled}
@@ -192,8 +202,15 @@ export function ThemeGrid({
   };
 
   return (
-    <div>
-      {title && <h3 className="font-medium text-sm mb-3">{title}</h3>}
+    <div {...testId("theme-grid")}>
+      {title && (
+        <h3
+          {...testId("theme-grid-title")}
+          className="font-medium text-sm mb-3"
+        >
+          {title}
+        </h3>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {Object.entries(themes).map(([themeId, colors]) => (
           <ThemePreview

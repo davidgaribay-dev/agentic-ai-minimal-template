@@ -3,6 +3,7 @@ import { useState, useCallback, useRef, useEffect, memo } from "react";
 import { useTranslation } from "react-i18next";
 import { Check, Copy, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { testId } from "@/lib/test-id";
 
 interface TableBlockProps {
   children: React.ReactNode;
@@ -166,6 +167,7 @@ export const TableBlock = memo(function TableBlock({
 
   return (
     <div
+      {...testId("table-block")}
       className={cn(
         "group/table my-4 w-full overflow-hidden rounded-xl border border-border",
         className,

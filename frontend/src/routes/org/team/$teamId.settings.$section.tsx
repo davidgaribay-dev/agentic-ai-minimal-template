@@ -15,6 +15,7 @@ import {
   Plug,
   AlertTriangle,
   Key,
+  KeyRound,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useWorkspace, useOrganizationMembers } from "@/lib/workspace";
@@ -90,6 +91,7 @@ import {
 import { isValidImageUrl, getInitials } from "@/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/ui/data-table";
+import { testId } from "@/lib/test-id";
 
 const VALID_SECTIONS = [
   "general",
@@ -188,7 +190,10 @@ function TeamSettingsPage() {
           <SettingsPageLayout title={t("team_settings_general" as never)}>
             {canManageTeam && (
               <SettingsCard>
-                <div className="p-4">
+                <div
+                  {...testId("team-settings-section-general")}
+                  className="p-4"
+                >
                   <TeamDetailsSection
                     orgId={currentOrg.id}
                     team={team}
@@ -220,16 +225,18 @@ function TeamSettingsPage() {
       case "people":
         return (
           <SettingsPageLayout title={t("org_settings_people" as never)}>
-            <MembersSection
-              orgId={currentOrg.id}
-              teamId={team.id}
-              members={teamMembers}
-              isLoading={isLoadingMembers}
-              canManage={canManageTeam}
-              isOrgAdmin={isOrgAdmin}
-              currentUserId={user?.id}
-              onUpdate={refresh}
-            />
+            <div {...testId("team-settings-section-people")}>
+              <MembersSection
+                orgId={currentOrg.id}
+                teamId={team.id}
+                members={teamMembers}
+                isLoading={isLoadingMembers}
+                canManage={canManageTeam}
+                isOrgAdmin={isOrgAdmin}
+                currentUserId={user?.id}
+                onUpdate={refresh}
+              />
+            </div>
           </SettingsPageLayout>
         );
       case "system-prompts":
@@ -362,7 +369,10 @@ function TeamSettingsPage() {
   };
 
   return (
-    <div className="bg-background min-h-screen">
+    <div
+      {...testId("team-settings-page")}
+      className="bg-background min-h-screen"
+    >
       <div className="mx-auto max-w-4xl px-4 md:px-6 py-4 md:py-8">
         {renderContent()}
       </div>
@@ -451,6 +461,20 @@ function MembersSection({
         queryKey: ["team-members", orgId, teamId],
       });
       onUpdate();
+    },
+  });
+
+  const [passwordResetSuccess, setPasswordResetSuccess] = useState<
+    string | null
+  >(null);
+
+  const sendPasswordResetMutation = useMutation({
+    mutationFn: (memberId: string) =>
+      teamsApi.sendMemberPasswordReset(orgId, teamId, memberId),
+    onSuccess: (_, memberId) => {
+      const member = members.find((m) => m.id === memberId);
+      setPasswordResetSuccess(member?.user_email || null);
+      setTimeout(() => setPasswordResetSuccess(null), 5000);
     },
   });
 
@@ -565,7 +589,12 @@ function MembersSection({
             <div className="flex justify-end">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="size-7">
+                  <Button
+                    {...testId(`team-member-actions-${member.id}`)}
+                    variant="ghost"
+                    size="icon"
+                    className="size-7"
+                  >
                     <MoreHorizontal className="size-3.5" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -615,6 +644,44 @@ function MembersSection({
                     <AlertDialogTrigger asChild>
                       <DropdownMenuItem
                         onSelect={(e) => e.preventDefault()}
+                        disabled={sendPasswordResetMutation.isPending}
+                      >
+                        {sendPasswordResetMutation.isPending ? (
+                          <Loader2 className="mr-2 size-3.5 animate-spin" />
+                        ) : (
+                          <KeyRound className="mr-2 size-3.5" />
+                        )}
+                        {t("org_send_password_reset")}
+                      </DropdownMenuItem>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          {t("org_send_password_reset_title")}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {t("org_send_password_reset_confirm", {
+                            email: member.user_email,
+                          })}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>{t("com_cancel")}</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() =>
+                            sendPasswordResetMutation.mutate(member.id)
+                          }
+                        >
+                          {t("org_send_password_reset")}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                  <DropdownMenuSeparator />
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <DropdownMenuItem
+                        onSelect={(e) => e.preventDefault()}
                         className="text-destructive focus:text-destructive"
                       >
                         <UserMinus className="mr-2 size-3.5" />
@@ -656,6 +723,7 @@ function MembersSection({
       isOrgAdmin,
       updateRoleMutation,
       removeMemberMutation,
+      sendPasswordResetMutation,
       t,
       getRoleBadge,
     ],
@@ -676,8 +744,15 @@ function MembersSection({
   );
 
   return (
-    <SettingsCard>
+    <SettingsCard {...testId("team-members-section")}>
       <div className="p-4 space-y-4">
+        {passwordResetSuccess && (
+          <div className="rounded-lg border border-green-500/20 bg-green-500/10 p-3 text-sm text-green-600 dark:text-green-400">
+            {t("org_password_reset_sent_success", {
+              email: passwordResetSuccess,
+            })}
+          </div>
+        )}
         <div className="flex items-center justify-between py-2">
           <div className="flex items-center gap-2 text-sm font-medium">
             <Users className="size-4" />
@@ -694,12 +769,20 @@ function MembersSection({
               }
             >
               <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-7 text-xs">
+                <Button
+                  {...testId("add-team-member-trigger")}
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs"
+                >
                   <Plus className="size-3 mr-1" />
                   {t("team_add_member")}
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
+              <DialogContent
+                {...testId("add-team-member-dialog")}
+                className="sm:max-w-md"
+              >
                 <DialogHeader>
                   <DialogTitle className="text-base">
                     {t("team_add_member")}
@@ -715,7 +798,10 @@ function MembersSection({
                       value={selectedUserId}
                       onValueChange={setSelectedUserId}
                     >
-                      <SelectTrigger className="h-8 text-sm">
+                      <SelectTrigger
+                        {...testId("member-select-trigger")}
+                        className="h-8 text-sm"
+                      >
                         <SelectValue placeholder={t("team_choose_member")} />
                       </SelectTrigger>
                       <SelectContent>
@@ -736,7 +822,10 @@ function MembersSection({
                       value={selectedRole}
                       onValueChange={(v) => setSelectedRole(v as TeamRole)}
                     >
-                      <SelectTrigger className="h-8 text-sm">
+                      <SelectTrigger
+                        {...testId("role-select-trigger")}
+                        className="h-8 text-sm"
+                      >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -759,6 +848,7 @@ function MembersSection({
                     {t("com_cancel")}
                   </Button>
                   <Button
+                    {...testId("add-member-submit")}
                     size="sm"
                     onClick={handleAddMember}
                     disabled={!selectedUserId || addMemberMutation.isPending}
@@ -1066,7 +1156,10 @@ function AccessDeniedSection() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
+    <div
+      {...testId("access-denied-section")}
+      className="flex flex-col items-center justify-center py-12 text-center"
+    >
       <div className="flex size-14 items-center justify-center rounded-full bg-destructive/10 mb-4">
         <AlertTriangle className="size-7 text-destructive" />
       </div>
@@ -1076,7 +1169,11 @@ function AccessDeniedSection() {
       <p className="text-sm text-muted-foreground mb-6 max-w-sm">
         {t("error_no_permission_team_settings" as never)}
       </p>
-      <Button size="sm" onClick={() => navigate({ to: "/" })}>
+      <Button
+        {...testId("access-denied-go-home")}
+        size="sm"
+        onClick={() => navigate({ to: "/" })}
+      >
         {t("error_go_home" as never)}
       </Button>
     </div>

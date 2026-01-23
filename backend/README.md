@@ -51,8 +51,14 @@ uv run bandit -r src/backend
 #### Pytest - Testing with Coverage
 
 ```bash
-# Run tests with coverage report
+# Run all tests
 uv run pytest
+
+# Run unit tests only (fast, no DB required)
+uv run pytest -m unit
+
+# Run integration tests only (requires DB)
+uv run pytest -m integration
 
 # Run with detailed coverage
 uv run pytest --cov --cov-report=html
@@ -60,6 +66,8 @@ uv run pytest --cov --cov-report=html
 # View coverage report
 open htmlcov/index.html
 ```
+
+**Note**: E2E/Playwright tests are in the root `tests/` folder, not here. Run with `cd ../tests && npm test`.
 
 ### Pre-commit Hooks
 

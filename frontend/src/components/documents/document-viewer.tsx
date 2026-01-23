@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { testId } from "@/lib/test-id";
 import { documentsApi } from "@/lib/api";
 import { useTheme } from "@/components/theme-provider";
 
@@ -180,21 +181,34 @@ export function DocumentViewer({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!max-w-6xl w-[90vw] h-[80vh] flex flex-col p-0">
+      <DialogContent
+        className="!max-w-6xl w-[90vw] h-[80vh] flex flex-col p-0"
+        {...testId("document-viewer")}
+      >
         {/* Header */}
-        <DialogHeader className="px-4 py-3 border-b flex-shrink-0">
+        <DialogHeader
+          {...testId("document-viewer-header")}
+          className="px-4 py-3 border-b flex-shrink-0"
+        >
           <div className="flex items-center justify-between pr-8">
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-muted-foreground" />
-              <DialogTitle className="text-base font-semibold">
+              <DialogTitle
+                {...testId("document-viewer-title")}
+                className="text-base font-semibold"
+              >
                 {filename}
               </DialogTitle>
-              <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+              <span
+                {...testId("document-viewer-filetype")}
+                className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded"
+              >
                 {fileType.toUpperCase()}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <Button
+                {...testId("document-viewer-copy-button")}
                 variant="ghost"
                 size="sm"
                 onClick={handleCopy}
@@ -215,13 +229,22 @@ export function DocumentViewer({
         </DialogHeader>
 
         {/* Content */}
-        <div className="flex-1 overflow-hidden">
+        <div
+          {...testId("document-viewer-content")}
+          className="flex-1 overflow-hidden"
+        >
           {isLoading ? (
-            <div className="flex items-center justify-center h-full">
+            <div
+              {...testId("document-viewer-loading")}
+              className="flex items-center justify-center h-full"
+            >
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : error ? (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+            <div
+              {...testId("document-viewer-error")}
+              className="flex flex-col items-center justify-center h-full text-muted-foreground"
+            >
               <FileText className="h-12 w-12 mb-2 opacity-50" />
               <p>{t("docs_load_error")}</p>
               <p className="text-sm">
@@ -251,7 +274,10 @@ export function DocumentViewer({
               }}
             />
           ) : (
-            <div className="h-full overflow-auto p-4">
+            <div
+              {...testId("document-viewer-text-content")}
+              className="h-full overflow-auto p-4"
+            >
               <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed">
                 {content}
               </pre>

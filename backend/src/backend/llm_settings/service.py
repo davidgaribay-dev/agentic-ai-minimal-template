@@ -10,6 +10,7 @@ import httpx
 from sqlmodel import Session, select
 
 from backend.core.cache import request_cached_sync
+from backend.core.exceptions import ResourceNotFoundError
 from backend.core.secrets import get_secrets_service
 from backend.llm_settings.models import (
     BUILT_IN_MODELS,
@@ -26,6 +27,7 @@ from backend.llm_settings.models import (
     UserLLMSettings,
     UserLLMSettingsUpdate,
 )
+from backend.teams.models import Team
 
 # Default values
 DEFAULT_PROVIDER = "anthropic"
@@ -126,6 +128,11 @@ def get_or_create_team_llm_settings(
     settings = session.exec(statement).first()
 
     if not settings:
+        # Verify team exists before creating settings
+        team = session.get(Team, team_id)
+        if not team:
+            raise ResourceNotFoundError("Team", str(team_id))
+
         settings = TeamLLMSettings(
             team_id=team_id,
             default_provider=None,  # Inherit from org

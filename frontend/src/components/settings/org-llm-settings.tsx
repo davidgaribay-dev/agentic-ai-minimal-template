@@ -21,6 +21,7 @@ import {
   ProviderApiKeysTable,
 } from "./llm-settings";
 import { SettingsCard } from "./settings-layout";
+import { testId } from "@/lib/test-id";
 
 interface OrgLLMSettingsProps {
   orgId: string;
@@ -110,7 +111,7 @@ export function OrgLLMSettings({ orgId }: OrgLLMSettingsProps) {
   ).length;
 
   return (
-    <div className="space-y-4">
+    <div {...testId("org-llm-settings")} className="space-y-4">
       {/* Models Section */}
       <SettingsCard>
         <div className="p-4 space-y-4">

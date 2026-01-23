@@ -19,6 +19,7 @@ import {
   usePredefinedThemes,
 } from "@/lib/queries";
 import type { OrganizationThemeSettingsUpdate } from "@/lib/api";
+import { testId } from "@/lib/test-id";
 
 interface OrgThemeSettingsProps {
   orgId: string;
@@ -176,7 +177,7 @@ export function OrgThemeSettings({ orgId }: OrgThemeSettingsProps) {
   );
 
   return (
-    <div className="space-y-6">
+    <div {...testId("org-theme-settings")} className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>{t("theme_customization")}</CardTitle>
@@ -193,6 +194,7 @@ export function OrgThemeSettings({ orgId }: OrgThemeSettingsProps) {
               </div>
             </div>
             <Switch
+              {...testId("org-theme-customization-switch")}
               id="theme-customization"
               checked={themeCustomizationEnabled}
               onCheckedChange={setThemeCustomizationEnabled}
@@ -209,6 +211,7 @@ export function OrgThemeSettings({ orgId }: OrgThemeSettingsProps) {
               </div>
             </div>
             <Switch
+              {...testId("org-theme-team-switch")}
               id="team-customization"
               checked={allowTeamCustomization}
               onCheckedChange={setAllowTeamCustomization}
@@ -226,6 +229,7 @@ export function OrgThemeSettings({ orgId }: OrgThemeSettingsProps) {
               </div>
             </div>
             <Switch
+              {...testId("org-theme-user-switch")}
               id="user-customization"
               checked={allowUserCustomization}
               onCheckedChange={setAllowUserCustomization}
@@ -276,13 +280,18 @@ export function OrgThemeSettings({ orgId }: OrgThemeSettingsProps) {
       {hasChanges && (
         <div className="flex justify-end gap-2 sticky bottom-4 bg-background/95 backdrop-blur p-4 border rounded-lg shadow-lg">
           <Button
+            {...testId("org-theme-reset")}
             variant="outline"
             onClick={handleReset}
             disabled={updateMutation.isPending}
           >
             {t("com_reset")}
           </Button>
-          <Button onClick={handleSave} disabled={updateMutation.isPending}>
+          <Button
+            {...testId("org-theme-save")}
+            onClick={handleSave}
+            disabled={updateMutation.isPending}
+          >
             {updateMutation.isPending && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             )}

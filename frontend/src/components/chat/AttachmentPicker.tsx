@@ -31,6 +31,9 @@ import {
 const INLINE_ACCEPT =
   "image/jpeg,image/png,image/gif,image/webp,application/pdf,text/plain,text/markdown,text/csv";
 
+/** Delay before triggering file input to ensure popover closes cleanly */
+const FILE_PICKER_DEBOUNCE_MS = 100;
+
 /** Get accept string for RAG uploads based on allowed file types */
 function getRAGAccept(allowedTypes: string[]): string {
   const mimeMap: Record<string, string> = {
@@ -116,7 +119,7 @@ export function AttachmentPicker({
     setOpen(false);
     setTimeout(() => {
       inlineInputRef.current?.click();
-    }, 100);
+    }, FILE_PICKER_DEBOUNCE_MS);
   }, []);
 
   const handleRAGClick = useCallback((e: React.MouseEvent) => {
@@ -126,16 +129,12 @@ export function AttachmentPicker({
     setOpen(false);
     setTimeout(() => {
       ragInputRef.current?.click();
-    }, 100);
+    }, FILE_PICKER_DEBOUNCE_MS);
   }, []);
 
   const handleInlineChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files;
-      console.log(
-        "[AttachmentPicker] handleInlineChange called",
-        files?.length,
-      );
       if (files && files.length > 0) {
         onInlineSelect(files);
       }
@@ -147,7 +146,6 @@ export function AttachmentPicker({
   const handleRAGChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files;
-      console.log("[AttachmentPicker] handleRAGChange called", files?.length);
       if (files && files.length > 0) {
         onRAGSelect(files);
       }
@@ -193,7 +191,7 @@ export function AttachmentPicker({
             <TooltipTrigger asChild>
               <PopoverTrigger asChild>
                 <Button
-                  {...testId("attachment-picker-button")}
+                  {...testId("attachment-picker-trigger")}
                   variant="ghost"
                   size="icon"
                   disabled={disabled}
@@ -211,6 +209,7 @@ export function AttachmentPicker({
         </TooltipProvider>
 
         <PopoverContent
+          {...testId("attachment-picker-popover")}
           className="w-[360px] max-w-[calc(100vw-2rem)] p-0"
           align="start"
           side="top"
@@ -229,7 +228,7 @@ export function AttachmentPicker({
             <div className="p-2">
               {/* Inline attachment option */}
               <button
-                {...testId("attachment-picker-inline")}
+                {...testId("attachment-picker-inline-item")}
                 type="button"
                 onClick={handleInlineClick}
                 className={cn(
@@ -260,7 +259,7 @@ export function AttachmentPicker({
                 </div>
               ) : ragEnabled ? (
                 <button
-                  {...testId("attachment-picker-rag")}
+                  {...testId("attachment-picker-knowledge-item")}
                   type="button"
                   onClick={handleRAGClick}
                   className={cn(

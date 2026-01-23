@@ -22,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useWorkspace } from "@/lib/workspace";
 import { CreateTeamDialog } from "@/components/create-team-dialog";
 import { cn, isValidImageUrl, getInitials } from "@/lib/utils";
+import { testId } from "@/lib/test-id";
 
 export function WorkspaceSwitcher() {
   const { t } = useTranslation();
@@ -54,7 +55,12 @@ export function WorkspaceSwitcher() {
     <>
       <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="gap-2 max-w-[200px]">
+          <Button
+            {...testId("workspace-switcher-trigger")}
+            variant="ghost"
+            size="sm"
+            className="gap-2 max-w-[200px]"
+          >
             {currentTeam && isValidImageUrl(currentTeam.logo_url) ? (
               <Avatar className="h-4 w-4 shrink-0">
                 <AvatarImage
@@ -77,7 +83,11 @@ export function WorkspaceSwitcher() {
             <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-[240px]">
+        <DropdownMenuContent
+          align="start"
+          className="w-[240px]"
+          {...testId("workspace-switcher-content")}
+        >
           <DropdownMenuLabel>
             {t("team_teams_in", { org: currentOrg.name })}
           </DropdownMenuLabel>
@@ -88,6 +98,7 @@ export function WorkspaceSwitcher() {
           ) : (
             <>
               <DropdownMenuItem
+                {...testId("workspace-switcher-all-teams")}
                 onClick={() => {
                   switchTeam(null);
                   setOpen(false);
@@ -102,6 +113,7 @@ export function WorkspaceSwitcher() {
               {teams.map((team) => (
                 <DropdownMenuItem
                   key={team.id}
+                  {...testId(`workspace-switcher-team-${team.id}`)}
                   onClick={() => {
                     switchTeam(team.id);
                     setOpen(false);
@@ -140,6 +152,7 @@ export function WorkspaceSwitcher() {
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem
+                {...testId("workspace-switcher-create-team")}
                 onClick={() => {
                   setOpen(false);
                   setCreateTeamOpen(true);
@@ -189,7 +202,11 @@ export function WorkspaceSwitcherCompact() {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon">
+          <Button
+            variant="ghost"
+            size="icon"
+            {...testId("workspace-switcher-compact-trigger")}
+          >
             {currentTeam && isValidImageUrl(currentTeam.logo_url) ? (
               <Avatar className="h-5 w-5">
                 <AvatarImage
@@ -205,7 +222,10 @@ export function WorkspaceSwitcherCompact() {
             )}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
+        <DropdownMenuContent
+          align="start"
+          {...testId("workspace-switcher-compact-content")}
+        >
           <DropdownMenuLabel className="flex items-center gap-2">
             {currentTeam && isValidImageUrl(currentTeam.logo_url) && (
               <Avatar className="h-4 w-4">
@@ -231,6 +251,7 @@ export function WorkspaceSwitcherCompact() {
           ) : (
             <>
               <DropdownMenuItem
+                {...testId("workspace-switcher-compact-all-teams")}
                 onClick={() => switchTeam(null)}
                 className={cn("gap-2", !currentTeam && "bg-accent")}
               >
@@ -241,6 +262,7 @@ export function WorkspaceSwitcherCompact() {
               {teams.map((team) => (
                 <DropdownMenuItem
                   key={team.id}
+                  {...testId(`workspace-switcher-compact-team-${team.id}`)}
                   onClick={() => switchTeam(team.id)}
                   className={cn(
                     "gap-2",
@@ -269,6 +291,7 @@ export function WorkspaceSwitcherCompact() {
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem
+                {...testId("workspace-switcher-compact-create-team")}
                 onClick={() => setCreateTeamOpen(true)}
                 className="gap-2"
               >

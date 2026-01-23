@@ -2,6 +2,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, ClassVar
 import uuid
 
+from sqlalchemy import UniqueConstraint
 from sqlmodel import Field, Relationship, SQLModel
 
 from backend.core.base_models import (
@@ -140,9 +141,12 @@ class TeamMember(TeamMemberBase, TimestampedTable, table=True):
     team: Team = Relationship(back_populates="members")
     org_member: "OrganizationMember" = Relationship(back_populates="team_memberships")
 
-    class Config:
-        # Unique constraint: org member can only be member of team once
-        table_args: ClassVar = {"unique_constraint": ["team_id", "org_member_id"]}
+    # Unique constraint: org member can only be member of team once
+    __table_args__: ClassVar = (
+        UniqueConstraint(
+            "team_id", "org_member_id", name="uq_team_member_team_org_member"
+        ),
+    )
 
 
 class TeamMemberCreate(SQLModel):

@@ -21,6 +21,7 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { PanelRight, PanelLeft } from "lucide-react";
 import { useIsMobile } from "@/hooks";
 import type { RouterContext } from "@/lib/router-context";
+import { testId } from "@/lib/test-id";
 
 /** Check if current path is a settings page */
 function isSettingsPage(pathname: string): boolean {
@@ -80,6 +81,7 @@ function DesktopLayout() {
 
   return (
     <div
+      {...testId("app-root-desktop")}
       className="hidden md:grid h-screen w-screen overflow-hidden"
       style={{
         gridTemplateColumns: `${sidebarWidth} 1fr ${rightPanelWidth}`,
@@ -89,7 +91,10 @@ function DesktopLayout() {
     >
       {onSettingsPage ? <SettingsSidebar /> : <AppSidebar />}
 
-      <main className="overflow-auto bg-background border-0">
+      <main
+        {...testId("root-outlet-desktop")}
+        className="overflow-auto bg-background border-0"
+      >
         <Outlet />
       </main>
 
@@ -124,7 +129,10 @@ function MobileLayout() {
   const onSettingsPage = isSettingsPage(location.pathname);
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden md:hidden">
+    <div
+      {...testId("app-root-mobile")}
+      className="flex flex-col h-screen w-screen overflow-hidden md:hidden"
+    >
       {/* Mobile sidebar (off-canvas drawer) */}
       {onSettingsPage ? <SettingsSidebar /> : <AppSidebar />}
 
@@ -132,7 +140,10 @@ function MobileLayout() {
       <MobileSidebarToggle />
 
       {/* Main content area - pt-14 reserves space for floating toggle */}
-      <main className="flex-1 overflow-auto bg-background pt-14">
+      <main
+        {...testId("root-outlet-mobile")}
+        className="flex-1 overflow-auto bg-background pt-14"
+      >
         <Outlet />
       </main>
     </div>
@@ -191,7 +202,10 @@ function RootComponent() {
 function NotFoundComponent() {
   const { t } = useTranslation();
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4">
+    <div
+      {...testId("not-found-page")}
+      className="flex min-h-screen flex-col items-center justify-center gap-4"
+    >
       <h1 className="text-4xl font-bold">404</h1>
       <p className="text-muted-foreground">{t("page_not_found")}</p>
       <Link to="/" className="text-primary hover:underline">

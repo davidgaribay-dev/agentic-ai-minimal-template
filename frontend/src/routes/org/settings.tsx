@@ -1,4 +1,5 @@
 import { createFileRoute, redirect, Outlet } from "@tanstack/react-router";
+import { testId } from "@/lib/test-id";
 
 /**
  * Layout route for /org/settings.
@@ -15,5 +16,9 @@ export const Route = createFileRoute("/org/settings")({
 
 /** Layout component that renders child routes */
 function OrgSettingsLayout() {
-  return <Outlet />;
+  return (
+    <div {...testId("org-settings-layout")}>
+      <Outlet />
+    </div>
+  );
 }

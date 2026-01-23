@@ -76,11 +76,15 @@ export interface UserLLMSettings {
   updated_at: string;
 }
 
-export interface OrganizationLLMSettingsUpdate {
-  default_provider?: string;
-  default_model?: string;
+/** Common update fields shared between org and team levels */
+export interface LLMSettingsUpdateBase {
+  default_provider?: string | null;
+  default_model?: string | null;
+  default_temperature?: number | null;
+}
+
+export interface OrganizationLLMSettingsUpdate extends LLMSettingsUpdateBase {
   default_model_display_name?: string | null;
-  default_temperature?: number;
   default_max_tokens?: number | null;
   default_top_p?: number;
   fallback_enabled?: boolean;
@@ -92,10 +96,7 @@ export interface OrganizationLLMSettingsUpdate {
   disabled_models?: string[];
 }
 
-export interface TeamLLMSettingsUpdate {
-  default_provider?: string | null;
-  default_model?: string | null;
-  default_temperature?: number | null;
+export interface TeamLLMSettingsUpdate extends LLMSettingsUpdateBase {
   default_max_tokens?: number | null;
   allow_user_customization?: boolean;
   disabled_models?: string[];

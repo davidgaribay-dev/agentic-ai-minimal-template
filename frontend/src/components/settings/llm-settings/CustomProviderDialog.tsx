@@ -38,6 +38,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { SettingsCard } from "../settings-layout";
+import { testId } from "@/lib/test-id";
 
 interface CustomProviderDialogProps {
   orgId: string;
@@ -158,7 +159,10 @@ export function CustomProviderDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent
+        {...testId("custom-provider-dialog")}
+        className="sm:max-w-[500px]"
+      >
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>
@@ -174,6 +178,7 @@ export function CustomProviderDialog({
               <Label htmlFor="provider-name">{t("llm_provider_name")}</Label>
               <Input
                 id="provider-name"
+                {...testId("custom-provider-name-input")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Ollama, LiteLLM, etc."
@@ -257,7 +262,11 @@ export function CustomProviderDialog({
             >
               {t("com_cancel")}
             </Button>
-            <Button type="submit" disabled={!canSubmit}>
+            <Button
+              type="submit"
+              {...testId("custom-provider-submit")}
+              disabled={!canSubmit}
+            >
               {isSubmitting && <Loader2 className="size-4 mr-2 animate-spin" />}
               {isEditing ? t("com_save") : t("com_create")}
             </Button>
@@ -374,7 +383,7 @@ export function CustomProviderList({
                     <Trash2 className="size-4" />
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent {...testId("delete-provider-alert-dialog")}>
                   <AlertDialogHeader>
                     <AlertDialogTitle>
                       {t("llm_delete_provider_title")}
@@ -384,8 +393,11 @@ export function CustomProviderList({
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>{t("com_cancel")}</AlertDialogCancel>
+                    <AlertDialogCancel {...testId("delete-provider-cancel")}>
+                      {t("com_cancel")}
+                    </AlertDialogCancel>
                     <AlertDialogAction
+                      {...testId("delete-provider-confirm")}
                       onClick={() => deleteMutation.mutate(provider.id)}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >

@@ -24,6 +24,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { testId } from "@/lib/test-id";
 
 const detailsSchema = z.object({
   name: z.string().min(1, "prompts_name_required"),
@@ -142,7 +143,7 @@ export function OrgDetailsSection({ org, onUpdate }: OrgDetailsSectionProps) {
     uploadLogoMutation.isPending || deleteLogoMutation.isPending;
 
   return (
-    <div className="space-y-6">
+    <div {...testId("entity-details")} className="space-y-6">
       {/* Hidden file input */}
       <input
         ref={fileInputRef}
@@ -163,6 +164,7 @@ export function OrgDetailsSection({ org, onUpdate }: OrgDetailsSectionProps) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
+              {...testId("entity-logo-button")}
               type="button"
               className="group relative size-12 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring flex-shrink-0"
               disabled={isLogoLoading}
@@ -216,6 +218,7 @@ export function OrgDetailsSection({ org, onUpdate }: OrgDetailsSectionProps) {
         </div>
         <div className="w-64">
           <Input
+            {...testId("entity-name-input")}
             id="org-name"
             {...register("name")}
             placeholder={t("entity_org_name")}
@@ -259,6 +262,7 @@ export function OrgDetailsSection({ org, onUpdate }: OrgDetailsSectionProps) {
 
       <div className="flex justify-end pt-2">
         <Button
+          {...testId("entity-save-button")}
           size="sm"
           onClick={onSubmit}
           disabled={!isDirty || updateMutation.isPending}
@@ -387,7 +391,7 @@ export function TeamDetailsSection({
     uploadLogoMutation.isPending || deleteLogoMutation.isPending;
 
   return (
-    <div className="space-y-6">
+    <div {...testId("entity-details")} className="space-y-6">
       {/* Hidden file input */}
       <input
         ref={fileInputRef}
@@ -406,6 +410,7 @@ export function TeamDetailsSection({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
+              {...testId("entity-logo-button")}
               type="button"
               className="group relative size-12 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring flex-shrink-0"
               disabled={isLogoLoading}
@@ -459,6 +464,7 @@ export function TeamDetailsSection({
         </div>
         <div className="w-64">
           <Input
+            {...testId("entity-name-input")}
             id="team-name"
             {...register("name")}
             placeholder={t("entity_team_name")}
@@ -484,6 +490,7 @@ export function TeamDetailsSection({
         </div>
         <div className="w-64">
           <Textarea
+            {...testId("entity-description-textarea")}
             id="team-description"
             {...register("description")}
             placeholder={t("entity_optional_description")}
@@ -502,6 +509,7 @@ export function TeamDetailsSection({
 
       <div className="flex justify-end pt-2">
         <Button
+          {...testId("entity-save-button")}
           size="sm"
           onClick={onSubmit}
           disabled={!isDirty || updateMutation.isPending}

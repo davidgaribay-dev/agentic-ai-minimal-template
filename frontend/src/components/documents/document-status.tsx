@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { CheckCircle2, Clock, Loader2, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { testId } from "@/lib/test-id";
 import type { ProcessingStatus } from "@/lib/api";
 
 interface DocumentStatusProps {
@@ -55,7 +56,11 @@ export function DocumentStatus({ status, className }: DocumentStatusProps) {
   const Icon = config.icon;
 
   return (
-    <Badge variant={config.variant} className={cn("gap-1.5", className)}>
+    <Badge
+      variant={config.variant}
+      className={cn("gap-1.5", className)}
+      {...testId(`document-status-${status}`)}
+    >
       <Icon
         className={cn(
           "h-3.5 w-3.5",

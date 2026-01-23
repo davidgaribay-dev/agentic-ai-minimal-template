@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { llmSettingsApi } from "@/lib/api";
+import { testId } from "@/lib/test-id";
 
 // Provider documentation URLs for getting API keys
 const PROVIDER_DOCS: Record<string, string> = {
@@ -89,7 +90,10 @@ export function TeamEditApiKeyDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        {...testId("team-edit-api-key-dialog")}
+        className="sm:max-w-md"
+      >
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>
@@ -111,6 +115,7 @@ export function TeamEditApiKeyDialog({
                 <Input
                   id="api-key"
                   type={showKey ? "text" : "password"}
+                  {...testId("team-edit-api-key-input")}
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   placeholder={
@@ -170,6 +175,7 @@ export function TeamEditApiKeyDialog({
               {t("com_cancel")}
             </Button>
             <Button
+              {...testId("team-edit-api-key-submit-button")}
               type="submit"
               disabled={!apiKey.trim() || saveMutation.isPending}
             >

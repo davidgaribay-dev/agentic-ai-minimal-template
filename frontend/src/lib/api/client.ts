@@ -135,6 +135,23 @@ export async function api<T>(
 
   if (!response.ok) {
     const errorBody = await response.json().catch(() => undefined);
+
+    // Handle 401 Unauthorized - session expired or invalidated
+    if (response.status === 401) {
+      // Clear auth tokens
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("auth_refresh_token");
+      localStorage.removeItem("auth_token_expiry");
+      // Clear workspace state to prevent stale IDs
+      localStorage.removeItem("workspace_current_org_id");
+      localStorage.removeItem("workspace_current_team_id");
+
+      // Redirect to login if not already there
+      if (!window.location.pathname.startsWith("/login")) {
+        window.location.href = "/login";
+      }
+    }
+
     throw new ApiError(response.status, response.statusText, errorBody);
   }
 

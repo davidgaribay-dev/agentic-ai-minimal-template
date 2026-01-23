@@ -131,5 +131,6 @@
   "email_new_account_email_label": "البريد الإلكتروني:",
   "email_new_account_password_label": "كلمة المرور:",
   "email_new_account_change_password": "يرجى تغيير كلمة المرور بعد تسجيل الدخول الأول.",
-  "email_new_account_button": "الذهاب إلى %{project_name}"
+  "email_new_account_button": "الذهاب إلى %{project_name}",
+  "email_new_account_link_trouble": "إذا لم يعمل الزر، انسخ والصق هذا الرابط في متصفحك:"
 }

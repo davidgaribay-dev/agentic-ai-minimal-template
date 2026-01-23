@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { mediaApi, formatFileSize, type ChatMedia } from "@/lib/api";
+import { testId } from "@/lib/test-id";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -117,7 +118,7 @@ export function MediaLibrary({ organizationId, teamId }: MediaLibraryProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div {...testId("media-library")} className="space-y-4">
       {/* Storage usage */}
       {usageData && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -146,10 +147,14 @@ export function MediaLibrary({ organizationId, teamId }: MediaLibraryProps) {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        <div
+          {...testId("media-library-grid")}
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"
+        >
           {mediaItems.map((item) => (
             <div
               key={item.id}
+              {...testId(`media-item-${item.id}`)}
               className="group relative aspect-square rounded-lg overflow-hidden border border-border bg-muted"
             >
               <img
@@ -170,6 +175,7 @@ export function MediaLibrary({ organizationId, teamId }: MediaLibraryProps) {
                 {/* Action buttons */}
                 <div className="flex items-center justify-center gap-2">
                   <Button
+                    {...testId(`media-preview-button-${item.id}`)}
                     size="icon"
                     variant="ghost"
                     className="size-7 text-white hover:bg-white/20"
@@ -178,6 +184,7 @@ export function MediaLibrary({ organizationId, teamId }: MediaLibraryProps) {
                     <ImageIcon className="size-3.5" />
                   </Button>
                   <Button
+                    {...testId(`media-download-button-${item.id}`)}
                     size="icon"
                     variant="ghost"
                     className="size-7 text-white hover:bg-white/20"
@@ -186,6 +193,7 @@ export function MediaLibrary({ organizationId, teamId }: MediaLibraryProps) {
                     <Download className="size-3.5" />
                   </Button>
                   <Button
+                    {...testId(`media-delete-button-${item.id}`)}
                     size="icon"
                     variant="ghost"
                     className="size-7 text-white hover:bg-white/20 hover:text-destructive"
@@ -202,7 +210,7 @@ export function MediaLibrary({ organizationId, teamId }: MediaLibraryProps) {
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent {...testId("media-delete-dialog")}>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("media_delete_title")}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -210,10 +218,14 @@ export function MediaLibrary({ organizationId, teamId }: MediaLibraryProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteMutation.isPending}>
+            <AlertDialogCancel
+              {...testId("media-delete-cancel")}
+              disabled={deleteMutation.isPending}
+            >
               {t("com_cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
+              {...testId("media-delete-confirm")}
               onClick={() => deleteId && deleteMutation.mutate(deleteId)}
               disabled={deleteMutation.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

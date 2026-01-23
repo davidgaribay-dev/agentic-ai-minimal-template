@@ -65,6 +65,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { testId } from "@/lib/test-id";
 
 export const Route = createFileRoute("/org/prompts")({
   beforeLoad: ({ context }) => {
@@ -82,7 +83,10 @@ function OrgPromptsPage() {
 
   if (!currentOrg || currentOrgRole === null) {
     return (
-      <div className="bg-background min-h-screen">
+      <div
+        {...testId("org-prompts-page")}
+        className="bg-background min-h-screen"
+      >
         <div className="px-6 py-6">
           <Skeleton className="h-8 w-48 mb-6" />
           <div className="space-y-4">
@@ -97,7 +101,10 @@ function OrgPromptsPage() {
 
   if (!isAdmin) {
     return (
-      <div className="bg-background min-h-screen">
+      <div
+        {...testId("org-prompts-page")}
+        className="bg-background min-h-screen"
+      >
         <div className="px-6 py-6">
           <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center">
             <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
@@ -117,7 +124,7 @@ function OrgPromptsPage() {
   }
 
   return (
-    <div className="bg-background min-h-screen">
+    <div {...testId("org-prompts-page")} className="bg-background min-h-screen">
       <div className="px-6 py-6">
         {/* Header */}
         <div className="mb-6">

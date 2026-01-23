@@ -47,20 +47,6 @@ export interface InvitationInfo {
   expires_at: string;
 }
 
-export interface InvitationCreatedResponse {
-  id: string;
-  email: string;
-  organization_id: string;
-  team_id: string | null;
-  org_role: OrgRole;
-  team_role: TeamRole | null;
-  status: InvitationStatus;
-  expires_at: string;
-  created_at: string;
-  accepted_at: string | null;
-  token: string;
-}
-
 export interface BulkInvitationCreate {
   emails: string[];
   team_ids?: string[] | null;
@@ -72,7 +58,6 @@ export interface BulkInvitationResult {
   email: string;
   success: boolean;
   invitation_id?: string | null;
-  token?: string | null;
   error?: string | null;
 }
 
@@ -96,9 +81,9 @@ export const invitationsApi = {
     );
   },
 
-  /** Create an invitation */
+  /** Create an invitation (token sent via email) */
   createInvitation: (orgId: string, invitation: InvitationCreate) =>
-    apiClient.post<InvitationCreatedResponse>(
+    apiClient.post<Invitation>(
       `/v1/organizations/${orgId}/invitations`,
       invitation,
       { headers: getAuthHeader() },
@@ -119,9 +104,9 @@ export const invitationsApi = {
       { headers: getAuthHeader() },
     ),
 
-  /** Resend an invitation */
+  /** Resend an invitation (token sent via email) */
   resendInvitation: (orgId: string, invitationId: string) =>
-    apiClient.post<{ invitation: Invitation; token: string }>(
+    apiClient.post<Invitation>(
       `/v1/organizations/${orgId}/invitations/${invitationId}/resend`,
       {},
       { headers: getAuthHeader() },

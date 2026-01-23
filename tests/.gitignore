@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Test outputs
+test-results/
+playwright-report/
+blob-report/
+
+# Playwright cache
+playwright/.cache/
+
+# Authentication state files (contain sensitive tokens)
+# IMPORTANT: Never commit these - they could be used to impersonate users
+playwright/.auth/
+.auth/
+
+# Test logs (contain test credentials)
+logs/
+
+# Environment files (may contain sensitive config)
+.env
+.env.local

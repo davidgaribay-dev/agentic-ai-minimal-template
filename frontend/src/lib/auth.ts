@@ -472,6 +472,10 @@ export async function logout() {
   // Clear tokens first
   removeToken();
 
+  // Clear workspace state to prevent stale org/team IDs on next login
+  localStorage.removeItem("workspace_current_org_id");
+  localStorage.removeItem("workspace_current_team_id");
+
   // Cancel any in-flight queries to prevent 401s
   await queryClient.cancelQueries();
 

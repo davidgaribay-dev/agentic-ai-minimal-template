@@ -1051,3 +1051,119 @@ shadcn's Dialog has a default `sm:max-w-lg` that overrides custom width classes.
 // ✅ Works - !important overrides default
 <DialogContent className="!max-w-6xl w-[90vw]">
 ```
+
+## Test IDs for Playwright Testing (REQUIRED)
+
+**Every interactive element MUST have a `data-testid` attribute** for reliable E2E testing with Playwright.
+
+### Usage
+
+```typescript
+import { testId } from "@/lib/test-id"
+
+// Spread testId() on ALL interactive elements
+<Button {...testId("create-team-submit-button")} onClick={handleSubmit}>
+  {t("com_submit")}
+</Button>
+<Input {...testId("login-email-input")} {...form.register("email")} />
+<DialogContent {...testId("edit-prompt-dialog")}>...</DialogContent>
+```
+
+### Naming Convention (kebab-case)
+
+**Pattern**: `{component}-{element}-{type}`
+
+| Element Type | Pattern | Examples |
+|--------------|---------|----------|
+| **Buttons** | `{action}-button` | `create-team-submit-button`, `delete-prompt-confirm-button` |
+| **Inputs** | `{field}-input` | `login-email-input`, `settings-name-input` |
+| **Textareas** | `{field}-textarea` | `prompt-content-textarea`, `chat-input-textarea` |
+| **Selects** | `{field}-select` | `llm-provider-select`, `guardrails-action-select` |
+| **Switches** | `{field}-switch` | `memory-enabled-switch`, `llm-allow-team-switch` |
+| **Dialogs** | `{name}-dialog` | `create-team-dialog`, `delete-org-alert-dialog` |
+| **Containers** | `{name}-container` | `chat-input-container`, `document-viewer-container` |
+| **Lists** | `{name}-list` | `document-list`, `memory-list` |
+| **List Items** | `{name}-item-${id}` | `document-item-${doc.id}`, `team-item-${team.id}` |
+| **Tables** | `{name}-table` | `configured-models-table`, `provider-api-keys-table` |
+| **Table Rows** | `{name}-row-${id}` | `model-row-${model.id}`, `api-key-row-${provider}` |
+| **Triggers** | `{component}-trigger` | `attachment-picker-trigger`, `user-menu-trigger` |
+| **Menu Items** | `{menu}-{action}` | `user-menu-settings`, `user-menu-logout` |
+
+### What MUST Have Test IDs
+
+- ✅ All buttons (submit, cancel, delete, edit, toggle)
+- ✅ All form inputs (text, email, password, number)
+- ✅ All textareas
+- ✅ All select/dropdown triggers and items
+- ✅ All switch/toggle controls
+- ✅ All checkbox inputs
+- ✅ Dialog/AlertDialog containers
+- ✅ Dialog action buttons (confirm, cancel)
+- ✅ List containers and individual items
+- ✅ Table containers and rows
+- ✅ Dropdown menu triggers and items
+- ✅ Navigation items and links
+- ✅ Tab triggers
+- ✅ Error, loading, and empty state containers
+- ✅ Search inputs
+- ✅ File upload inputs/dropzones
+
+### Dynamic IDs for Lists
+
+Use actual IDs from data, not array indices:
+
+```typescript
+{items.map((item) => (
+  <Card key={item.id} {...testId(`item-card-${item.id}`)}>
+    <Button {...testId(`item-delete-${item.id}`)}>{t("com_delete")}</Button>
+  </Card>
+))}
+```
+
+### Complete Dialog Example
+
+```typescript
+<Dialog open={open} onOpenChange={setOpen}>
+  <DialogTrigger asChild>
+    <Button {...testId("create-team-trigger")}>{t("team_create")}</Button>
+  </DialogTrigger>
+  <DialogContent {...testId("create-team-dialog")}>
+    <form onSubmit={handleSubmit}>
+      <Input
+        {...testId("create-team-name-input")}
+        {...form.register("name")}
+      />
+      <DialogFooter>
+        <Button {...testId("create-team-cancel-button")} variant="outline">
+          {t("com_cancel")}
+        </Button>
+        <Button {...testId("create-team-submit-button")} type="submit">
+          {t("com_create")}
+        </Button>
+      </DialogFooter>
+    </form>
+  </DialogContent>
+</Dialog>
+```
+
+### Environment Variable
+
+Test IDs are conditionally rendered via `VITE_ENABLE_TEST_IDS=true` in `lib/test-id.ts`. This keeps production bundles clean while enabling test selectors in test environments.
+
+### Playwright Usage
+
+```typescript
+// In Playwright tests (root tests/ folder)
+// File: tests/tests/auth/login.spec.ts
+await page.getByTestId('login-email-input').fill('admin@example.com');
+await page.getByTestId('login-password-input').fill('changethis');
+await page.getByTestId('login-submit-button').click();
+
+// File: tests/tests/teams/create-team.spec.ts
+await page.getByTestId('create-team-trigger').click();
+await page.getByTestId('create-team-name-input').fill('My Team');
+await page.getByTestId('create-team-submit-button').click();
+await expect(page.getByTestId('create-team-dialog')).not.toBeVisible();
+```
+
+**Note**: E2E tests are in the root `tests/` folder (not `frontend/`). Run with `cd ../tests && npm test`.

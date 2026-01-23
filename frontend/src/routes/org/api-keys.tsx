@@ -61,6 +61,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { testId } from "@/lib/test-id";
 
 export const Route = createFileRoute("/org/api-keys")({
   beforeLoad: ({ context }) => {
@@ -116,7 +117,7 @@ function OrgApiKeysPage() {
 
   if (!currentOrg || currentOrgRole === null) {
     return (
-      <div className="bg-background">
+      <div {...testId("org-api-keys-page")} className="bg-background">
         <div className="mx-auto max-w-4xl px-4 py-8">
           <Skeleton className="h-8 w-48 mb-8" />
           <div className="space-y-4">
@@ -131,7 +132,7 @@ function OrgApiKeysPage() {
 
   if (!isAdmin) {
     return (
-      <div className="bg-background">
+      <div {...testId("org-api-keys-page")} className="bg-background">
         <div className="mx-auto max-w-4xl px-4 py-8">
           <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center">
             <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
@@ -151,7 +152,7 @@ function OrgApiKeysPage() {
   }
 
   return (
-    <div className="bg-background">
+    <div {...testId("org-api-keys-page")} className="bg-background">
       <div className="mx-auto max-w-4xl px-4 py-8">
         {/* Header */}
         <div className="mb-8">

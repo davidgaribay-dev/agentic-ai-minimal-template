@@ -12,6 +12,7 @@ import type {
   ChatSettings as ChatSettingsType,
   DisabledByLevel,
 } from "@/lib/api";
+import { testId } from "@/lib/test-id";
 
 export interface ChatSettingsProps {
   settings: ChatSettingsType;
@@ -68,6 +69,7 @@ function SettingRow({
         <p className="text-xs text-muted-foreground">{description}</p>
       </div>
       <Switch
+        {...testId(`${id}-switch`)}
         id={id}
         checked={checked}
         onCheckedChange={onCheckedChange}
@@ -117,7 +119,7 @@ export function ChatSettings({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" {...testId("chat-settings")}>
       <SettingRow
         id="chat-enabled"
         label={t("chat_enabled")}

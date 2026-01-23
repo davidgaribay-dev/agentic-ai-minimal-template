@@ -17,6 +17,7 @@ services:
       start_period: 10s
 
   # Main application database (with pgvector for LangGraph memory semantic search)
+  # Note: pgvector and pg_trgm extensions are created by Alembic migrations
   db:
     image: pgvector/pgvector:pg17
     restart: always

@@ -106,7 +106,7 @@ export function OrgDangerZone({
                     {t("danger_leave")}
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent {...testId("leave-org-alert-dialog")}>
                   <AlertDialogHeader>
                     <AlertDialogTitle>{t("danger_leave_org")}</AlertDialogTitle>
                     <AlertDialogDescription>
@@ -150,7 +150,7 @@ export function OrgDangerZone({
                     {t("com_delete")}
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent {...testId("delete-org-alert-dialog")}>
                   <AlertDialogHeader>
                     <AlertDialogTitle className="flex items-center gap-2">
                       <AlertTriangle className="size-4 text-destructive" />
@@ -168,6 +168,7 @@ export function OrgDangerZone({
                           {t("danger_type_confirm", { name: orgName })}
                         </p>
                         <Input
+                          {...testId("delete-org-confirm-input")}
                           value={confirmName}
                           onChange={(e) => setConfirmName(e.target.value)}
                           placeholder={orgName}
@@ -269,6 +270,7 @@ export function TeamDangerZone({
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button
+                  {...testId("danger-leave-team-button")}
                   variant="outline"
                   size="sm"
                   className="h-7 text-xs border-destructive/50 text-destructive hover:bg-destructive hover:text-white"
@@ -277,7 +279,7 @@ export function TeamDangerZone({
                   {t("danger_leave")}
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent {...testId("leave-team-alert-dialog")}>
                 <AlertDialogHeader>
                   <AlertDialogTitle>{t("danger_leave_team")}</AlertDialogTitle>
                   <AlertDialogDescription>
@@ -311,6 +313,7 @@ export function TeamDangerZone({
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
+                    {...testId("danger-delete-team-button")}
                     variant="destructive"
                     size="sm"
                     className="h-7 text-xs"
@@ -319,7 +322,7 @@ export function TeamDangerZone({
                     {t("com_delete")}
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent {...testId("delete-team-alert-dialog")}>
                   <AlertDialogHeader>
                     <AlertDialogTitle className="flex items-center gap-2">
                       <AlertTriangle className="size-4 text-destructive" />
@@ -337,6 +340,7 @@ export function TeamDangerZone({
                           {t("danger_type_confirm", { name: teamName })}
                         </p>
                         <Input
+                          {...testId("delete-team-confirm-input")}
                           value={confirmName}
                           onChange={(e) => setConfirmName(e.target.value)}
                           placeholder={teamName}

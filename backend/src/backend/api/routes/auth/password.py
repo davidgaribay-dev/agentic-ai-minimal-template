@@ -15,15 +15,16 @@ from backend.auth import (
     UpdatePassword,
     get_user_by_email,
 )
+from backend.core.config import settings
 from backend.core.logging import get_logger
 from backend.core.rate_limit import PASSWORD_RESET_RATE_LIMIT, limiter
 from backend.core.security import get_password_hash, verify_password
 from backend.core.utils import (
-    generate_password_recovery_email,
     generate_password_reset_token,
-    send_email,
     verify_password_reset_token,
 )
+from backend.email import email_service
+from backend.email.schemas import PasswordResetData
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -96,26 +97,49 @@ async def recover_password(request: Request, email: str, session: SessionDep) ->
         password_reset_token = generate_password_reset_token(
             email=email, password_changed_at=user.password_changed_at
         )
-        email_data = generate_password_recovery_email(
-            email_to=user.email,
-            email=email,
+
+        reset_link = (
+            f"{settings.FRONTEND_URL}/reset-password?token={password_reset_token}"
+        )
+        reset_data = PasswordResetData(
+            email=user.email,
             token=password_reset_token,
+            reset_link=reset_link,
+            username=user.full_name,
             locale=user.language,
         )
-        send_email(
-            email_to=user.email,
-            subject=email_data.subject,
-            html_content=email_data.html_content,
-        )
-        logger.info("password_recovery_requested", email=email)
 
-        await audit_service.log(
-            AuditAction.USER_PASSWORD_RESET_REQUESTED,
-            actor=user,
+        result = await email_service.send_password_reset_email(
+            data=reset_data,
             request=request,
-            targets=[Target(type="user", id=str(user.id), name=user.email)],
-            metadata={"recovery_email_sent": True},
+            actor=user,
         )
+
+        if result.success:
+            logger.info("password_recovery_requested", email=email)
+            await audit_service.log(
+                AuditAction.EMAIL_PASSWORD_RESET_SENT,
+                actor=user,
+                request=request,
+                targets=[Target(type="user", id=str(user.id), name=user.email)],
+                metadata={"recovery_email_sent": True, "initiated_by": "user"},
+            )
+        else:
+            logger.error(
+                "password_recovery_email_failed",
+                email=email,
+                error=result.error_message,
+            )
+            await audit_service.log(
+                AuditAction.EMAIL_FAILED,
+                actor=user,
+                request=request,
+                outcome="failure",
+                severity=LogLevel.ERROR,
+                targets=[Target(type="user", id=str(user.id), name=user.email)],
+                error_code="EMAIL_SEND_FAILED",
+                error_message=result.error_message,
+            )
     else:
         # Log attempt for non-existent user (for security monitoring)
         logger.info("password_recovery_attempted_unknown_email", email=email)

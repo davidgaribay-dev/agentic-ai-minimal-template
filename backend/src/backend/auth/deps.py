@@ -76,7 +76,11 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
     # Check if token was issued before password change (implicit revocation)
     if token_data.jti and "iat" in payload:
         token_issued_at = datetime.fromtimestamp(payload["iat"], tz=UTC)
-        if user.password_changed_at and token_issued_at < user.password_changed_at:
+        # Ensure password_changed_at is timezone-aware for comparison
+        password_changed_at = user.password_changed_at
+        if password_changed_at and password_changed_at.tzinfo is None:
+            password_changed_at = password_changed_at.replace(tzinfo=UTC)
+        if password_changed_at and token_issued_at < password_changed_at:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token invalidated by password change",

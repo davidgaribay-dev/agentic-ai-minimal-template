@@ -20,6 +20,7 @@ import {
   usePredefinedThemes,
 } from "@/lib/queries";
 import type { TeamThemeSettingsUpdate } from "@/lib/api";
+import { testId } from "@/lib/test-id";
 
 interface TeamThemeSettingsProps {
   orgId: string;
@@ -180,7 +181,7 @@ export function TeamThemeSettings({ orgId, teamId }: TeamThemeSettingsProps) {
   );
 
   return (
-    <div className="space-y-6">
+    <div {...testId("team-theme-settings")} className="space-y-6">
       {!canCustomize && (
         <Alert>
           <Info className="h-4 w-4" />
@@ -204,6 +205,7 @@ export function TeamThemeSettings({ orgId, teamId }: TeamThemeSettingsProps) {
               </div>
             </div>
             <Switch
+              {...testId("team-theme-customization-switch")}
               id="theme-customization"
               checked={themeCustomizationEnabled}
               onCheckedChange={setThemeCustomizationEnabled}
@@ -221,6 +223,7 @@ export function TeamThemeSettings({ orgId, teamId }: TeamThemeSettingsProps) {
               </div>
             </div>
             <Switch
+              {...testId("team-theme-user-switch")}
               id="user-customization"
               checked={allowUserCustomization}
               onCheckedChange={setAllowUserCustomization}
@@ -277,13 +280,18 @@ export function TeamThemeSettings({ orgId, teamId }: TeamThemeSettingsProps) {
       {canCustomize && hasChanges && (
         <div className="flex justify-end gap-2 sticky bottom-4 bg-background/95 backdrop-blur p-4 border rounded-lg shadow-lg">
           <Button
+            {...testId("team-theme-reset")}
             variant="outline"
             onClick={handleReset}
             disabled={updateMutation.isPending}
           >
             {t("com_reset")}
           </Button>
-          <Button onClick={handleSave} disabled={updateMutation.isPending}>
+          <Button
+            {...testId("team-theme-save")}
+            onClick={handleSave}
+            disabled={updateMutation.isPending}
+          >
             {updateMutation.isPending && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             )}

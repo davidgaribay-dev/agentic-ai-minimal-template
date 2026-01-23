@@ -6,7 +6,6 @@ import {
   MessageSquare,
   MoreHorizontal,
   Pencil,
-  Plus,
   Search,
   Star,
   Trash2,
@@ -14,6 +13,8 @@ import {
 
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { conversationsApi, type Conversation } from "@/lib/api";
+import { testId } from "@/lib/test-id";
+import { useWorkspace } from "@/lib/workspace";
 import {
   queryKeys,
   useDeleteConversation,
@@ -52,8 +53,8 @@ interface ChatHistoryDropdownProps {
   currentTitle?: string | null;
   teamId?: string;
   onSelectConversation: (conversationId: string) => void;
-  onNewChat: () => void;
   onConversationDeleted?: (conversationId: string) => void;
+  onTeamChange?: (teamId: string) => void;
   className?: string;
 }
 
@@ -126,6 +127,7 @@ const ConversationItem = memo(function ConversationItem({
 
   return (
     <div
+      {...testId(`chat-history-item-${conversation.id}`)}
       className={cn(
         "flex cursor-pointer items-center justify-between gap-2 rounded-sm px-2 py-2 text-sm hover:bg-accent",
         isSelected && "bg-accent",
@@ -148,6 +150,7 @@ const ConversationItem = memo(function ConversationItem({
       <DropdownMenu open={actionsOpen} onOpenChange={setActionsOpen}>
         <DropdownMenuTrigger asChild>
           <button
+            {...testId(`chat-history-actions-${conversation.id}`)}
             type="button"
             className={cn(
               "shrink-0 rounded p-0.5 transition-opacity hover:bg-muted",
@@ -160,7 +163,10 @@ const ConversationItem = memo(function ConversationItem({
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-40">
-          <DropdownMenuItem onClick={handleStar}>
+          <DropdownMenuItem
+            {...testId(`chat-history-star-button-${conversation.id}`)}
+            onClick={handleStar}
+          >
             <Star
               className={cn(
                 "mr-2 size-4",
@@ -171,12 +177,16 @@ const ConversationItem = memo(function ConversationItem({
               ? t("chat_history_unstar")
               : t("chat_history_star")}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleRename}>
+          <DropdownMenuItem
+            {...testId(`chat-history-rename-button-${conversation.id}`)}
+            onClick={handleRename}
+          >
             <Pencil className="mr-2 size-4" />
             {t("sidebar_rename")}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
+            {...testId(`chat-history-delete-button-${conversation.id}`)}
             onClick={handleDelete}
             className="text-destructive focus:text-destructive"
           >
@@ -194,13 +204,24 @@ export function ChatHistoryDropdown({
   currentTitle,
   teamId,
   onSelectConversation,
-  onNewChat,
   onConversationDeleted,
+  onTeamChange,
   className,
 }: ChatHistoryDropdownProps) {
   const { t } = useTranslation();
+  const { teams } = useWorkspace();
   const [search, setSearch] = useState("");
+  const [selectedTeamId, setSelectedTeamId] = useState<string | undefined>(
+    teamId,
+  );
   const [open, setOpen] = useState(false);
+
+  // Sync selectedTeamId with teamId prop when URL changes
+  useEffect(() => {
+    if (teamId && teamId !== selectedTeamId) {
+      setSelectedTeamId(teamId);
+    }
+  }, [teamId]);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [conversationToRename, setConversationToRename] =
     useState<Conversation | null>(null);
@@ -210,14 +231,22 @@ export function ChatHistoryDropdown({
     useState<Conversation | null>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
 
-  const updateMutation = useUpdateConversation(teamId);
-  const deleteMutation = useDeleteConversation(teamId);
+  const updateMutation = useUpdateConversation(selectedTeamId);
+  const deleteMutation = useDeleteConversation(selectedTeamId);
 
   const { data, isLoading } = useQuery({
-    queryKey: queryKeys.conversations.list(teamId),
-    queryFn: () => conversationsApi.getConversations(0, 50, teamId),
-    enabled: open && !!teamId,
+    queryKey: queryKeys.conversations.list(selectedTeamId),
+    queryFn: () => conversationsApi.getConversations(0, 50, selectedTeamId),
+    enabled: open && !!selectedTeamId,
   });
+
+  const handleTeamChange = useCallback(
+    (newTeamId: string) => {
+      setSelectedTeamId(newTeamId);
+      onTeamChange?.(newTeamId);
+    },
+    [onTeamChange],
+  );
 
   const conversations = data?.data ?? [];
 
@@ -241,12 +270,6 @@ export function ChatHistoryDropdown({
 
   const handleSelect = (conversationId: string) => {
     onSelectConversation(conversationId);
-    setOpen(false);
-    setSearch("");
-  };
-
-  const handleNewChat = () => {
-    onNewChat();
     setOpen(false);
     setSearch("");
   };
@@ -302,7 +325,7 @@ export function ChatHistoryDropdown({
       key={conversation.id}
       conversation={conversation}
       isSelected={conversation.id === currentConversationId}
-      teamId={teamId}
+      teamId={selectedTeamId}
       onSelect={handleSelect}
       onRename={handleOpenRename}
       onRequestDelete={handleRequestDelete}
@@ -315,6 +338,7 @@ export function ChatHistoryDropdown({
       <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
           <Button
+            {...testId("chat-history-dropdown-trigger")}
             variant="ghost"
             size="sm"
             className={cn("gap-1.5 text-xs font-medium", className)}
@@ -337,25 +361,36 @@ export function ChatHistoryDropdown({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-72">
-          <div className="flex items-center gap-2 p-2">
-            <div className="relative flex-1">
+          {teams.length > 1 && (
+            <>
+              <div className="p-2">
+                <select
+                  {...testId("chat-history-team-select")}
+                  value={selectedTeamId ?? ""}
+                  onChange={(e) => handleTeamChange(e.target.value)}
+                  className="h-7 w-full rounded-md border border-input bg-background px-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  {teams.map((team) => (
+                    <option key={team.id} value={team.id}>
+                      {team.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <DropdownMenuSeparator />
+            </>
+          )}
+          <div className="p-2">
+            <div className="relative">
               <Search className="absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
+                {...testId("chat-history-search-input")}
                 placeholder={t("search_conversations_placeholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="h-7 pl-7 text-xs"
               />
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 shrink-0 gap-1 px-2"
-              onClick={handleNewChat}
-            >
-              <Plus className="size-3.5" />
-              {t("sidebar_new_chat")}
-            </Button>
           </div>
           <DropdownMenuSeparator />
           <div className="max-h-[60vh] overflow-y-auto p-1">

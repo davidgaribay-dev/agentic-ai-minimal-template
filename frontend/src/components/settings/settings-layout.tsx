@@ -5,6 +5,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { testId } from "@/lib/test-id";
 
 interface SettingsPageLayoutProps {
   title: string;
@@ -21,7 +22,7 @@ export function SettingsPageLayout({
   children,
 }: SettingsPageLayoutProps) {
   return (
-    <div className="space-y-6">
+    <div {...testId("settings-layout")} className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
         {description && (

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { testId } from "@/lib/test-id";
 
 interface PatternInputProps {
   patterns: string[];
@@ -67,6 +68,7 @@ export function PatternInput({
     <div className="space-y-2">
       <div className="flex gap-2">
         <Input
+          {...testId("pattern-input")}
           value={input}
           onChange={(e) => {
             setInput(e.target.value);
@@ -81,6 +83,7 @@ export function PatternInput({
           )}
         />
         <Button
+          {...testId("pattern-add-button")}
           type="button"
           size="sm"
           variant="outline"
@@ -93,15 +96,17 @@ export function PatternInput({
       {error && <p className="text-xs text-destructive">{error}</p>}
       {patterns.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
-          {patterns.map((pattern) => (
+          {patterns.map((pattern, index) => (
             <Badge
-              key={pattern}
+              {...testId(`pattern-item-${index}`)}
+              key={`${pattern}-${index}`}
               variant="outline"
               className="gap-1 pr-1 font-mono text-xs"
             >
               {pattern}
               {!disabled && (
                 <button
+                  {...testId(`pattern-remove-${index}`)}
                   type="button"
                   onClick={() => handleRemove(pattern)}
                   className="ml-0.5 hover:bg-muted rounded-sm p-0.5"

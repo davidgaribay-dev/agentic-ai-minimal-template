@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{ t('email_verification_title') | default('Verify your email') }}</h1>
+
+{% if username %}
+<p>{{ t('email_verification_greeting', name=username) | default('Hi ' + username + ',') }}</p>
+{% endif %}
+
+<p>{{ t('email_verification_intro') | default('Enter this code to verify your email address and complete your registration:') }}</p>
+
+<div class="code-box">
+    <span class="code">{{ code }}</span>
+</div>
+
+<p class="secondary-text">{{ t('email_verification_expires', minutes=expires_in_minutes) | default('This code expires in ' + (expires_in_minutes | string) + ' minutes.') }}</p>
+
+<p class="secondary-text">{{ t('email_verification_no_request') | default("If you didn't create an account, no action is needed.") }}</p>
+{% endblock %}

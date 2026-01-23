@@ -69,8 +69,8 @@ export interface UserGuardrails extends GuardrailSettingsBase {
   updated_at: string;
 }
 
-/** Update schema for organization guardrails */
-export interface OrganizationGuardrailsUpdate {
+/** Base update schema for guardrails (shared fields) */
+export interface GuardrailsUpdateBase {
   guardrails_enabled?: boolean;
   input_blocked_keywords?: string[];
   input_blocked_patterns?: string[];
@@ -81,37 +81,19 @@ export interface OrganizationGuardrailsUpdate {
   pii_detection_enabled?: boolean;
   pii_types?: PIIType[];
   pii_action?: GuardrailAction;
+}
+
+/** Update schema for organization guardrails */
+export interface OrganizationGuardrailsUpdate extends GuardrailsUpdateBase {
   allow_team_override?: boolean;
   allow_user_override?: boolean;
 }
 
 /** Update schema for team guardrails */
-export interface TeamGuardrailsUpdate {
-  guardrails_enabled?: boolean;
-  input_blocked_keywords?: string[];
-  input_blocked_patterns?: string[];
-  input_action?: GuardrailAction;
-  output_blocked_keywords?: string[];
-  output_blocked_patterns?: string[];
-  output_action?: GuardrailAction;
-  pii_detection_enabled?: boolean;
-  pii_types?: PIIType[];
-  pii_action?: GuardrailAction;
-}
+export type TeamGuardrailsUpdate = GuardrailsUpdateBase;
 
 /** Update schema for user guardrails */
-export interface UserGuardrailsUpdate {
-  guardrails_enabled?: boolean;
-  input_blocked_keywords?: string[];
-  input_blocked_patterns?: string[];
-  input_action?: GuardrailAction;
-  output_blocked_keywords?: string[];
-  output_blocked_patterns?: string[];
-  output_action?: GuardrailAction;
-  pii_detection_enabled?: boolean;
-  pii_types?: PIIType[];
-  pii_action?: GuardrailAction;
-}
+export type UserGuardrailsUpdate = GuardrailsUpdateBase;
 
 /** Effective guardrails after applying hierarchy */
 export interface EffectiveGuardrails {

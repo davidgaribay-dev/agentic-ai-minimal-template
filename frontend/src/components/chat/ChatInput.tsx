@@ -3,6 +3,7 @@ import { useRef, useCallback, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { ArrowUp, Square } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { testId } from "@/lib/test-id";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { PromptPicker } from "./PromptPicker";
@@ -17,6 +18,9 @@ import {
 } from "@/hooks/useMediaUpload";
 import { mediaApi, documentsApi, type DocumentScope } from "@/lib/api";
 import type { ChatMediaAttachment } from "@/lib/chat-store";
+
+/** Timeout for resetting pending state as a fallback if streaming never starts */
+const PENDING_FALLBACK_TIMEOUT_MS = 2000;
 
 interface ChatInputProps {
   onSubmit: (
@@ -57,9 +61,6 @@ export function ChatInput({
     organizationId: organizationId ?? "",
     teamId,
     allowDocuments: true,
-    onError: (error) => {
-      console.error("Media upload error:", error);
-    },
   });
 
   // Reset pending state when streaming starts (parent acknowledged the submit)
@@ -106,13 +107,13 @@ export function ChatInput({
       setValue("");
       mediaUpload.clearUploads();
       textareaRef.current?.focus();
-    } catch (error) {
-      console.error("Submit error:", error);
+    } catch {
+      // Error handled by parent - just ensure we reset pending state
     }
 
     // Reset pending state after a short timeout as fallback
     // (in case streaming never starts due to an error)
-    setTimeout(() => setIsPending(false), 2000);
+    setTimeout(() => setIsPending(false), PENDING_FALLBACK_TIMEOUT_MS);
   }, [
     value,
     disabled,
@@ -151,22 +152,15 @@ export function ChatInput({
 
       for (const file of fileArray) {
         try {
-          console.log(`Uploading ${file.name} to Knowledge Base...`);
-
           await documentsApi.upload({
             file,
             organization_id: organizationId,
             team_id: teamId,
             scope,
           });
-
-          console.log(
-            `${file.name} added to Knowledge Base and will be searchable soon.`,
-          );
         } catch (error) {
-          const message =
-            error instanceof Error ? error.message : t("docs_upload_failed");
-          console.error(`Failed to upload ${file.name}: ${message}`);
+          // Log error for debugging; documents API handles user notifications
+          console.warn(`Document upload failed for ${file.name}:`, error);
         }
       }
     },
@@ -230,6 +224,7 @@ export function ChatInput({
 
   return (
     <div
+      {...testId("chat-input-container")}
       className={cn(
         "flex flex-col rounded-xl bg-chat-input-bg border border-border/50",
         className,
@@ -249,6 +244,7 @@ export function ChatInput({
       )}
 
       <Textarea
+        {...testId("chat-input-textarea")}
         ref={textareaRef}
         value={value}
         onChange={(e) => setValue(e.target.value)}
@@ -294,6 +290,7 @@ export function ChatInput({
         <div className="flex items-center gap-1">
           {isStreaming ? (
             <Button
+              {...testId("chat-stop-button")}
               onClick={onStop}
               variant="outline"
               size="icon"
@@ -304,6 +301,7 @@ export function ChatInput({
             </Button>
           ) : (
             <Button
+              {...testId("chat-send-button")}
               onClick={handleSubmit}
               disabled={!canSubmit}
               size="icon"

@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useCallback, useRef, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -11,6 +11,7 @@ import { queryKeys } from "@/lib/queries";
 import { useChatSelection } from "@/lib/chat-store";
 import { useWorkspace } from "@/lib/workspace";
 import { useEffectiveSettings } from "@/lib/settings-context";
+import { testId } from "@/lib/test-id";
 
 const chatSearchSchema = z.object({
   id: z.string().optional(),
@@ -29,9 +30,10 @@ export const Route = createFileRoute("/team/$teamId/chat")({
 function TeamChatPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const chatRef = useRef<ChatHandle>(null);
   const { teamId } = Route.useParams();
-  const { currentOrg } = useWorkspace();
+  const { currentOrg, teams, isLoadingTeams } = useWorkspace();
   const { id: conversationIdFromUrl } = Route.useSearch();
   const effectiveSettings = useEffectiveSettings();
 
@@ -46,6 +48,17 @@ function TeamChatPage() {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const orgId = currentOrg?.id;
+
+  // Validate teamId from URL against user's actual teams
+  // Redirect to first valid team if current teamId is invalid
+  const validatedTeam = teams.find((team) => team.id === teamId);
+  useEffect(() => {
+    if (!isLoadingTeams && teams.length > 0 && !validatedTeam) {
+      // Team ID from URL is invalid, redirect to first team
+      const firstTeam = teams[0];
+      navigate({ to: "/team/$teamId/chat", params: { teamId: firstTeam.id } });
+    }
+  }, [isLoadingTeams, teams, validatedTeam, navigate]);
 
   useEffect(() => {
     if (conversationIdFromUrl === lastLoadedIdRef.current) {
@@ -106,6 +119,12 @@ function TeamChatPage() {
     [selectedConversationId, currentTitle, setSelectedConversation],
   );
 
+  // Don't render anything while teams are loading or if team is invalid
+  // This prevents API calls with invalid team IDs
+  if (isLoadingTeams || (!validatedTeam && teams.length > 0)) {
+    return null;
+  }
+
   if (!effectiveSettings.chat_enabled) {
     const disabledBy = effectiveSettings.chat_disabled_by;
     const message =
@@ -116,7 +135,10 @@ function TeamChatPage() {
           : t("chat_disabled");
 
     return (
-      <div className="flex h-full items-center justify-center">
+      <div
+        {...testId("page-chat-disabled")}
+        className="flex h-full items-center justify-center"
+      >
         <div className="text-center max-w-md px-4">
           <div className="flex justify-center mb-4">
             <div className="flex size-16 items-center justify-center rounded-full bg-muted">
@@ -137,6 +159,7 @@ function TeamChatPage() {
 
   return (
     <Chat
+      {...testId("page-chat")}
       ref={chatRef}
       instanceId="page"
       organizationId={orgId}

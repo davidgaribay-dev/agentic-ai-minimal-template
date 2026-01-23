@@ -32,6 +32,7 @@ services:
 
   # Main application database (with pgvector for LangGraph memory semantic search)
   # Also stores audit logs and application logs
+  # Note: pgvector and pg_trgm extensions are created by Alembic migrations
   db:
     image: pgvector/pgvector:pg17
     restart: always

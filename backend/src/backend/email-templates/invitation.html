@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{ t('email_invitation_title') | default("You've been invited") }}</h1>
+
+<p>{{ t('email_invitation_intro', inviter=inviter_name, org=organization_name) | default((inviter_name | default('Someone')) + ' has invited you to join ' + organization_name + '.') }}</p>
+
+{% if team_name %}
+<p>{{ t('email_invitation_team', team=team_name) | default("You'll be joining the " + team_name + ' team.') }}</p>
+{% endif %}
+
+{% if link %}
+<p>{{ t('email_invitation_click_button') | default('Click the button below to accept your invitation:') }}</p>
+
+<a href="{{ link }}" class="button">{{ t('email_invitation_accept_button') | default('Accept Invitation') }}</a>
+
+<p class="secondary-text" style="margin-top: 24px;">{{ t('email_invitation_or_code') | default('Or enter this code manually:') }}</p>
+
+<div class="code-box">
+    <span class="code">{{ code }}</span>
+</div>
+{% else %}
+<p>{{ t('email_invitation_code_intro') | default('Use this code to accept your invitation:') }}</p>
+
+<div class="code-box">
+    <span class="code">{{ code }}</span>
+</div>
+{% endif %}
+
+<p class="secondary-text">{{ t('email_invitation_expires', days=expires_in_days) | default('This invitation expires in ' + (expires_in_days | string) + ' days.') }}</p>
+
+<p class="secondary-text">{{ t('email_invitation_no_request') | default("If you weren't expecting this invitation, you can safely ignore this email.") }}</p>
+{% endblock %}

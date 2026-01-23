@@ -134,23 +134,33 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     }
   }, [isLoadingOrgs, currentOrgId, organizations]);
 
+  // Only consider org ID valid when it's been validated against loaded organizations
+  // This prevents 404 errors from stale localStorage values
+  const validatedOrgId = useMemo(() => {
+    if (!currentOrgId || isLoadingOrgs || organizations.length === 0) {
+      return null;
+    }
+    const orgExists = organizations.some((org) => org.id === currentOrgId);
+    return orgExists ? currentOrgId : null;
+  }, [currentOrgId, isLoadingOrgs, organizations]);
+
   const {
     data: teamsData,
     isLoading: isLoadingTeams,
     error: teamsError,
   } = useQuery({
-    queryKey: workspaceKeys.teams(currentOrgId ?? ""),
-    queryFn: () => teamsApi.getMyTeams(currentOrgId!),
-    enabled: isLoggedIn() && !!currentOrgId,
+    queryKey: workspaceKeys.teams(validatedOrgId ?? ""),
+    queryFn: () => teamsApi.getMyTeams(validatedOrgId!),
+    enabled: isLoggedIn() && !!validatedOrgId,
     ...queryDefaults.stable,
   });
 
   const teams = teamsData?.data ?? [];
 
   const { data: myMembership } = useQuery({
-    queryKey: ["workspace", "my-membership", currentOrgId],
-    queryFn: () => organizationsApi.getMyMembership(currentOrgId!),
-    enabled: isLoggedIn() && !!currentOrgId,
+    queryKey: ["workspace", "my-membership", validatedOrgId],
+    queryFn: () => organizationsApi.getMyMembership(validatedOrgId!),
+    enabled: isLoggedIn() && !!validatedOrgId,
     ...queryDefaults.stable,
   });
 
@@ -224,18 +234,18 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
 
   const refresh = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: workspaceKeys.organizations });
-    if (currentOrgId) {
+    if (validatedOrgId) {
       queryClient.invalidateQueries({
-        queryKey: workspaceKeys.teams(currentOrgId),
+        queryKey: workspaceKeys.teams(validatedOrgId),
       });
       queryClient.invalidateQueries({
-        queryKey: workspaceKeys.membership(currentOrgId),
+        queryKey: workspaceKeys.membership(validatedOrgId),
       });
       queryClient.invalidateQueries({
-        queryKey: ["workspace", "my-membership", currentOrgId],
+        queryKey: ["workspace", "my-membership", validatedOrgId],
       });
     }
-  }, [queryClient, currentOrgId]);
+  }, [queryClient, validatedOrgId]);
 
   const value = useMemo<WorkspaceState>(
     () => ({

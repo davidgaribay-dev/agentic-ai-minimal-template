@@ -27,6 +27,7 @@ import {
   useReprocessDocument,
 } from "@/lib/queries";
 import { formatFileSize } from "@/lib/api/media";
+import { testId } from "@/lib/test-id";
 import type { Document, ProcessingStatus } from "@/lib/api";
 
 interface DocumentListProps {
@@ -131,7 +132,10 @@ export function DocumentList({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
+      <div
+        {...testId("document-list-loading")}
+        className="flex items-center justify-center p-8"
+      >
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -139,7 +143,7 @@ export function DocumentList({
 
   if (error) {
     return (
-      <Alert variant="destructive">
+      <Alert {...testId("document-list-error")} variant="destructive">
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
           {error instanceof Error ? error.message : t("docs_failed_load")}
@@ -150,7 +154,7 @@ export function DocumentList({
 
   if (filteredDocuments.length === 0) {
     return (
-      <Card>
+      <Card {...testId("document-list-empty")}>
         <CardContent className="flex flex-col items-center justify-center p-8 text-center">
           <FileText className="h-12 w-12 text-muted-foreground mb-4" />
           <p className="text-sm font-medium text-muted-foreground">
@@ -165,14 +169,14 @@ export function DocumentList({
   }
 
   return (
-    <div className="space-y-2">
+    <div {...testId("document-list")} className="space-y-2">
       {filteredDocuments.map((doc: Document) => {
         const IconComponent = getFileIcon(doc.file_type);
         const isDeleting = deletingId === doc.id;
         const isReprocessing = reprocessingId === doc.id;
 
         return (
-          <Card key={doc.id}>
+          <Card key={doc.id} {...testId(`document-item-${doc.id}`)}>
             <CardContent className="flex items-center justify-between p-4">
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 <IconComponent className="h-5 w-5 text-muted-foreground flex-shrink-0" />
@@ -196,13 +200,22 @@ export function DocumentList({
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <Button
+                      {...testId(`document-menu-${doc.id}`)}
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                    >
                       <MoreVertical className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent
+                    {...testId(`document-menu-content-${doc.id}`)}
+                    align="end"
+                  >
                     {doc.processing_status === "failed" && (
                       <DropdownMenuItem
+                        {...testId(`document-reprocess-${doc.id}`)}
                         onClick={() => handleReprocess(doc.id)}
                         disabled={isReprocessing}
                       >
@@ -215,6 +228,7 @@ export function DocumentList({
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuItem
+                      {...testId(`document-delete-${doc.id}`)}
                       className="text-destructive focus:text-destructive"
                       onClick={() => handleDelete(doc.id)}
                       disabled={isDeleting}

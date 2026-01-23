@@ -188,4 +188,12 @@ export const teamsApi = {
     apiClient.delete<Team>(`/v1/organizations/${orgId}/teams/${teamId}/logo`, {
       headers: getAuthHeader(),
     }),
+
+  /** Send password reset email to a team member (admin action) */
+  sendMemberPasswordReset: (orgId: string, teamId: string, memberId: string) =>
+    apiClient.post<Message>(
+      `/v1/organizations/${orgId}/teams/${teamId}/members/${memberId}/send-password-reset`,
+      {},
+      { headers: getAuthHeader() },
+    ),
 };

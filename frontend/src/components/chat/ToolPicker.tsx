@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { MCPServerWithTools, MCPTool } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { testId } from "@/lib/test-id";
 import {
   Popover,
   PopoverContent,
@@ -216,6 +217,7 @@ export function ToolPicker({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          {...testId("tool-picker-trigger")}
           variant="ghost"
           size="icon"
           disabled={disabled}
@@ -249,6 +251,7 @@ export function ToolPicker({
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
+                {...testId("tool-picker-search-input")}
                 placeholder={t("mcp_search_tools")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -377,12 +380,14 @@ function ServerRow({
     <div>
       {/* Server row */}
       <div
+        {...testId(`tool-picker-server-${server.server_id}`)}
         className={cn(
           "flex items-center gap-1.5 px-3 py-1 hover:bg-accent/50 transition-colors overflow-hidden",
         )}
       >
         {/* Expand/collapse */}
         <button
+          {...testId(`tool-picker-server-toggle-${server.server_id}`)}
           onClick={onToggleExpand}
           disabled={!hasTools}
           className={cn(
@@ -400,6 +405,7 @@ function ServerRow({
 
         {/* Checkbox */}
         <Checkbox
+          {...testId(`tool-picker-server-checkbox-${server.server_id}`)}
           checked={serverIndeterminate ? "indeterminate" : serverChecked}
           onCheckedChange={(checked) => {
             if (checked === "indeterminate") return;
@@ -482,6 +488,7 @@ function ToolRow({
   const { t } = useTranslation();
   return (
     <div
+      {...testId(`tool-picker-item-${tool.name}`)}
       className={cn(
         "flex items-center gap-1.5 px-3 py-1 hover:bg-accent/30 transition-colors overflow-hidden",
       )}
@@ -491,6 +498,7 @@ function ToolRow({
 
       {/* Checkbox */}
       <Checkbox
+        {...testId(`tool-picker-tool-checkbox-${tool.name}`)}
         checked={isEnabled}
         onCheckedChange={onToggle}
         disabled={isUpdating || isDisabledByServer}

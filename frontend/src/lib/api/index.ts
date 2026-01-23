@@ -47,6 +47,11 @@ export {
   type UserUpdateMe,
   type LanguageResponse,
   type LanguageUpdate,
+  type VerificationStatusResponse,
+  type SendVerificationCodeRequest,
+  type VerifyEmailRequest,
+  type ResendVerificationRequest,
+  type UpdateSignupEmailRequest,
 } from "./auth";
 
 // Items module
@@ -122,7 +127,6 @@ export {
   type InvitationsPublic,
   type InvitationCreate,
   type InvitationInfo,
-  type InvitationCreatedResponse,
   type BulkInvitationCreate,
   type BulkInvitationResult,
   type BulkInvitationResponse,
@@ -229,6 +233,7 @@ export {
   type OrganizationLLMSettings,
   type TeamLLMSettings,
   type UserLLMSettings,
+  type LLMSettingsUpdateBase,
   type OrganizationLLMSettingsUpdate,
   type TeamLLMSettingsUpdate,
   type UserLLMSettingsUpdate,
@@ -281,6 +286,7 @@ export {
   type OrganizationGuardrails,
   type TeamGuardrails,
   type UserGuardrails,
+  type GuardrailsUpdateBase,
   type OrganizationGuardrailsUpdate,
   type TeamGuardrailsUpdate,
   type UserGuardrailsUpdate,

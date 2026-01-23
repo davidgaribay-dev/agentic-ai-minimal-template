@@ -210,4 +210,12 @@ export const organizationsApi = {
       preferences,
       { headers: getAuthHeader() },
     ),
+
+  /** Send password reset email to a member (admin action) */
+  sendMemberPasswordReset: (orgId: string, memberId: string) =>
+    apiClient.post<Message>(
+      `/v1/organizations/${orgId}/members/${memberId}/send-password-reset`,
+      {},
+      { headers: getAuthHeader() },
+    ),
 };

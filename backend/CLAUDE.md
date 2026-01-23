@@ -11,57 +11,70 @@ uv sync                                    # Install dependencies
 uv run uvicorn backend.main:app --reload   # Dev server (port 8000)
 uv run alembic upgrade head                # Run migrations
 uv run alembic revision --autogenerate -m "msg"  # Create migration
-uv run pytest                              # Run tests
+uv run pytest                              # Run all tests
+uv run pytest -m unit                      # Unit tests only (fast, no DB)
+uv run pytest -m integration               # Integration tests (requires DB)
+uv run pytest --cov                        # With coverage report
 ```
+
+**Note**: E2E/Playwright tests are in the root `tests/` folder, not here. Run with `cd ../tests && npm test`.
 
 ## Architecture
 
 Stack: FastAPI, SQLModel (SQLAlchemy + Pydantic), LangGraph, PostgreSQL, Alembic, structlog, JWT + bcrypt
 
 ```
-src/backend/
-├── main.py              # FastAPI app with lifespan management
-├── api/
-│   ├── deps.py          # Shared dependencies
-│   └── routes/          # REST endpoints (/v1 prefix)
-├── agents/
-│   ├── base.py          # LangGraph agent with PostgreSQL checkpointing
-│   ├── react_agent.py   # ReAct agent with tools
-│   ├── context.py       # Agent execution context (org/team/user isolation)
-│   ├── factory.py       # Agent builder with dependency injection
-│   ├── llm.py           # Multi-provider LLM factory
-│   └── tools.py         # @tool decorated functions
-├── auth/
-│   ├── models.py        # User model + schemas
-│   ├── crud.py          # Timing-safe authentication
-│   ├── deps.py          # CurrentUser, SessionDep dependencies
-│   └── token_revocation.py  # JWT blacklisting with TTL cache + DB persistence
-├── rbac/
-│   ├── permissions.py   # OrgPermission, TeamPermission enums + role mappings
-│   └── deps.py          # OrgContextDep, TeamContextDep, require_*_permission
-├── organizations/       # Org model + CRUD
-├── teams/               # Team model + CRUD (TeamMember → OrganizationMember FK)
-├── conversations/       # Soft-delete, multi-tenant scoped + message index
-├── prompts/             # Hierarchical system prompts (org/team/user)
-├── memory/              # Long-term memory with semantic search
-├── mcp/                 # MCP server registry, client, tool loading, types
-├── settings/            # Hierarchical settings (org/team/user)
-├── documents/           # RAG document upload, parsing, chunking, vector store
-├── rag_settings/        # RAG configuration hierarchy (org/team/user)
-├── theme_settings/      # UI theme configuration with predefined themes
-├── core/
-│   ├── config.py        # Pydantic settings with computed fields
-│   ├── db.py            # Engine, session, pagination utilities
-│   ├── security.py      # JWT tokens, password hashing
-│   ├── secrets.py       # Encrypted database secrets (Fernet/AES-128-CBC)
-│   ├── encrypted_secrets.py  # EncryptedSecret model and Fernet cipher
-│   ├── logging.py       # structlog configuration
-│   ├── cache.py         # Redis/in-memory caching utilities
-│   ├── http.py          # HTTP client with retries and circuit breaker
-│   ├── tasks.py         # Background task management
-│   ├── uow.py           # Unit of Work pattern for transactions
-│   └── exceptions.py    # Domain-specific exception hierarchy
-└── scripts/             # Pre-start, initial data, backfill scripts
+backend/
+├── src/backend/
+│   ├── main.py              # FastAPI app with lifespan management
+│   ├── api/
+│   │   ├── deps.py          # Shared dependencies
+│   │   └── routes/          # REST endpoints (/v1 prefix)
+│   ├── agents/
+│   │   ├── base.py          # LangGraph agent with PostgreSQL checkpointing
+│   │   ├── react_agent.py   # ReAct agent with tools
+│   │   ├── context.py       # Agent execution context (org/team/user isolation)
+│   │   ├── factory.py       # Agent builder with dependency injection
+│   │   ├── llm.py           # Multi-provider LLM factory
+│   │   └── tools.py         # @tool decorated functions
+│   ├── auth/
+│   │   ├── models.py        # User model + schemas
+│   │   ├── crud.py          # Timing-safe authentication
+│   │   ├── deps.py          # CurrentUser, SessionDep dependencies
+│   │   └── token_revocation.py  # JWT blacklisting with TTL cache + DB persistence
+│   ├── rbac/
+│   │   ├── permissions.py   # OrgPermission, TeamPermission enums + role mappings
+│   │   └── deps.py          # OrgContextDep, TeamContextDep, require_*_permission
+│   ├── organizations/       # Org model + CRUD
+│   ├── teams/               # Team model + CRUD (TeamMember → OrganizationMember FK)
+│   ├── conversations/       # Soft-delete, multi-tenant scoped + message index
+│   ├── prompts/             # Hierarchical system prompts (org/team/user)
+│   ├── memory/              # Long-term memory with semantic search
+│   ├── mcp/                 # MCP server registry, client, tool loading, types
+│   ├── settings/            # Hierarchical settings (org/team/user)
+│   ├── documents/           # RAG document upload, parsing, chunking, vector store
+│   ├── rag_settings/        # RAG configuration hierarchy (org/team/user)
+│   ├── theme_settings/      # UI theme configuration with predefined themes
+│   ├── core/
+│   │   ├── config.py        # Pydantic settings with computed fields
+│   │   ├── db.py            # Engine, session, pagination utilities
+│   │   ├── security.py      # JWT tokens, password hashing
+│   │   ├── secrets.py       # Encrypted database secrets (Fernet/AES-128-CBC)
+│   │   ├── encrypted_secrets.py  # EncryptedSecret model and Fernet cipher
+│   │   ├── logging.py       # structlog configuration
+│   │   ├── cache.py         # Redis/in-memory caching utilities
+│   │   ├── http.py          # HTTP client with retries and circuit breaker
+│   │   ├── tasks.py         # Background task management
+│   │   ├── uow.py           # Unit of Work pattern for transactions
+│   │   └── exceptions.py    # Domain-specific exception hierarchy
+│   └── scripts/             # Pre-start, initial data, backfill scripts
+├── tests/                   # Unit + integration tests (pytest)
+│   ├── unit/                # Fast tests (no DB required)
+│   │   ├── agents/          # Agent system tests
+│   │   ├── auth/            # Auth + RBAC tests
+│   │   └── core/            # Core utilities tests
+│   └── integration/         # Tests requiring DB
+└── alembic/                 # Database migrations
 ```
 
 ## Key Patterns
@@ -632,7 +645,15 @@ New Route:
 New Model:
 1. Add SQLModel class in appropriate module's `models.py`
 2. Import in `alembic/env.py` for autogenerate detection
-3. Run `alembic revision --autogenerate -m "description"` then `alembic upgrade head`
+3. **ALWAYS use autogenerate** - NEVER write migrations manually:
+   ```bash
+   uv run alembic revision --autogenerate -m "description"
+   uv run alembic upgrade head
+   ```
+4. Review generated file - may need manual additions:
+   - `import pgvector.sqlalchemy` for vector columns
+   - `CREATE EXTENSION IF NOT EXISTS vector/pg_trgm` at start of upgrade()
+   - Renamed columns (shows as drop + add - adjust manually if needed)
 
 New Agent Tool:
 Add `@tool` decorated function in `agents/tools.py`

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import type { MCPServer } from "@/lib/api";
+import { testId } from "@/lib/test-id";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -56,7 +57,10 @@ export function ServerActionsCell({
   const [testDialogOpen, setTestDialogOpen] = useState(false);
 
   return (
-    <div className="flex justify-end">
+    <div
+      {...testId(`mcp-server-actions-${server.id}`)}
+      className="flex justify-end"
+    >
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="size-7">
@@ -64,7 +68,10 @@ export function ServerActionsCell({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-44">
-          <DropdownMenuItem onSelect={() => setTestDialogOpen(true)}>
+          <DropdownMenuItem
+            {...testId("mcp-server-test-button")}
+            onSelect={() => setTestDialogOpen(true)}
+          >
             <PlayCircle className="mr-2 size-3.5" />
             {t("mcp_test_connection")}
           </DropdownMenuItem>
@@ -76,6 +83,7 @@ export function ServerActionsCell({
           <EditServerDialog server={server} scope={scope} />
           <DropdownMenuSeparator />
           <DropdownMenuItem
+            {...testId("mcp-server-toggle-button")}
             onClick={() => onToggle(!server.enabled)}
             disabled={isToggling}
           >
@@ -95,6 +103,7 @@ export function ServerActionsCell({
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <DropdownMenuItem
+                {...testId("mcp-server-delete-button")}
                 className="text-destructive focus:text-destructive"
                 onSelect={(e) => e.preventDefault()}
               >
@@ -114,6 +123,7 @@ export function ServerActionsCell({
               <AlertDialogFooter>
                 <AlertDialogCancel>{t("com_cancel")}</AlertDialogCancel>
                 <AlertDialogAction
+                  {...testId("mcp-delete-confirm-button")}
                   onClick={onDelete}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >

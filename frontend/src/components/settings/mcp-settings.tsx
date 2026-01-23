@@ -3,6 +3,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, AlertTriangle } from "lucide-react";
+import { testId } from "@/lib/test-id";
 
 type SettingsLevel = "org" | "team" | "user";
 
@@ -39,7 +40,7 @@ export function MCPSettings({
   };
 
   return (
-    <div className="space-y-4">
+    <div {...testId("mcp-settings")} className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="space-y-0.5">
           <Label htmlFor="mcp-enabled" className="text-sm font-medium">
@@ -63,6 +64,7 @@ export function MCPSettings({
             <Loader2 className="size-4 animate-spin text-muted-foreground" />
           ) : (
             <Switch
+              {...testId("mcp-enabled-switch")}
               id="mcp-enabled"
               checked={mcpEnabled && !isDisabledByHigherLevel}
               onCheckedChange={onMCPEnabledChange}
@@ -98,6 +100,7 @@ export function MCPSettings({
               <Loader2 className="size-4 animate-spin text-muted-foreground" />
             ) : (
               <Switch
+                {...testId("mcp-custom-servers-switch")}
                 id="mcp-custom-servers"
                 checked={
                   (mcpAllowCustomServers ?? true) &&

@@ -16,6 +16,7 @@ import { ChevronDown, Sparkles } from "lucide-react";
 import { llmSettingsApi } from "@/lib/api";
 import { queryKeys } from "@/lib/queries";
 import { Button } from "@/components/ui/button";
+import { testId } from "@/lib/test-id";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -85,6 +86,7 @@ export function ChatModelSelector({
     // Show current model as informational badge (no dropdown)
     return (
       <Button
+        {...testId("chat-model-selector")}
         variant="ghost"
         size="sm"
         className={cn(
@@ -124,6 +126,7 @@ export function ChatModelSelector({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
+          {...testId("chat-model-selector")}
           variant="ghost"
           size="sm"
           className={cn(
@@ -151,6 +154,7 @@ export function ChatModelSelector({
           const isSelected = model.id === selectedModel;
           return (
             <DropdownMenuItem
+              {...testId(`chat-model-option-${model.id}`)}
               key={model.id}
               onClick={() => handleModelSelect(model.id)}
               className={cn(isSelected && "bg-accent")}

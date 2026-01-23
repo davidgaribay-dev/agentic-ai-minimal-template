@@ -12,6 +12,7 @@ from backend.invitations.models import Invitation  # noqa: F401
 
 # Import all models to ensure relationships are properly configured
 from backend.items.models import Item  # noqa: F401
+from backend.llm_settings.models import UserLLMSettings  # noqa: F401
 from backend.organizations import crud as org_crud
 from backend.organizations.models import (  # noqa: F401
     Organization,

@@ -25,6 +25,7 @@ import {
 
 import { useEffectiveSettings } from "@/lib/settings-context";
 import { cn } from "@/lib/utils";
+import { testId } from "@/lib/test-id";
 import {
   Sidebar,
   SidebarContent,
@@ -190,20 +191,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const chatEnabled = effectiveSettings.chat_enabled;
 
   return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader className={cn(state === "collapsed" && "items-center")}>
+    <Sidebar {...testId("app-sidebar-container")} collapsible="icon" {...props}>
+      <SidebarHeader
+        className={cn(state === "collapsed" && "items-center")}
+        {...testId("sidebar-header")}
+      >
         <NavUser />
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent {...testId("sidebar-content")}>
         {/* Workspace Section - Admin only */}
         {canCreateTeam && (
           <SidebarGroup
             className={cn(state === "collapsed" && "items-center px-0")}
+            {...testId("sidebar-section-workspace")}
           >
             {state === "expanded" && (
               <SidebarGroupLabel
                 className="flex items-center justify-between px-2 h-6 cursor-pointer hover:bg-sidebar-accent/50 rounded-md"
                 onClick={toggleWorkspaceSection}
+                {...testId("sidebar-section-workspace-header")}
               >
                 <span className="text-[11px] font-semibold text-sidebar-foreground/50 uppercase tracking-wide">
                   {t("nav_workspace")}
@@ -235,7 +241,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           "flex items-center justify-center",
                       )}
                     >
-                      <Link to={orgSettingsNavItem.url}>
+                      <Link
+                        {...testId("sidebar-nav-item-org-settings")}
+                        to={orgSettingsNavItem.url}
+                      >
                         <orgSettingsNavItem.icon />
                         {state === "expanded" && (
                           <span>{t(orgSettingsNavItem.titleKey)}</span>
@@ -252,12 +261,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {/* Your Teams Section */}
         <SidebarGroup
           className={cn(state === "collapsed" && "items-center px-0")}
+          {...testId("sidebar-section-teams")}
         >
           {state === "expanded" && (
-            <SidebarGroupLabel className="flex items-center justify-between group px-2 h-6">
+            <SidebarGroupLabel
+              className="flex items-center justify-between group px-2 h-6"
+              {...testId("sidebar-section-teams-header")}
+            >
               <button
                 onClick={toggleTeamsSection}
                 className="flex items-center gap-1 hover:bg-sidebar-accent/50 rounded-md -ml-1 pl-1 pr-2 py-0.5"
+                {...testId("sidebar-section-teams-toggle")}
               >
                 <ChevronDown
                   className={cn(
@@ -271,6 +285,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </button>
               {canCreateTeam && (
                 <button
+                  {...testId("sidebar-create-team-button")}
                   onClick={() => setCreateTeamOpen(true)}
                   className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-sidebar-accent rounded-md"
                   title={t("team_create")}

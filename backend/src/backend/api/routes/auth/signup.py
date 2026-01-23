@@ -1,10 +1,11 @@
 """User registration routes."""
 
+from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any
 
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile, status
 
-from backend.audit.schemas import AuditAction, Target
+from backend.audit.schemas import AuditAction, LogLevel, Target
 from backend.audit.service import audit_service
 from backend.auth import (
     SessionDep,
@@ -14,12 +15,15 @@ from backend.auth import (
     get_user_by_email,
 )
 from backend.auth.models import UserRegisterWithInvitation
+from backend.core.config import settings
 from backend.core.logging import get_logger
 from backend.core.storage import (
     InvalidFileTypeError,
     StorageError,
     upload_file,
 )
+from backend.email import email_service
+from backend.email.schemas import VerificationCodeData
 from backend.invitations import crud as invitation_crud
 from backend.invitations.models import InvitationStatus
 from backend.organizations import crud as org_crud
@@ -228,6 +232,63 @@ async def register_user(
         },
     )
 
+    # Send email verification code
+    code = email_service.generate_verification_code()
+    expires_at = datetime.now(UTC) + timedelta(
+        minutes=settings.EMAIL_VERIFICATION_EXPIRE_MINUTES
+    )
+
+    user.email_verification_code = code
+    user.email_verification_code_expires_at = expires_at
+    user.email_verification_sent_at = datetime.now(UTC)
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    verification_data = VerificationCodeData(
+        email=user.email,
+        code=code,
+        username=user.full_name,
+        expires_in_minutes=settings.EMAIL_VERIFICATION_EXPIRE_MINUTES,
+        locale=user.language,
+    )
+
+    result = await email_service.send_verification_email(
+        data=verification_data,
+        request=request,
+        actor=user,
+    )
+
+    if result.success:
+        await audit_service.log(
+            AuditAction.EMAIL_VERIFICATION_SENT,
+            actor=user,
+            request=request,
+            organization_id=organization.id,
+            team_id=team.id,
+            targets=[Target(type="user", id=str(user.id), name=user.email)],
+            metadata={"expires_in_minutes": settings.EMAIL_VERIFICATION_EXPIRE_MINUTES},
+        )
+        logger.info("verification_code_sent_on_signup", email=user.email)
+    else:
+        await audit_service.log(
+            AuditAction.EMAIL_FAILED,
+            actor=user,
+            request=request,
+            outcome="failure",
+            severity=LogLevel.ERROR,
+            organization_id=organization.id,
+            team_id=team.id,
+            targets=[Target(type="user", id=str(user.id), name=user.email)],
+            error_code="EMAIL_SEND_FAILED",
+            error_message=result.error_message,
+        )
+        logger.error(
+            "verification_email_failed_on_signup",
+            email=user.email,
+            error=result.error_message,
+        )
+
     return user
 
 
@@ -331,5 +392,62 @@ async def register_user_with_invitation(
             else None,
         },
     )
+
+    # Send email verification code
+    code = email_service.generate_verification_code()
+    expires_at = datetime.now(UTC) + timedelta(
+        minutes=settings.EMAIL_VERIFICATION_EXPIRE_MINUTES
+    )
+
+    user.email_verification_code = code
+    user.email_verification_code_expires_at = expires_at
+    user.email_verification_sent_at = datetime.now(UTC)
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    verification_data = VerificationCodeData(
+        email=user.email,
+        code=code,
+        username=user.full_name,
+        expires_in_minutes=settings.EMAIL_VERIFICATION_EXPIRE_MINUTES,
+        locale=user.language,
+    )
+
+    result = await email_service.send_verification_email(
+        data=verification_data,
+        request=request,
+        actor=user,
+    )
+
+    if result.success:
+        await audit_service.log(
+            AuditAction.EMAIL_VERIFICATION_SENT,
+            actor=user,
+            request=request,
+            organization_id=invitation.organization_id,
+            team_id=team_joined,
+            targets=[Target(type="user", id=str(user.id), name=user.email)],
+            metadata={"expires_in_minutes": settings.EMAIL_VERIFICATION_EXPIRE_MINUTES},
+        )
+        logger.info("verification_code_sent_on_invitation_signup", email=user.email)
+    else:
+        await audit_service.log(
+            AuditAction.EMAIL_FAILED,
+            actor=user,
+            request=request,
+            outcome="failure",
+            severity=LogLevel.ERROR,
+            organization_id=invitation.organization_id,
+            team_id=team_joined,
+            targets=[Target(type="user", id=str(user.id), name=user.email)],
+            error_code="EMAIL_SEND_FAILED",
+            error_message=result.error_message,
+        )
+        logger.error(
+            "verification_email_failed_on_invitation_signup",
+            email=user.email,
+            error=result.error_message,
+        )
 
     return user

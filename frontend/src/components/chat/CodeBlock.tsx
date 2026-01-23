@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Check, Copy, Download } from "lucide-react";
 import { codeToTokens, bundledLanguages, type BundledLanguage } from "shiki";
 import { cn } from "@/lib/utils";
+import { testId } from "@/lib/test-id";
 
 const languageExtensions: Record<string, string> = {
   javascript: "js",
@@ -93,6 +94,7 @@ function CopyButton({ code, className }: { code: string; className?: string }) {
 
   return (
     <button
+      {...testId("code-block-copy-button")}
       onClick={handleCopy}
       className={cn(
         "cursor-pointer p-1 text-muted-foreground transition-colors hover:text-foreground",
@@ -137,6 +139,7 @@ function DownloadButton({
 
   return (
     <button
+      {...testId("code-block-download-button")}
       onClick={handleDownload}
       className={cn(
         "cursor-pointer p-1 text-muted-foreground transition-colors hover:text-foreground",
@@ -225,6 +228,7 @@ export const CodeBlock = memo(function CodeBlock({
 
   return (
     <div
+      {...testId("code-block-container")}
       className={cn(
         "group/code my-4 w-full overflow-hidden rounded-xl border border-border",
         className,
@@ -267,7 +271,10 @@ export const CodeBlock = memo(function CodeBlock({
           )}
         >
           {showLanguage && language && (
-            <span className="mr-auto font-mono text-xs lowercase text-muted-foreground">
+            <span
+              {...testId("code-block-language")}
+              className="mr-auto font-mono text-xs lowercase text-muted-foreground"
+            >
               {language}
             </span>
           )}

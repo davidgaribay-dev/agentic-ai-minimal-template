@@ -20,6 +20,7 @@ import {
 } from "@/lib/ui-store";
 import { useWorkspace } from "@/lib/workspace";
 import { useChatSelection } from "@/lib/chat-store";
+import { testId } from "@/lib/test-id";
 
 type PanelMode = "chat" | "custom";
 
@@ -228,6 +229,7 @@ export function SidePanel() {
 
   return (
     <div
+      {...testId("side-panel")}
       ref={panelRef}
       role="complementary"
       aria-label={
@@ -236,6 +238,7 @@ export function SidePanel() {
       className="relative flex h-full flex-col border-l bg-background overflow-hidden"
     >
       <div
+        {...testId("side-panel-resize-handle")}
         role="separator"
         aria-orientation="vertical"
         aria-label={t("aria_resize_panel")}
@@ -252,10 +255,10 @@ export function SidePanel() {
               currentTitle={currentTitle}
               teamId={teamId}
               onSelectConversation={handleSelectConversation}
-              onNewChat={handleNewChat}
             />
             <div className="flex items-center gap-1">
               <Button
+                {...testId("side-panel-new-chat-button")}
                 variant="ghost"
                 size="sm"
                 className="h-7 w-7 p-0"
@@ -265,6 +268,7 @@ export function SidePanel() {
                 <Plus className="size-4" />
               </Button>
               <Button
+                {...testId("side-panel-close-button")}
                 variant="ghost"
                 size="sm"
                 className="h-7 w-7 p-0"
@@ -277,10 +281,14 @@ export function SidePanel() {
           </>
         ) : (
           <>
-            <span className="px-2 text-xs font-medium uppercase tracking-wide">
+            <span
+              {...testId("side-panel-title")}
+              className="px-2 text-xs font-medium uppercase tracking-wide"
+            >
               {title || t("panel_title")}
             </span>
             <Button
+              {...testId("side-panel-close-button")}
               variant="ghost"
               size="sm"
               className="h-7 w-7 p-0"

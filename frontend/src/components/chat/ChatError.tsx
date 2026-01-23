@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { AlertCircle, Settings, KeyRound } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { testId } from "@/lib/test-id";
 
 interface ChatErrorProps {
   error: Error;
@@ -101,6 +102,7 @@ function ErrorCard({
 }: ErrorCardProps) {
   return (
     <div
+      {...testId("chat-error-container")}
       className={cn(
         "flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm",
         className,
@@ -161,6 +163,7 @@ function ApiKeyError({
       description={t("error_api_key_configure_prompt", { provider })}
       action={
         <Link
+          {...testId("chat-error-settings-link")}
           to={getSettingsLink()}
           className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
         >

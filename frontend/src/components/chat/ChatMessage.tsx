@@ -70,6 +70,7 @@ const MessageCopyButton = memo(function MessageCopyButton({
 
   return (
     <button
+      {...testId("chat-message-copy-button")}
       onClick={handleCopy}
       className={cn(
         "flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",

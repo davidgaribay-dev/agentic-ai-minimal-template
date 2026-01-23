@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { DocumentViewer } from "@/components/documents/document-viewer";
 import type { MessageSource } from "@/lib/chat-store";
 import { getFaviconUrl, getDisplayName, getDomain } from "./helpers";
+import { testId } from "@/lib/test-id";
 
 interface InlineCitationBadgeProps {
   /** Citation marker text (e.g., "filename.md") */
@@ -73,6 +74,7 @@ export function InlineCitationBadge({
   if (!hasSources) {
     return (
       <span
+        {...testId(`inline-citation-badge-${marker}`)}
         className={cn(
           "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium",
           "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400",
@@ -90,6 +92,7 @@ export function InlineCitationBadge({
     <Popover>
       <PopoverTrigger asChild>
         <button
+          {...testId(`inline-citation-badge-${marker}`)}
           className={cn(
             "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium",
             "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400",
@@ -115,19 +118,27 @@ export function InlineCitationBadge({
         <div className="flex flex-col">
           {/* Pagination header - only show if multiple sources */}
           {totalSources > 1 && (
-            <div className="flex items-center justify-between px-3 py-2 border-b">
+            <div
+              {...testId("inline-citation-badge-pagination")}
+              className="flex items-center justify-between px-3 py-2 border-b"
+            >
               <div className="flex items-center gap-1">
                 <button
+                  {...testId("inline-citation-badge-prev")}
                   onClick={handlePrev}
                   className="rounded p-0.5 hover:bg-muted text-muted-foreground hover:text-foreground"
                   aria-label={t("aria_prev_source")}
                 >
                   <ChevronLeft className="h-3.5 w-3.5" />
                 </button>
-                <span className="text-xs text-muted-foreground min-w-[28px] text-center">
+                <span
+                  {...testId("inline-citation-badge-counter")}
+                  className="text-xs text-muted-foreground min-w-[28px] text-center"
+                >
                   {currentIndex + 1}/{totalSources}
                 </span>
                 <button
+                  {...testId("inline-citation-badge-next")}
                   onClick={handleNext}
                   className="rounded p-0.5 hover:bg-muted text-muted-foreground hover:text-foreground"
                   aria-label={t("aria_next_source")}
@@ -143,7 +154,7 @@ export function InlineCitationBadge({
 
           {/* Source card content */}
           {currentSource && (
-            <div className="p-3">
+            <div {...testId("inline-citation-badge-content")} className="p-3">
               <div className="flex items-center gap-2 mb-1">
                 {getFaviconUrl(currentSource.source) ? (
                   <img
@@ -159,21 +170,31 @@ export function InlineCitationBadge({
                     <FileText className="h-2.5 w-2.5 text-muted-foreground" />
                   </div>
                 )}
-                <span className="text-xs text-muted-foreground">
+                <span
+                  {...testId("inline-citation-badge-domain")}
+                  className="text-xs text-muted-foreground"
+                >
                   {getDomain(currentSource.source)}
                 </span>
               </div>
 
-              <h4 className="font-semibold text-sm text-foreground mb-1.5 line-clamp-2">
+              <h4
+                {...testId("inline-citation-badge-title")}
+                className="font-semibold text-sm text-foreground mb-1.5 line-clamp-2"
+              >
                 {getDisplayName(currentSource.source)}
               </h4>
 
-              <p className="text-xs text-muted-foreground line-clamp-3">
+              <p
+                {...testId("inline-citation-badge-preview")}
+                className="text-xs text-muted-foreground line-clamp-3"
+              >
                 {currentSource.content}
               </p>
 
               {isDocument && (
                 <Button
+                  {...testId("inline-citation-badge-view-document")}
                   variant="outline"
                   size="sm"
                   className="mt-2 w-full h-7 text-xs"

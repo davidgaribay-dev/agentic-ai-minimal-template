@@ -66,3 +66,20 @@ import { Button } from "@/components/ui/button"  // Use @/ prefix
 ```typescript
 form.setValue("field", value, { shouldDirty: true })
 ```
+
+### Test IDs (REQUIRED)
+```typescript
+import { testId } from "@/lib/test-id"
+
+// ALL interactive elements MUST have test IDs
+<Button {...testId("feature-submit-button")} onClick={handleSubmit}>{t("com_save")}</Button>
+<Input {...testId("feature-name-input")} {...form.register("name")} />
+<DialogContent {...testId("confirm-delete-dialog")}>...</DialogContent>
+```
+
+**Naming Convention**: `{component}-{element}-{type}` in kebab-case
+- Buttons: `create-team-submit-button`, `delete-prompt-confirm-button`
+- Inputs: `login-email-input`, `settings-name-input`
+- Dialogs: `edit-prompt-dialog`, `delete-org-alert-dialog`
+- Lists: `document-list`, `document-item-${id}`
+- Tables: `configured-models-table`, `model-row-${id}`

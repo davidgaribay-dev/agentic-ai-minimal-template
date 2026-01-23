@@ -55,6 +55,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { testId } from "@/lib/test-id";
 
 export const Route = createFileRoute("/organizations")({
   beforeLoad: ({ context }) => {
@@ -84,7 +85,10 @@ function OrganizationsPage() {
 
   if (!isLoadingOrgs && currentOrg && currentOrgRole === null) {
     return (
-      <div className="bg-background min-h-screen">
+      <div
+        {...testId("organizations-page")}
+        className="bg-background min-h-screen"
+      >
         <div className="mx-auto max-w-4xl px-6 py-8">
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -96,7 +100,10 @@ function OrganizationsPage() {
 
   if (!isLoadingOrgs && currentOrgRole === "member") {
     return (
-      <div className="bg-background min-h-screen">
+      <div
+        {...testId("organizations-page")}
+        className="bg-background min-h-screen"
+      >
         <div className="mx-auto max-w-4xl px-6 py-8">
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 mb-4">
@@ -118,7 +125,10 @@ function OrganizationsPage() {
   }
 
   return (
-    <div className="bg-background min-h-screen">
+    <div
+      {...testId("organizations-page")}
+      className="bg-background min-h-screen"
+    >
       <div className="mx-auto max-w-4xl px-6 py-8">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
@@ -272,7 +282,10 @@ function OrganizationsDataTable({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   {!isCurrentOrg && (
-                    <DropdownMenuItem onClick={() => onSwitch(org.id)}>
+                    <DropdownMenuItem
+                      {...testId(`org-select-${org.id}`)}
+                      onClick={() => onSwitch(org.id)}
+                    >
                       <ArrowRightLeft className="mr-2 size-4" />
                       {t("org_switch_to")}
                     </DropdownMenuItem>
@@ -353,6 +366,7 @@ function OrganizationsDataTable({
           <div className="flex gap-2">
             {!isCurrentOrg && (
               <Button
+                {...testId(`org-select-${org.id}`)}
                 variant="outline"
                 size="sm"
                 className="flex-1"
@@ -636,6 +650,7 @@ function CreateOrganizationDialog({
                 <Label htmlFor="org-name">{t("org_name_label")}</Label>
                 <Input
                   id="org-name"
+                  {...testId("create-org-name-input")}
                   value={orgName}
                   onChange={(e) => setOrgName(e.target.value)}
                   placeholder={t("org_name_placeholder")}
@@ -648,6 +663,7 @@ function CreateOrganizationDialog({
                 </Label>
                 <Textarea
                   id="org-description"
+                  {...testId("create-org-description-input")}
                   value={orgDescription}
                   onChange={(e) => setOrgDescription(e.target.value)}
                   placeholder={t("org_description_placeholder")}
@@ -663,6 +679,7 @@ function CreateOrganizationDialog({
                 {t("com_cancel")}
               </Button>
               <Button
+                {...testId("create-org-submit-button")}
                 onClick={handleCreateOrg}
                 disabled={!orgName.trim() || isCreatingOrg}
               >
@@ -746,6 +763,7 @@ function CreateOrganizationDialog({
                 <Label htmlFor="team-name">{t("team_name_label")}</Label>
                 <Input
                   id="team-name"
+                  {...testId("create-team-name-input")}
                   value={teamName}
                   onChange={(e) => setTeamName(e.target.value)}
                   placeholder={t("team_name_placeholder")}
@@ -758,6 +776,7 @@ function CreateOrganizationDialog({
                 </Label>
                 <Textarea
                   id="team-description"
+                  {...testId("create-team-description-input")}
                   value={teamDescription}
                   onChange={(e) => setTeamDescription(e.target.value)}
                   placeholder={t("team_description_placeholder")}
@@ -773,6 +792,7 @@ function CreateOrganizationDialog({
                 {t("com_skip")}
               </Button>
               <Button
+                {...testId("create-team-submit-button")}
                 onClick={handleCreateTeam}
                 disabled={!teamName.trim() || isCreatingTeam}
               >

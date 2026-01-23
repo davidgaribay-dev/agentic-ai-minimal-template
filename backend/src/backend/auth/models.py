@@ -33,6 +33,12 @@ class User(UserBase, BaseTable, table=True):
     # Only set explicitly on password change operations, not on every model load
     password_changed_at: datetime | None = Field(default=None)
 
+    # Email verification fields
+    email_verified: bool = Field(default=False)
+    email_verification_code: str | None = Field(default=None, max_length=6)
+    email_verification_code_expires_at: datetime | None = Field(default=None)
+    email_verification_sent_at: datetime | None = Field(default=None)
+
     items: list["Item"] = Relationship(
         back_populates="owner",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
@@ -123,6 +129,7 @@ class UpdatePassword(SQLModel):
 
 class UserPublic(UserBase):
     id: uuid.UUID
+    email_verified: bool = False
 
 
 # UsersPublic is now PaginatedResponse[UserPublic] - use it directly in routes
@@ -153,6 +160,61 @@ class NewPassword(SQLModel):
 
 class Message(SQLModel):
     message: str
+
+
+# Email verification schemas
+class SendVerificationCodeRequest(SQLModel):
+    """Request to send a verification code to an email."""
+
+    email: EmailStr
+
+
+class VerifyEmailRequest(SQLModel):
+    """Request to verify email with code."""
+
+    email: EmailStr
+    code: str = Field(min_length=6, max_length=6)
+
+
+class ResendVerificationRequest(SQLModel):
+    """Request to resend verification code."""
+
+    email: EmailStr
+
+
+class UpdateSignupEmailRequest(SQLModel):
+    """Request to update email during signup (before verification)."""
+
+    current_email: EmailStr
+    new_email: EmailStr
+
+
+class VerificationStatusResponse(SQLModel):
+    """Response with verification status."""
+
+    email_verified: bool
+    verification_sent: bool = False
+    can_resend_at: datetime | None = None
+
+
+# Password reset schemas
+class PasswordResetRequest(SQLModel):
+    """Request to send password reset email."""
+
+    email: EmailStr
+
+
+class PasswordResetWithTokenRequest(SQLModel):
+    """Request to reset password using token from email."""
+
+    token: str
+    new_password: str = Field(min_length=8, max_length=128)
+
+
+class AdminPasswordResetRequest(SQLModel):
+    """Request for admin to trigger password reset for a user."""
+
+    # No body needed - user determined by route param
 
 
 User.model_rebuild()

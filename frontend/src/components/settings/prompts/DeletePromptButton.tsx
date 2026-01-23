@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Loader2, Trash2 } from "lucide-react";
 import type { Prompt } from "@/lib/api";
+import { testId } from "@/lib/test-id";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -41,6 +42,7 @@ export function DeletePromptButton({
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button
+          {...testId("delete-prompt-trigger")}
           variant="ghost"
           size="icon"
           className={`${compact ? "size-6" : "size-7"} text-muted-foreground hover:text-destructive`}
@@ -48,7 +50,7 @@ export function DeletePromptButton({
           <Trash2 className={compact ? "size-2.5" : "size-3"} />
         </Button>
       </AlertDialogTrigger>
-      <AlertDialogContent>
+      <AlertDialogContent {...testId("delete-prompt-alert-dialog")}>
         <AlertDialogHeader>
           <AlertDialogTitle>{t("prompts_delete")}</AlertDialogTitle>
           <AlertDialogDescription>
@@ -58,6 +60,7 @@ export function DeletePromptButton({
         <AlertDialogFooter>
           <AlertDialogCancel>{t("com_cancel")}</AlertDialogCancel>
           <AlertDialogAction
+            {...testId("delete-prompt-confirm")}
             onClick={() => deleteMutation.mutate()}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >

@@ -25,6 +25,7 @@ import {
   ConfiguredModelsTable,
 } from "./llm-settings";
 import { SettingsCard } from "./settings-layout";
+import { testId } from "@/lib/test-id";
 
 interface TeamLLMSettingsProps {
   orgId: string;
@@ -156,7 +157,7 @@ export function TeamLLMSettings({ orgId, teamId }: TeamLLMSettingsProps) {
   ).length;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" {...testId("team-llm-settings")}>
       {/* Disabled by org warning */}
       {disabledByOrg && (
         <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-sm">

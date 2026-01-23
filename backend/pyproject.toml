@@ -33,6 +33,7 @@ dependencies = [
     # Email
     "emails>=0.6",
     "jinja2>=3.1.4",
+    "resend>=2.0.0",
     # S3/SeaweedFS storage
     "boto3>=1.35.0",
     # Rate limiting
@@ -309,6 +310,7 @@ module = [
     "langmem.*",
     "passlib.*",
     "emails.*",
+    "resend.*",
     "slowapi.*",
     "sse_starlette.*",
     "pgvector.*",
@@ -410,6 +412,13 @@ disable_error_code = ["no-untyped-def", "arg-type"]
 [[tool.mypy.overrides]]
 module = ["backend.core.tasks"]
 disable_error_code = ["type-arg", "no-untyped-def", "arg-type"]
+
+# Email modules with Resend integration
+[[tool.mypy.overrides]]
+module = [
+    "backend.email.*",
+]
+disable_error_code = ["type-arg", "arg-type", "no-untyped-def"]
 
 [tool.pydantic-mypy]
 init_forbid_extra = true

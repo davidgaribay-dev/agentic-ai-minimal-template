@@ -39,6 +39,7 @@ import {
   isLoggedIn,
   useCurrentUser,
 } from "@/lib/auth";
+import { testId } from "@/lib/test-id";
 
 export const Route = createFileRoute("/invite")({
   component: InvitePage,
@@ -125,7 +126,10 @@ function InvitePage() {
 
   if (isLoadingInvitation || isLoadingUser) {
     return (
-      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-background via-background to-muted p-4">
+      <div
+        {...testId("invite-page")}
+        className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-background via-background to-muted p-4"
+      >
         {/* Background decoration */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="absolute -left-40 -top-40 h-80 w-80 rounded-full bg-primary/5 blur-3xl" />
@@ -147,7 +151,10 @@ function InvitePage() {
     const errorMessage =
       (invitationError as Error)?.message || t("invite_expired_desc");
     return (
-      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-background via-background to-muted p-4">
+      <div
+        {...testId("invite-page")}
+        className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-background via-background to-muted p-4"
+      >
         {/* Background decoration */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="absolute -left-40 -top-40 h-80 w-80 rounded-full bg-primary/5 blur-3xl" />
@@ -183,7 +190,10 @@ function InvitePage() {
 
   if (isExpired) {
     return (
-      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-background via-background to-muted p-4">
+      <div
+        {...testId("invite-page")}
+        className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-background via-background to-muted p-4"
+      >
         {/* Background decoration */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="absolute -left-40 -top-40 h-80 w-80 rounded-full bg-primary/5 blur-3xl" />
@@ -221,7 +231,10 @@ function InvitePage() {
     const isCorrectEmail = currentUser.email === invitationInfo.email;
 
     return (
-      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-background via-background to-muted p-4">
+      <div
+        {...testId("invite-page")}
+        className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-background via-background to-muted p-4"
+      >
         {/* Background decoration */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="absolute -left-40 -top-40 h-80 w-80 rounded-full bg-primary/5 blur-3xl" />
@@ -304,7 +317,10 @@ function InvitePage() {
               </div>
 
               {!isCorrectEmail && (
-                <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
+                <div
+                  {...testId("invite-email-mismatch-error")}
+                  className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive"
+                >
                   <p>
                     {t("invite_email_mismatch", {
                       inviteEmail: invitationInfo.email,
@@ -316,7 +332,10 @@ function InvitePage() {
               )}
 
               {acceptInvitation.error && (
-                <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+                <div
+                  {...testId("invite-accept-error")}
+                  className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive"
+                >
                   {(acceptInvitation.error as Error).message ||
                     t("invite_failed_accept")}
                 </div>
@@ -324,6 +343,7 @@ function InvitePage() {
             </CardContent>
             <CardFooter className="flex flex-col gap-3 pt-2">
               <Button
+                {...testId("invite-accept-button")}
                 className="w-full gap-2 shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30"
                 size="lg"
                 onClick={handleAcceptInvitation}
@@ -353,7 +373,10 @@ function InvitePage() {
   const error = localError || registerWithInvitation.error?.message;
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-background via-background to-muted p-4">
+    <div
+      {...testId("invite-page")}
+      className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-background via-background to-muted p-4"
+    >
       {/* Background decoration */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -left-40 -top-40 h-80 w-80 rounded-full bg-primary/5 blur-3xl" />
@@ -384,10 +407,13 @@ function InvitePage() {
             </CardTitle>
             <CardDescription>{t("invite_create_desc")}</CardDescription>
           </CardHeader>
-          <form onSubmit={handleNewUserSubmit}>
+          <form {...testId("invite-form")} onSubmit={handleNewUserSubmit}>
             <CardContent className="space-y-4">
               {error && (
-                <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+                <div
+                  {...testId("invite-error")}
+                  className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive"
+                >
                   {error}
                 </div>
               )}
@@ -453,6 +479,7 @@ function InvitePage() {
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
+                    {...testId("invite-name-input")}
                     id="fullName"
                     type="text"
                     placeholder={t("invite_full_name_placeholder")}
@@ -468,6 +495,7 @@ function InvitePage() {
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
+                    {...testId("invite-password-input")}
                     id="password"
                     type="password"
                     placeholder={t("auth_password_min_chars")}
@@ -487,6 +515,7 @@ function InvitePage() {
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
+                    {...testId("invite-confirm-password-input")}
                     id="confirmPassword"
                     type="password"
                     placeholder={t("invite_confirm_placeholder")}
@@ -502,6 +531,7 @@ function InvitePage() {
             </CardContent>
             <CardFooter className="flex flex-col gap-4 pt-2">
               <Button
+                {...testId("invite-submit-button")}
                 type="submit"
                 className="w-full gap-2 shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30"
                 size="lg"

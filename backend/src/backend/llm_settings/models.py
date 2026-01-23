@@ -5,7 +5,7 @@ Supports built-in providers (Anthropic, OpenAI, Google) and custom OpenAI-compat
 """
 
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 import uuid
 
 from sqlalchemy.dialects.postgresql import JSON
@@ -333,7 +333,7 @@ class CustomLLMProvider(TimestampedTable, table=True):
 
     # Relationships
     organization: "Organization" = Relationship(back_populates="custom_llm_providers")
-    team: "Team | None" = Relationship(back_populates="custom_llm_providers")
+    team: Optional["Team"] = Relationship(back_populates="custom_llm_providers")
 
 
 # Update schemas

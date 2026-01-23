@@ -25,11 +25,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { testId } from "@/lib/test-id";
 import { SettingsCard } from "../settings-layout";
 
 import {
   type LLMSettingsProps,
   type OrgLLMSettingsProps,
+  type LLMSettingsUpdateBase,
   PROVIDER_OPTIONS,
 } from "./types";
 
@@ -56,9 +58,29 @@ export function LLMSettingsForm(props: LLMSettingsProps) {
 
   const tooltipMessage = getTooltipMessage();
 
-  // Type-safe update handler - uses unknown to satisfy the discriminated union
-  const handleUpdate = (data: Record<string, unknown>) => {
-    (props.onUpdate as (data: Record<string, unknown>) => void)(data);
+  // Type-safe update handler using the common base type
+  // Both org and team levels use default_* field naming
+  const handleUpdate = (data: LLMSettingsUpdateBase) => {
+    props.onUpdate(data);
+  };
+
+  // Org-specific update handler for permission fields
+  const handleOrgUpdate = (
+    data:
+      | { allow_team_customization: boolean }
+      | { allow_user_customization: boolean }
+      | { allow_per_request_model_selection: boolean },
+  ) => {
+    if (level === "org") {
+      (props as OrgLLMSettingsProps).onUpdate(data);
+    }
+  };
+
+  // Team-specific update handler for allow_user_customization
+  const handleTeamUpdate = (data: { allow_user_customization: boolean }) => {
+    if (level === "team") {
+      props.onUpdate(data);
+    }
   };
 
   // Group models by provider for display
@@ -79,7 +101,7 @@ export function LLMSettingsForm(props: LLMSettingsProps) {
   };
 
   return (
-    <div className="space-y-4">
+    <div {...testId("llm-settings")} className="space-y-4">
       {/* Default Model Selection */}
       <SettingsCard>
         <div className="p-4 space-y-4">
@@ -117,7 +139,7 @@ export function LLMSettingsForm(props: LLMSettingsProps) {
                 onValueChange={(v) => handleUpdate({ default_provider: v })}
                 disabled={isDisabled}
               >
-                <SelectTrigger id="provider">
+                <SelectTrigger {...testId("llm-provider-select")} id="provider">
                   <SelectValue placeholder={t("llm_select_provider")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -143,7 +165,7 @@ export function LLMSettingsForm(props: LLMSettingsProps) {
                 onValueChange={(v) => handleUpdate({ default_model: v })}
                 disabled={isDisabled}
               >
-                <SelectTrigger id="model">
+                <SelectTrigger {...testId("llm-model-select")} id="model">
                   <SelectValue placeholder={t("llm_select_model")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -190,6 +212,7 @@ export function LLMSettingsForm(props: LLMSettingsProps) {
               </span>
             </div>
             <Slider
+              {...testId("llm-temperature-slider")}
               value={[defaultTemperature]}
               onValueChange={(values) =>
                 handleUpdate({ default_temperature: values[0] })
@@ -230,12 +253,13 @@ export function LLMSettingsForm(props: LLMSettingsProps) {
                   </p>
                 </div>
                 <Switch
+                  {...testId("llm-allow-team-switch")}
                   id="allow-team"
                   checked={
                     (props as OrgLLMSettingsProps).allowTeamCustomization
                   }
                   onCheckedChange={(v) =>
-                    handleUpdate({ allow_team_customization: v })
+                    handleOrgUpdate({ allow_team_customization: v })
                   }
                   disabled={isLoading}
                 />
@@ -251,12 +275,13 @@ export function LLMSettingsForm(props: LLMSettingsProps) {
                   </p>
                 </div>
                 <Switch
+                  {...testId("llm-allow-user-switch")}
                   id="allow-user"
                   checked={
                     (props as OrgLLMSettingsProps).allowUserCustomization
                   }
                   onCheckedChange={(v) =>
-                    handleUpdate({ allow_user_customization: v })
+                    handleOrgUpdate({ allow_user_customization: v })
                   }
                   disabled={isLoading}
                 />
@@ -272,12 +297,13 @@ export function LLMSettingsForm(props: LLMSettingsProps) {
                   </p>
                 </div>
                 <Switch
+                  {...testId("llm-allow-per-request-switch")}
                   id="allow-per-request"
                   checked={
                     (props as OrgLLMSettingsProps).allowPerRequestSelection
                   }
                   onCheckedChange={(v) =>
-                    handleUpdate({ allow_per_request_model_selection: v })
+                    handleOrgUpdate({ allow_per_request_model_selection: v })
                   }
                   disabled={isLoading}
                 />
@@ -306,6 +332,7 @@ export function LLMSettingsForm(props: LLMSettingsProps) {
                 </p>
               </div>
               <Switch
+                {...testId("llm-allow-user-team-switch")}
                 id="allow-user-team"
                 checked={
                   "allowUserCustomization" in props
@@ -313,7 +340,7 @@ export function LLMSettingsForm(props: LLMSettingsProps) {
                     : true
                 }
                 onCheckedChange={(v) =>
-                  handleUpdate({ allow_user_customization: v })
+                  handleTeamUpdate({ allow_user_customization: v })
                 }
                 disabled={isDisabled}
               />

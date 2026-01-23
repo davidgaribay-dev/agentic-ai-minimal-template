@@ -8,6 +8,7 @@ import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { X, Loader2, AlertCircle, FileText, File } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { testId } from "@/lib/test-id";
 import { formatFileSize } from "@/lib/api/media";
 import type { PendingUpload } from "@/hooks/useMediaUpload";
 
@@ -39,6 +40,7 @@ const ImagePreview = memo(function ImagePreview({
 
   return (
     <div
+      {...testId(`attachment-preview-image-${upload.id}`)}
       className={cn(
         "relative group size-16 rounded-lg overflow-hidden border border-border/50",
         isError && "border-destructive",
@@ -71,6 +73,7 @@ const ImagePreview = memo(function ImagePreview({
       {/* Remove button */}
       {!disabled && (
         <button
+          {...testId(`attachment-preview-remove-${upload.id}`)}
           type="button"
           onClick={() => onRemove(upload.id)}
           className={cn(
@@ -112,6 +115,7 @@ const DocumentPreview = memo(function DocumentPreview({
 
   return (
     <div
+      {...testId(`attachment-preview-doc-${upload.id}`)}
       className={cn(
         "relative group flex items-center gap-2 px-3 py-2 rounded-lg border border-border/50",
         "bg-muted/30 min-w-0 max-w-[200px]",
@@ -141,6 +145,7 @@ const DocumentPreview = memo(function DocumentPreview({
       {/* Remove button */}
       {!disabled && (
         <button
+          {...testId(`attachment-preview-remove-${upload.id}`)}
           type="button"
           onClick={() => onRemove(upload.id)}
           className={cn(
@@ -179,7 +184,10 @@ export const AttachmentPreviewList = memo(function AttachmentPreviewList({
   const documents = uploads.filter((u) => u.attachmentType === "document");
 
   return (
-    <div className={cn("flex flex-col gap-2", className)}>
+    <div
+      {...testId("attachment-preview-list")}
+      className={cn("flex flex-col gap-2", className)}
+    >
       {/* Images row */}
       {images.length > 0 && (
         <div className="flex flex-wrap gap-2">

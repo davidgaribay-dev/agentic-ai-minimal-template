@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Info, AlertTriangle, Shield } from "lucide-react";
 
-import type { GuardrailAction, OrganizationGuardrailsUpdate } from "@/lib/api";
+import type { GuardrailAction } from "@/lib/api";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
@@ -29,12 +29,14 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { testId } from "@/lib/test-id";
 import { SettingsCard } from "../settings-layout";
 
 import {
   type GuardrailSettingsProps,
   type OrgGuardrailSettingsProps,
   type TeamGuardrailSettingsProps,
+  type GuardrailsUpdateBase,
   ACTION_OPTIONS,
 } from "./types";
 import { KeywordInput } from "./KeywordInput";
@@ -76,13 +78,23 @@ export function GuardrailSettings(props: GuardrailSettingsProps) {
 
   const tooltipMessage = getTooltipMessage();
 
-  // Type-safe update handler
-  const handleUpdate = (data: Partial<OrganizationGuardrailsUpdate>) => {
-    onUpdate(data as Parameters<typeof onUpdate>[0]);
+  // Type-safe update handler using the common base type
+  // All three update types (Org, Team, User) accept GuardrailsUpdateBase fields
+  const handleUpdate = (data: GuardrailsUpdateBase) => {
+    onUpdate(data);
+  };
+
+  // Org-specific update handler for allow_team_override and allow_user_override
+  const handleOrgUpdate = (
+    data: { allow_team_override?: boolean } | { allow_user_override?: boolean },
+  ) => {
+    if (level === "org") {
+      (props as OrgGuardrailSettingsProps).onUpdate(data);
+    }
   };
 
   return (
-    <div className="space-y-4">
+    <div {...testId("guardrail-settings")} className="space-y-4">
       {/* Master toggle card */}
       <SettingsCard>
         <div className="p-4 space-y-4">
@@ -115,6 +127,7 @@ export function GuardrailSettings(props: GuardrailSettingsProps) {
               </p>
             </div>
             <Switch
+              {...testId("guardrails-enabled-switch")}
               id="guardrails-enabled"
               checked={isDisabledByHigherLevel ? false : guardrailsEnabled}
               onCheckedChange={(enabled) =>
@@ -136,12 +149,13 @@ export function GuardrailSettings(props: GuardrailSettingsProps) {
                     {t("guardrails_allow_team_override")}
                   </Label>
                   <Switch
+                    {...testId("guardrails-allow-team-override-switch")}
                     id="allow-team-override"
                     checked={
                       (props as OrgGuardrailSettingsProps).allowTeamOverride
                     }
                     onCheckedChange={(v) =>
-                      handleUpdate({ allow_team_override: v })
+                      handleOrgUpdate({ allow_team_override: v })
                     }
                     disabled={isLoading}
                   />
@@ -151,12 +165,13 @@ export function GuardrailSettings(props: GuardrailSettingsProps) {
                     {t("guardrails_allow_user_override")}
                   </Label>
                   <Switch
+                    {...testId("guardrails-allow-user-override-switch")}
                     id="allow-user-override"
                     checked={
                       (props as OrgGuardrailSettingsProps).allowUserOverride
                     }
                     onCheckedChange={(v) =>
-                      handleUpdate({ allow_user_override: v })
+                      handleOrgUpdate({ allow_user_override: v })
                     }
                     disabled={isLoading}
                   />
@@ -191,7 +206,10 @@ export function GuardrailSettings(props: GuardrailSettingsProps) {
                   }
                   disabled={isDisabled || !guardrailsEnabled}
                 >
-                  <SelectTrigger className="w-32 h-8">
+                  <SelectTrigger
+                    {...testId("guardrails-input-action-select")}
+                    className="w-32 h-8"
+                  >
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -265,7 +283,10 @@ export function GuardrailSettings(props: GuardrailSettingsProps) {
                   }
                   disabled={isDisabled || !guardrailsEnabled}
                 >
-                  <SelectTrigger className="w-32 h-8">
+                  <SelectTrigger
+                    {...testId("guardrails-output-action-select")}
+                    className="w-32 h-8"
+                  >
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -339,6 +360,7 @@ export function GuardrailSettings(props: GuardrailSettingsProps) {
                   </p>
                 </div>
                 <Switch
+                  {...testId("guardrails-pii-enabled-switch")}
                   id="pii-enabled"
                   checked={piiDetectionEnabled}
                   onCheckedChange={(v) =>
@@ -360,7 +382,10 @@ export function GuardrailSettings(props: GuardrailSettingsProps) {
                       }
                       disabled={isDisabled || !guardrailsEnabled}
                     >
-                      <SelectTrigger className="w-32 h-8">
+                      <SelectTrigger
+                        {...testId("guardrails-pii-action-select")}
+                        className="w-32 h-8"
+                      >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>

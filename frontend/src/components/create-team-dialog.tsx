@@ -11,6 +11,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Loader2 } from "lucide-react";
 import { useWorkspace, workspaceKeys } from "@/lib/workspace";
 import { teamsApi, type TeamCreate, ApiError } from "@/lib/api";
+import { testId } from "@/lib/test-id";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -106,7 +107,7 @@ export function CreateTeamDialog({
       {!isControlled && (
         <DialogTrigger asChild>{trigger ?? defaultTrigger}</DialogTrigger>
       )}
-      <DialogContent>
+      <DialogContent {...testId("create-team-dialog")}>
         <DialogHeader>
           <DialogTitle>{t("team_create_dialog_title")}</DialogTitle>
           <DialogDescription>
@@ -117,6 +118,7 @@ export function CreateTeamDialog({
           <div className="space-y-2">
             <Label htmlFor="team-name">{t("team_name_label")}</Label>
             <Input
+              {...testId("create-team-name-input")}
               id="team-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -129,6 +131,7 @@ export function CreateTeamDialog({
               {t("team_description_optional")}
             </Label>
             <Textarea
+              {...testId("create-team-description-textarea")}
               id="team-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -143,6 +146,7 @@ export function CreateTeamDialog({
             {t("com_cancel")}
           </Button>
           <Button
+            {...testId("create-team-submit-button")}
             onClick={handleCreate}
             disabled={!name.trim() || createMutation.isPending}
           >

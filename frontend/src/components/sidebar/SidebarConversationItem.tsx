@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { testId } from "@/lib/test-id";
 
 interface SidebarConversationItemProps {
   conversation: Conversation;
@@ -85,6 +86,7 @@ export const SidebarConversationItem = memo(function SidebarConversationItem({
 
   return (
     <SidebarMenuItem
+      {...testId(`conversation-item-${conversation.id}`)}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >

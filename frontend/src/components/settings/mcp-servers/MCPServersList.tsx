@@ -10,6 +10,7 @@ import { Server, Loader2 } from "lucide-react";
 
 import { mcpServersApi, type MCPServer } from "@/lib/api";
 import { DataTable } from "@/components/ui/data-table";
+import { testId } from "@/lib/test-id";
 import type { Scope } from "./types";
 import { getQueryKeyForScope } from "./hooks";
 import {
@@ -179,7 +180,7 @@ export function MCPServersList({
   }
 
   return (
-    <div className="space-y-4">
+    <div {...testId("mcp-servers-list")} className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Server className="size-4" />

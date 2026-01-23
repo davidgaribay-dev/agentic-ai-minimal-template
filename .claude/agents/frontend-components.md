@@ -562,48 +562,165 @@ function ItemList({ items }: { items: Item[] }) {
 
 ---
 
-## Test ID Patterns
+## Test ID Patterns (CRITICAL for Playwright)
 
-Always add test IDs to interactive elements for reliable test selection:
+**Every interactive element MUST have a test ID.** This is non-negotiable for E2E testing.
 
 ```typescript
 import { testId } from "@/lib/test-id"
 
-// Spread testId() on interactive elements
-<Button {...testId("submit-button")} onClick={handleSubmit}>
+// Spread testId() on ALL interactive elements
+<Button {...testId("create-team-submit-button")} onClick={handleSubmit}>
   {t("com_submit")}
 </Button>
 
-<Input {...testId("email-input")} type="email" {...form.register("email")} />
+<Input {...testId("login-email-input")} type="email" {...form.register("email")} />
+```
 
-<Dialog>
-  <DialogContent {...testId("confirm-dialog")}>
-    <Button {...testId("confirm-dialog-cancel")} variant="outline">
-      {t("com_cancel")}
-    </Button>
-    <Button {...testId("confirm-dialog-confirm")}>
-      {t("com_confirm")}
-    </Button>
+### Naming Convention (kebab-case)
+
+**Pattern**: `{component}-{element}-{type}`
+
+| Element Type | Pattern | Examples |
+|--------------|---------|----------|
+| **Buttons** | `{action}-button` | `create-team-submit-button`, `delete-prompt-confirm-button`, `chat-send-button` |
+| **Inputs** | `{field}-input` | `login-email-input`, `settings-name-input`, `search-query-input` |
+| **Textareas** | `{field}-textarea` | `prompt-content-textarea`, `chat-input-textarea` |
+| **Selects** | `{field}-select` | `llm-provider-select`, `guardrails-action-select` |
+| **Switches** | `{field}-switch` | `memory-enabled-switch`, `llm-allow-team-switch` |
+| **Dialogs** | `{name}-dialog` | `create-team-dialog`, `edit-prompt-dialog`, `delete-org-alert-dialog` |
+| **Containers** | `{name}-container` | `chat-input-container`, `document-viewer-container` |
+| **Lists** | `{name}-list` | `document-list`, `memory-list`, `attachment-preview-list` |
+| **List Items** | `{name}-item-${id}` | `document-item-${doc.id}`, `team-item-${team.id}` |
+| **Tables** | `{name}-table` | `configured-models-table`, `provider-api-keys-table` |
+| **Table Rows** | `{name}-row-${id}` | `model-row-${model.id}`, `api-key-row-${provider}` |
+| **Actions** | `{target}-{action}-button` | `model-delete-button-${id}`, `memory-clear-button` |
+| **Triggers** | `{component}-trigger` | `attachment-picker-trigger`, `user-menu-trigger` |
+| **Menu Items** | `{menu}-{action}` | `user-menu-settings`, `user-menu-logout` |
+
+### Complete Dialog Example
+
+```typescript
+<Dialog open={open} onOpenChange={setOpen}>
+  <DialogTrigger asChild>
+    <Button {...testId("create-team-trigger")}>{t("team_create")}</Button>
+  </DialogTrigger>
+  <DialogContent {...testId("create-team-dialog")}>
+    <DialogHeader>
+      <DialogTitle>{t("team_create_title")}</DialogTitle>
+    </DialogHeader>
+    <form onSubmit={handleSubmit}>
+      <div className="space-y-4">
+        <Input
+          {...testId("create-team-name-input")}
+          {...form.register("name")}
+          placeholder={t("team_name_placeholder")}
+        />
+        <Textarea
+          {...testId("create-team-description-textarea")}
+          {...form.register("description")}
+        />
+      </div>
+      <DialogFooter>
+        <Button
+          {...testId("create-team-cancel-button")}
+          variant="outline"
+          onClick={() => setOpen(false)}
+        >
+          {t("com_cancel")}
+        </Button>
+        <Button {...testId("create-team-submit-button")} type="submit">
+          {t("com_create")}
+        </Button>
+      </DialogFooter>
+    </form>
   </DialogContent>
 </Dialog>
 ```
 
-### Test ID Naming Convention
-- Format: `{component}-{element}` or `{component}-{element}-{variant}`
-- Examples:
-  - `login-form` - Form container
-  - `login-email-input` - Email field
-  - `login-submit-button` - Submit button
-  - `chat-message-user` - User message container
-  - `chat-message-assistant` - Assistant message container
-  - `settings-save-button` - Settings save button
+### Complete Table Example
 
-### When to Add Test IDs
-- Buttons and clickable elements
-- Form inputs and textareas
-- Dialog/modal containers
-- List items that need individual selection
-- Containers that change based on state (e.g., loading, error, success)
+```typescript
+<Table {...testId("configured-models-table")}>
+  <TableHeader>
+    <TableRow>
+      <TableHead>{t("col_provider")}</TableHead>
+      <TableHead>{t("col_model")}</TableHead>
+      <TableHead>{t("col_actions")}</TableHead>
+    </TableRow>
+  </TableHeader>
+  <TableBody>
+    {models.map((model) => (
+      <TableRow key={model.id} {...testId(`model-row-${model.id}`)}>
+        <TableCell>{model.provider}</TableCell>
+        <TableCell>{model.name}</TableCell>
+        <TableCell>
+          <Button
+            {...testId(`model-edit-button-${model.id}`)}
+            variant="ghost"
+            size="sm"
+          >
+            {t("com_edit")}
+          </Button>
+          <Button
+            {...testId(`model-delete-button-${model.id}`)}
+            variant="ghost"
+            size="sm"
+          >
+            {t("com_delete")}
+          </Button>
+        </TableCell>
+      </TableRow>
+    ))}
+  </TableBody>
+</Table>
+```
+
+### When to Add Test IDs (Comprehensive List)
+
+**ALWAYS add test IDs to:**
+- ✅ All buttons (submit, cancel, delete, edit, toggle)
+- ✅ All form inputs (text, email, password, number)
+- ✅ All textareas
+- ✅ All select/dropdown triggers and items
+- ✅ All switch/toggle controls
+- ✅ All checkbox inputs
+- ✅ Dialog/AlertDialog containers
+- ✅ Dialog action buttons (confirm, cancel)
+- ✅ List containers and individual items
+- ✅ Table containers and rows
+- ✅ Dropdown menu triggers and items
+- ✅ Navigation items and links
+- ✅ Tab triggers
+- ✅ Error message containers
+- ✅ Loading state containers
+- ✅ Empty state containers
+- ✅ Search inputs
+- ✅ File upload inputs/dropzones
+
+**Dynamic IDs for lists:**
+```typescript
+// Use actual IDs from data, not array indices
+{items.map((item) => (
+  <Card key={item.id} {...testId(`item-card-${item.id}`)}>
+    <Button {...testId(`item-delete-${item.id}`)}>Delete</Button>
+  </Card>
+))}
+```
+
+### Playwright Usage Examples
+
+```typescript
+// Selecting elements in Playwright tests
+await page.getByTestId('create-team-trigger').click();
+await page.getByTestId('create-team-name-input').fill('My Team');
+await page.getByTestId('create-team-submit-button').click();
+await expect(page.getByTestId('create-team-dialog')).not.toBeVisible();
+
+// Dynamic list items
+await page.getByTestId(`document-item-${docId}`).click();
+await page.getByTestId(`document-delete-${docId}`).click();
+```
 
 ---
 

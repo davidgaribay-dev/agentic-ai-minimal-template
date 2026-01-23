@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 import { promptsApi, type Prompt } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { testId } from "@/lib/test-id";
 import {
   Popover,
   PopoverContent,
@@ -126,6 +127,7 @@ export function PromptPicker({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          {...testId("prompt-picker-trigger")}
           variant="ghost"
           size="icon"
           disabled={disabled}
@@ -157,6 +159,7 @@ export function PromptPicker({
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
+                {...testId("prompt-picker-search-input")}
                 placeholder={t("prompts_search_templates")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -202,6 +205,7 @@ export function PromptPicker({
                     </div>
                     {group.prompts.map((prompt) => (
                       <button
+                        {...testId(`prompt-picker-item-${prompt.id}`)}
                         key={prompt.id}
                         onClick={() => handleSelect(prompt)}
                         className={cn(

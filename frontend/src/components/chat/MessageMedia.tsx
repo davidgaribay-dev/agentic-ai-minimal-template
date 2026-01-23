@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import type { ChatMediaAttachment } from "@/lib/chat-store";
+import { testId } from "@/lib/test-id";
 
 interface MessageMediaProps {
   media: ChatMediaAttachment[];
@@ -42,9 +43,13 @@ export const MessageMedia = memo(function MessageMedia({
 
   return (
     <>
-      <div className={cn("flex flex-wrap gap-2", className)}>
+      <div
+        {...testId("message-media")}
+        className={cn("flex flex-wrap gap-2", className)}
+      >
         {media.map((item) => (
           <button
+            {...testId(`message-media-item-${item.id}`)}
             key={item.id}
             type="button"
             onClick={() => setSelectedImage(item)}

@@ -131,5 +131,6 @@
   "email_new_account_email_label": "Email:",
   "email_new_account_password_label": "Пароль:",
   "email_new_account_change_password": "Пожалуйста, измените пароль после первого входа.",
-  "email_new_account_button": "Перейти в %{project_name}"
+  "email_new_account_button": "Перейти в %{project_name}",
+  "email_new_account_link_trouble": "Если кнопка не работает, скопируйте и вставьте эту ссылку в браузер:"
 }

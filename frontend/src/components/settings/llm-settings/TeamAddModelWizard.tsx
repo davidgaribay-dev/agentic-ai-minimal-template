@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { llmSettingsApi, type TeamLLMSettingsUpdate } from "@/lib/api";
+import { testId } from "@/lib/test-id";
 
 // Provider configuration with icons and branding
 const PROVIDERS: Record<
@@ -239,7 +240,10 @@ export function TeamAddModelWizard({
           {t("llm_add_model")}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent
+        {...testId("team-add-model-wizard")}
+        className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="size-5" />
@@ -296,6 +300,7 @@ export function TeamAddModelWizard({
                       <button
                         key={providerId}
                         type="button"
+                        {...testId(`team-provider-select-${providerId}`)}
                         onClick={() => handleProviderSelect(providerId)}
                         className={cn(
                           "p-4 rounded-lg border-2 text-left transition-all",

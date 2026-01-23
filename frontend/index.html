@@ -8,9 +8,12 @@
       var d = t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme:dark)').matches);
       if (d) document.documentElement.classList.add('dark');
 
-      // Apply cached theme colors immediately to prevent flash
+      // Apply cached theme colors only if they match the resolved theme mode
+      // This prevents dark theme colors being applied when system preference is light
       var cachedColors = localStorage.getItem('ui-theme-colors');
-      if (cachedColors) {
+      var cachedMode = localStorage.getItem('ui-theme-mode');
+      var resolvedMode = d ? 'dark' : 'light';
+      if (cachedColors && cachedMode === resolvedMode) {
         try {
           var colors = JSON.parse(cachedColors);
           var root = document.documentElement;

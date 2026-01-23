@@ -4,6 +4,7 @@ import uuid
 from sqlmodel import Session, select
 
 from backend.core.cache import request_cached_sync
+from backend.core.exceptions import ResourceNotFoundError
 from backend.settings.models import (
     EffectiveSettings,
     OrganizationSettings,
@@ -13,6 +14,7 @@ from backend.settings.models import (
     UserSettings,
     UserSettingsUpdate,
 )
+from backend.teams.models import Team
 
 
 def get_or_create_org_settings(
@@ -67,6 +69,11 @@ def get_or_create_team_settings(session: Session, team_id: uuid.UUID) -> TeamSet
     settings = session.exec(statement).first()
 
     if not settings:
+        # Verify team exists before creating settings
+        team = session.get(Team, team_id)
+        if not team:
+            raise ResourceNotFoundError("Team", str(team_id))
+
         settings = TeamSettings(
             team_id=team_id,
             chat_enabled=True,

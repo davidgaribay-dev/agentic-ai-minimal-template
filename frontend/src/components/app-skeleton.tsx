@@ -1,8 +1,10 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { testId } from "@/lib/test-id";
 
 export function AppSkeleton() {
   return (
     <div
+      {...testId("app-skeleton")}
       className="grid h-screen w-screen overflow-hidden bg-background"
       style={{
         gridTemplateColumns: "16rem 1fr",
@@ -10,7 +12,10 @@ export function AppSkeleton() {
       }}
     >
       {/* Sidebar skeleton */}
-      <div className="flex flex-col bg-sidebar border-r border-sidebar-border">
+      <div
+        {...testId("app-skeleton-sidebar")}
+        className="flex flex-col bg-sidebar border-r border-sidebar-border"
+      >
         {/* Header - Team switcher */}
         <div className="p-2">
           <div className="flex items-center gap-2 p-2">
@@ -40,10 +45,10 @@ export function AppSkeleton() {
       </div>
 
       {/* Main content skeleton */}
-      <main className="overflow-auto p-6">
+      <main {...testId("app-skeleton-main")} className="overflow-auto p-6">
         <div className="space-y-6">
-          <Skeleton className="h-8 w-48" />
-          <div className="space-y-3">
+          <Skeleton {...testId("app-skeleton-title")} className="h-8 w-48" />
+          <div {...testId("app-skeleton-content")} className="space-y-3">
             <Skeleton className="h-4 w-full max-w-2xl" />
             <Skeleton className="h-4 w-full max-w-xl" />
             <Skeleton className="h-4 w-full max-w-lg" />

@@ -5,6 +5,7 @@ import { Loader2, Power, ChevronDown, ChevronRight } from "lucide-react";
 import type { Prompt } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { testId } from "@/lib/test-id";
 import { type PromptScope, getQueryKey, activatePrompt } from "./types";
 import { EditPromptDialog } from "./EditPromptDialog";
 import { DeletePromptButton } from "./DeletePromptButton";
@@ -51,6 +52,7 @@ export function PromptRow({ prompt, scope, compact = false }: PromptRowProps) {
 
   return (
     <div
+      {...testId(`prompt-row-${prompt.id}`)}
       className={`group ${sizes.container} bg-muted/30 hover:bg-muted/50 transition-colors`}
     >
       <div

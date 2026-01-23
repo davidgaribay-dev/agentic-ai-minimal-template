@@ -22,6 +22,7 @@ import {
   type MCPTestResult,
   getApiErrorMessage,
 } from "@/lib/api";
+import { testId } from "@/lib/test-id";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -98,7 +99,10 @@ export function TestConnectionDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-lg flex flex-col">
+      <DialogContent
+        {...testId("mcp-test-dialog")}
+        className="sm:max-w-lg flex flex-col"
+      >
         <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Server className="size-5" />
@@ -109,7 +113,10 @@ export function TestConnectionDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="py-4 overflow-y-auto min-h-0 flex-1">
+        <div
+          {...testId("mcp-test-result")}
+          className="py-4 overflow-y-auto min-h-0 flex-1"
+        >
           {testMutation.isPending ? (
             <div className="flex flex-col items-center justify-center py-8 gap-3">
               <Loader2 className="size-8 animate-spin text-muted-foreground" />
@@ -221,7 +228,11 @@ export function TestConnectionDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             {t("com_close")}
           </Button>
-          <Button onClick={handleTestAgain} disabled={testMutation.isPending}>
+          <Button
+            {...testId("mcp-test-run-button")}
+            onClick={handleTestAgain}
+            disabled={testMutation.isPending}
+          >
             {testMutation.isPending ? (
               <>
                 <Loader2 className="mr-2 size-4 animate-spin" />

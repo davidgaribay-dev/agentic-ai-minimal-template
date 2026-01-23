@@ -7,11 +7,10 @@ import {
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { testId } from "@/lib/test-id";
 import { useLogin, authQueryOptions, isLoggedIn } from "@/lib/auth";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -22,6 +21,9 @@ export const Route = createFileRoute("/login")({
     }
   },
 });
+
+const authInputClassName =
+  "h-12 rounded-sm border-input bg-background px-4 text-base placeholder:text-muted-foreground/60";
 
 function LoginPage() {
   const { t } = useTranslation();
@@ -45,22 +47,17 @@ function LoginPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="relative w-full max-w-[360px]">
-        {/* Logo/Brand section */}
-        <div className="mb-12 text-center">
-          <div className="mx-auto mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
-            <Sparkles className="h-6 w-6 text-primary-foreground" />
-          </div>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            {t("auth_sign_in_title")}
-          </h1>
-        </div>
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <div className="w-full max-w-[400px]">
+        {/* Title */}
+        <h1 className="mb-8 text-center text-2xl font-semibold tracking-tight">
+          {t("auth_sign_in_title")}
+        </h1>
 
         <form
           {...testId("login-form")}
           onSubmit={handleSubmit}
-          className="space-y-4"
+          className="space-y-6"
         >
           {login.error && (
             <div
@@ -71,7 +68,7 @@ function LoginPage() {
             </div>
           )}
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             <Input
               {...testId("login-email-input")}
               id="email"
@@ -81,7 +78,7 @@ function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
-              className="h-11 rounded-xl border-border/50 bg-muted/30 px-4 text-[15px] placeholder:text-muted-foreground/60"
+              className={authInputClassName}
             />
             <Input
               {...testId("login-password-input")}
@@ -93,26 +90,36 @@ function LoginPage() {
               required
               autoComplete="current-password"
               minLength={8}
-              className="h-11 rounded-xl border-border/50 bg-muted/30 px-4 text-[15px] placeholder:text-muted-foreground/60"
+              className={authInputClassName}
             />
+          </div>
+
+          <div className="flex justify-end">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {t("auth_forgot_password")}
+            </Link>
           </div>
 
           <Button
             {...testId("login-submit-button")}
             type="submit"
-            className="h-11 w-full rounded-xl text-[15px] font-medium"
+            variant="outline"
             disabled={login.isPending}
+            className="h-12 w-full rounded-sm border-input bg-background px-4 text-base font-medium hover:bg-muted"
           >
             {login.isPending ? t("auth_signing_in") : t("auth_continue_email")}
           </Button>
 
-          <p className="pt-4 text-center text-sm text-muted-foreground">
-            {t("auth_no_account")}{" "}
+          <p className="pt-2 text-center text-sm text-muted-foreground">
             <Link
+              {...testId("signup-link")}
               to="/signup"
-              className="font-medium text-foreground underline underline-offset-4 transition-colors hover:text-muted-foreground"
+              className="transition-colors hover:text-foreground"
             >
-              {t("auth_create_one")}
+              {t("auth_back_to_signup")}
             </Link>
           </p>
         </form>

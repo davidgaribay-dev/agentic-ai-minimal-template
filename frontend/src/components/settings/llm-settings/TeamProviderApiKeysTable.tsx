@@ -41,6 +41,7 @@ import {
 import { DataTable } from "@/components/ui/data-table";
 import { llmSettingsApi } from "@/lib/api";
 import { TeamEditApiKeyDialog } from "./TeamEditApiKeyDialog";
+import { testId } from "@/lib/test-id";
 
 // Provider configuration with icons and display info
 const PROVIDER_CONFIG = {
@@ -240,6 +241,7 @@ export function TeamProviderApiKeysTable({
   return (
     <>
       <DataTable
+        {...testId("team-provider-api-keys-table")}
         columns={columns}
         data={providerRows}
         searchKey="name"

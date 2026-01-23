@@ -53,6 +53,31 @@ export interface UserUpdateMe {
   email?: string | null;
 }
 
+// Email verification types
+export interface VerificationStatusResponse {
+  email_verified: boolean;
+  verification_sent: boolean;
+  can_resend_at: string | null;
+}
+
+export interface SendVerificationCodeRequest {
+  email: string;
+}
+
+export interface VerifyEmailRequest {
+  email: string;
+  code: string;
+}
+
+export interface ResendVerificationRequest {
+  email: string;
+}
+
+export interface UpdateSignupEmailRequest {
+  current_email: string;
+  new_email: string;
+}
+
 export const authApi = {
   /** Request password recovery email */
   recoverPassword: (email: string) =>
@@ -122,4 +147,31 @@ export const authApi = {
     apiClient.patch<LanguageResponse>("/v1/auth/me/language", data, {
       headers: getAuthHeader(),
     }),
+
+  // Email verification methods
+
+  /** Send verification code to email (during signup) */
+  sendVerificationCode: (data: SendVerificationCodeRequest) =>
+    apiClient.post<VerificationStatusResponse>(
+      "/v1/auth/send-verification-code",
+      data,
+    ),
+
+  /** Verify email with code */
+  verifyEmail: (data: VerifyEmailRequest) =>
+    apiClient.post<VerificationStatusResponse>("/v1/auth/verify-email", data),
+
+  /** Resend verification code */
+  resendVerification: (data: ResendVerificationRequest) =>
+    apiClient.post<VerificationStatusResponse>(
+      "/v1/auth/resend-verification",
+      data,
+    ),
+
+  /** Update email during signup (before verification) */
+  updateSignupEmail: (data: UpdateSignupEmailRequest) =>
+    apiClient.post<VerificationStatusResponse>(
+      "/v1/auth/update-signup-email",
+      data,
+    ),
 };

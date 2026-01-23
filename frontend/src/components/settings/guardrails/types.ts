@@ -5,10 +5,20 @@
 import type {
   GuardrailAction,
   PIIType,
+  GuardrailsUpdateBase,
   OrganizationGuardrailsUpdate,
   TeamGuardrailsUpdate,
   UserGuardrailsUpdate,
 } from "@/lib/api";
+
+/** Union type for all guardrail update handlers */
+export type GuardrailsUpdateHandler =
+  | ((data: OrganizationGuardrailsUpdate) => void)
+  | ((data: TeamGuardrailsUpdate) => void)
+  | ((data: UserGuardrailsUpdate) => void);
+
+/** Re-export base type for use in components */
+export type { GuardrailsUpdateBase };
 
 /** Props shared across all levels */
 export interface GuardrailSettingsBaseProps {

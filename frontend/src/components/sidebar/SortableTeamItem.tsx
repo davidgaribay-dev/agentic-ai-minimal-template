@@ -13,6 +13,7 @@ import {
 import { useTranslation } from "react-i18next";
 
 import { cn, isValidImageUrl } from "@/lib/utils";
+import { testId } from "@/lib/test-id";
 import {
   SidebarMenuButton,
   SidebarMenuItem,
@@ -80,6 +81,7 @@ export function SortableTeamItem({
       ref={setNodeRef}
       style={style}
       className={cn(isDragging && "opacity-50")}
+      {...testId(`sidebar-team-item-${team.id}`)}
     >
       <SidebarMenuItem>
         <div className="flex items-center w-full group/team">
@@ -136,7 +138,10 @@ export function SortableTeamItem({
           {state === "expanded" && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="p-0.5 hover:bg-sidebar-accent rounded-sm opacity-0 group-hover/team:opacity-100 transition-opacity">
+                <button
+                  {...testId(`sidebar-team-menu-${team.id}`)}
+                  className="p-0.5 hover:bg-sidebar-accent rounded-sm opacity-0 group-hover/team:opacity-100 transition-opacity"
+                >
                   <MoreHorizontal className="size-3.5 text-sidebar-foreground/50" />
                 </button>
               </DropdownMenuTrigger>
@@ -144,6 +149,7 @@ export function SortableTeamItem({
                 {canAccessTeamSettings && (
                   <DropdownMenuItem asChild>
                     <Link
+                      {...testId(`sidebar-team-settings-${team.id}`)}
                       to="/org/team/$teamId/settings"
                       params={{ teamId: team.id }}
                       className="cursor-pointer"
@@ -174,6 +180,7 @@ export function SortableTeamItem({
           {chatEnabled && (
             <SidebarMenuItem>
               <SidebarMenuButton
+                {...testId(`sidebar-new-chat-${team.id}`)}
                 onClick={() => {
                   onSwitchTeam(team.id);
                   navigate({
@@ -199,6 +206,7 @@ export function SortableTeamItem({
                 className="h-7 pl-3"
               >
                 <Link
+                  {...testId(`sidebar-chats-${team.id}`)}
                   to="/team/$teamId/search"
                   params={{ teamId: team.id }}
                   onClick={() => onSwitchTeam(team.id)}

@@ -189,8 +189,17 @@ Auth secrets stored encrypted in PostgreSQL (never exposed in API responses).
 ```
 ├── setup.sh                # Full automated setup script
 ├── setup-local.sh          # Local dev setup (infrastructure only)
-├── docker-compose.yml      # Full stack (including backend/frontend containers)
+├── docker-compose.yml      # Full stack (backend + frontend + infrastructure)
 ├── docker-compose-local.yml # Infrastructure only (for local dev)
+├── tests/                  # Playwright E2E tests
+│   ├── tests/
+│   │   ├── api/            # API tests (no browser)
+│   │   ├── auth/           # Auth UI tests
+│   │   ├── teams/          # Team management tests
+│   │   └── invitations/    # Invitation flow tests
+│   ├── pages/              # Page objects
+│   ├── utils/              # Test utilities
+│   └── playwright.config.ts
 ├── backend/
 │   ├── src/backend/
 │   │   ├── agents/         # LangGraph agent, tools, context, factory
@@ -210,6 +219,9 @@ Auth secrets stored encrypted in PostgreSQL (never exposed in API responses).
 │   │   ├── prompts/        # System and template prompts
 │   │   ├── audit/          # PostgreSQL audit logging
 │   │   └── core/           # Config, DB, security, secrets (encrypted), cache, HTTP, tasks, UoW, exceptions
+│   ├── tests/              # Unit + integration tests (pytest)
+│   │   ├── unit/           # Fast tests (no DB)
+│   │   └── integration/    # Tests requiring DB
 │   ├── scripts/            # Setup scripts (backfill_message_index.py, etc.)
 │   └── alembic/            # Database migrations
 └── frontend/               # React 19 + TanStack + Tailwind v4 + i18next
@@ -251,6 +263,28 @@ npm run format:check                       # Check formatting without changes
 npx shadcn@latest add <name>               # Add UI component
 ```
 
+## Testing
+
+### Backend Tests (pytest)
+```bash
+cd backend
+uv run pytest                              # All tests
+uv run pytest -m unit                      # Unit tests only (fast, no DB)
+uv run pytest -m integration               # Integration tests (requires DB)
+uv run pytest --cov                        # With coverage report
+```
+
+### E2E Tests (Playwright)
+```bash
+cd tests
+npm run test                               # All E2E tests
+npm run test:ui-only                       # UI tests only (browser)
+npm run test:api-only                      # API tests only (no browser)
+npm run test:headed                        # Visible browser mode
+npm run test:debug                         # Debug mode
+npm run report                             # View HTML report
+```
+
 ## Pre-Commit Hooks (Automated)
 
 **Pre-commit hooks run automatically on every `git commit`**, catching issues before they reach CI.
@@ -264,6 +298,7 @@ cd backend && uv run pre-commit install
 
 | Hook | Backend | Frontend | Auto-fix |
 |------|---------|----------|----------|
+| File checks | ✅ | ✅ | ✅ |
 | Ruff lint | ✅ | - | ✅ |
 | Ruff format | ✅ | - | ✅ |
 | MyPy | ✅ | - | - |
@@ -271,6 +306,8 @@ cd backend && uv run pre-commit install
 | TypeScript | - | ✅ | - |
 | Prettier | - | ✅ | ✅ |
 | Gitleaks | ✅ | ✅ | - |
+
+File checks include: trailing whitespace, end-of-file fixer, YAML/JSON/TOML validation, merge conflict detection, private key detection.
 
 ### Usage
 ```bash
@@ -285,7 +322,18 @@ git commit --no-verify -m "hotfix"
 
 # Run manually on all files
 cd backend && uv run pre-commit run --all-files
+
+# Run specific hook only
+cd backend && uv run pre-commit run ruff-lint --all-files
 ```
+
+### Troubleshooting
+
+**Hook not running?** Re-install: `cd backend && uv run pre-commit install`
+
+**JSON validation failing?** Check for duplicate keys in translation files.
+
+**Gitleaks crashing?** Known WASM issue on some systems - CI still runs it. Skip locally with `SKIP=gitleaks`.
 
 ### CI Alignment
 Pre-commit hooks match GitHub Actions CI exactly:
@@ -336,13 +384,38 @@ New frontend page: Add file to `frontend/src/routes/` (auto-generates to routeTr
 - Index route: `settings.index.tsx` (redirects to default section)
 - Section route: `settings.$section.tsx` (renders section content)
 
-New database model: Add SQLModel class, import in `alembic/env.py`, run migrations
+New database model: Add SQLModel class, import in `alembic/env.py`, then run `uv run alembic revision --autogenerate -m "description"` (see Database Migrations below)
 
 New agent tool: Add `@tool` function in `backend/agents/tools.py`
 
 New MCP server: Add via UI at org/team/user settings pages, or via API (`/v1/organizations/{id}/mcp-servers`, `/v1/organizations/{id}/teams/{id}/mcp-servers`, `/v1/mcp-servers/me`)
 
 New frontend strings: **NEVER hardcode** - add to `frontend/src/locales/en/translation.json`, use `useTranslation()` hook. See [frontend/CLAUDE.md](frontend/CLAUDE.md#internationalization-i18n) for key naming conventions (`com_`, `auth_`, `chat_`, etc.)
+
+## Database Migrations
+
+**ALWAYS use autogenerate** - NEVER write migration files manually.
+
+```bash
+cd backend
+uv run alembic revision --autogenerate -m "add_user_preferences"  # Generate
+uv run alembic upgrade head                                        # Apply
+```
+
+**Workflow:**
+1. Modify SQLModel classes in `backend/src/backend/*/models.py`
+2. Ensure model is imported in `backend/alembic/env.py`
+3. Run `uv run alembic revision --autogenerate -m "description"`
+4. Review the generated file - autogenerate may miss:
+   - PostgreSQL extensions (`CREATE EXTENSION IF NOT EXISTS vector/pg_trgm`)
+   - `import pgvector.sqlalchemy` for vector columns
+   - Complex data migrations
+5. Run `uv run alembic upgrade head` to apply
+
+**Known autogenerate limitations:**
+- Won't detect renamed columns (shows as drop + add) - manually adjust if needed
+- LangGraph checkpoint tables (`checkpoint_*`) are managed separately - ignore "removed table" warnings
+- Custom SQL (data migrations, triggers) must be added manually
 
 ## Code Style & Linting Standards
 

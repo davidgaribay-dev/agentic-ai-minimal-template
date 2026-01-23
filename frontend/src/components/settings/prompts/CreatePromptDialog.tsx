@@ -20,6 +20,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ErrorAlert } from "@/components/ui/error-alert";
+import { testId } from "@/lib/test-id";
 import { type PromptScope, getQueryKey, createPromptApi } from "./types";
 
 const createPromptSchema = z.object({
@@ -89,6 +90,7 @@ export function CreatePromptDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
+          {...testId("create-prompt-button")}
           variant="ghost"
           size="sm"
           className={compact ? "h-5 text-[10px] px-1.5" : "h-7 text-xs"}
@@ -97,7 +99,10 @@ export function CreatePromptDialog({
           {t("prompts_add")}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        {...testId("create-prompt-dialog")}
+        className="sm:max-w-md"
+      >
         <DialogHeader>
           <DialogTitle className="text-base">
             {defaultType === "system"
@@ -117,6 +122,7 @@ export function CreatePromptDialog({
                 {t("com_name")}
               </Label>
               <Input
+                {...testId("prompt-name-input")}
                 id="name"
                 {...register("name")}
                 placeholder={t("prompts_name_example")}
@@ -144,6 +150,7 @@ export function CreatePromptDialog({
                 {t("com_content")}
               </Label>
               <Textarea
+                {...testId("prompt-content-input")}
                 id="content"
                 {...register("content")}
                 placeholder={
@@ -176,7 +183,12 @@ export function CreatePromptDialog({
             >
               {t("com_cancel")}
             </Button>
-            <Button type="submit" size="sm" disabled={createMutation.isPending}>
+            <Button
+              {...testId("create-prompt-submit")}
+              type="submit"
+              size="sm"
+              disabled={createMutation.isPending}
+            >
               {createMutation.isPending && (
                 <Loader2 className="mr-1.5 size-3 animate-spin" />
               )}

@@ -3,11 +3,15 @@
  */
 
 import type {
+  LLMSettingsUpdateBase,
   OrganizationLLMSettingsUpdate,
   TeamLLMSettingsUpdate,
   UserLLMSettingsUpdate,
   ModelInfo,
 } from "@/lib/api";
+
+/** Re-export base type for use in components */
+export type { LLMSettingsUpdateBase };
 
 export type SettingsLevel = "org" | "team" | "user";
 export type DisabledByLevel = "org" | "team" | null;

@@ -21,6 +21,7 @@ import {
   getDomain,
   getBadgeLabel,
 } from "./helpers";
+import { testId } from "@/lib/test-id";
 
 interface CitationBadgeProps {
   /** Primary source to display */
@@ -83,6 +84,7 @@ export function CitationBadge({
     <Popover>
       <PopoverTrigger asChild>
         <button
+          {...testId("citation-badge")}
           className={cn(
             "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium transition-colors",
             "bg-muted/80 text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -114,20 +116,28 @@ export function CitationBadge({
         <div className="flex flex-col">
           {/* Pagination header - only show if multiple sources */}
           {totalSources > 1 && (
-            <div className="flex items-center justify-between px-3 py-2.5 border-b">
+            <div
+              {...testId("citation-badge-pagination")}
+              className="flex items-center justify-between px-3 py-2.5 border-b"
+            >
               {/* Left side: arrows and counter */}
               <div className="flex items-center gap-1">
                 <button
+                  {...testId("citation-badge-prev")}
                   onClick={handlePrev}
                   className="rounded p-0.5 hover:bg-muted text-muted-foreground hover:text-foreground"
                   aria-label={t("aria_prev_source")}
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                <span className="text-sm text-muted-foreground min-w-[32px] text-center">
+                <span
+                  {...testId("citation-badge-counter")}
+                  className="text-sm text-muted-foreground min-w-[32px] text-center"
+                >
                   {currentIndex + 1}/{totalSources}
                 </span>
                 <button
+                  {...testId("citation-badge-next")}
                   onClick={handleNext}
                   className="rounded p-0.5 hover:bg-muted text-muted-foreground hover:text-foreground"
                   aria-label={t("aria_next_source")}
@@ -175,7 +185,7 @@ export function CitationBadge({
           )}
 
           {/* Source card content */}
-          <div className="p-4">
+          <div {...testId("citation-badge-content")} className="p-4">
             {/* Domain header with favicon */}
             <div className="flex items-center gap-2 mb-1">
               {getFaviconUrl(currentSource.source) ? (
@@ -192,24 +202,34 @@ export function CitationBadge({
                   <FileText className="h-3 w-3 text-muted-foreground" />
                 </div>
               )}
-              <span className="text-sm text-muted-foreground">
+              <span
+                {...testId("citation-badge-domain")}
+                className="text-sm text-muted-foreground"
+              >
                 {getDomain(currentSource.source)}
               </span>
             </div>
 
             {/* Title */}
-            <h4 className="font-bold text-base text-foreground mb-2 line-clamp-2">
+            <h4
+              {...testId("citation-badge-title")}
+              className="font-bold text-base text-foreground mb-2 line-clamp-2"
+            >
               {getDisplayName(currentSource.source)}
             </h4>
 
             {/* Content preview */}
-            <p className="text-sm text-muted-foreground line-clamp-5">
+            <p
+              {...testId("citation-badge-preview")}
+              className="text-sm text-muted-foreground line-clamp-5"
+            >
               {currentSource.content}
             </p>
 
             {/* View Full Document button */}
             {isDocument && (
               <Button
+                {...testId("citation-badge-view-document")}
                 variant="outline"
                 size="sm"
                 className="mt-3 w-full"

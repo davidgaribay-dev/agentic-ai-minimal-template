@@ -12,8 +12,9 @@ from backend.auth.models import User  # noqa: F401 - Import models for autogener
 from backend.auth.token_revocation import (
     RevokedToken,  # noqa: F401 - Import models for autogenerate
 )
-from backend.conversations.models import (
-    Conversation,  # noqa: F401 - Import models for autogenerate
+from backend.conversations.models import (  # noqa: F401 - Import models for autogenerate
+    Conversation,
+    ConversationMessage,
 )
 from backend.core.config import settings
 from backend.core.encrypted_secrets import (
@@ -32,6 +33,12 @@ from backend.invitations.models import (
     Invitation,  # noqa: F401 - Import models for autogenerate
 )
 from backend.items.models import Item  # noqa: F401 - Import models for autogenerate
+from backend.llm_settings.models import (  # noqa: F401 - Import models for autogenerate
+    CustomLLMProvider,
+    OrganizationLLMSettings,
+    TeamLLMSettings,
+    UserLLMSettings,
+)
 from backend.mcp.models import MCPServer  # noqa: F401 - Import models for autogenerate
 from backend.media.models import (
     ChatMedia,  # noqa: F401 - Import models for autogenerate
@@ -40,10 +47,16 @@ from backend.organizations.models import (  # noqa: F401 - Import models for aut
     Organization,
     OrganizationMember,
 )
+from backend.prompts.models import Prompt  # noqa: F401 - Import models for autogenerate
 from backend.rag_settings.models import (  # noqa: F401 - Import models for autogenerate
     OrganizationRAGSettings,
     TeamRAGSettings,
     UserRAGSettings,
+)
+from backend.settings.models import (  # noqa: F401 - Import models for autogenerate
+    OrganizationSettings,
+    TeamSettings,
+    UserSettings,
 )
 from backend.teams.models import (  # noqa: F401 - Import models for autogenerate
     Team,

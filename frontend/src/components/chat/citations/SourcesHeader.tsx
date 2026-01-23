@@ -16,6 +16,7 @@ import {
 import { DocumentViewer } from "@/components/documents/document-viewer";
 import type { MessageSource } from "@/lib/chat-store";
 import { getFaviconUrl, getDisplayName, getDomain } from "./helpers";
+import { testId } from "@/lib/test-id";
 
 interface SourcesHeaderProps {
   sources: MessageSource[];
@@ -62,12 +63,16 @@ export function SourcesHeader({ sources, className }: SourcesHeaderProps) {
   return (
     <>
       <Collapsible
+        {...testId("sources-header")}
         open={isExpanded}
         onOpenChange={setIsExpanded}
         className={className}
       >
-        <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group">
-          <span>
+        <CollapsibleTrigger
+          {...testId("sources-header-toggle")}
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
+        >
+          <span {...testId("sources-header-count")}>
             {t(
               uniqueCount === 1
                 ? "sources_reviewed"
@@ -76,6 +81,7 @@ export function SourcesHeader({ sources, className }: SourcesHeaderProps) {
             )}
           </span>
           <ChevronDown
+            {...testId("sources-header-chevron")}
             className={cn(
               "h-4 w-4 transition-transform",
               isExpanded && "rotate-180",
@@ -84,9 +90,15 @@ export function SourcesHeader({ sources, className }: SourcesHeaderProps) {
         </CollapsibleTrigger>
 
         <CollapsibleContent className="mt-2">
-          <div className="rounded-lg border bg-card overflow-hidden">
+          <div
+            {...testId("sources-header-content")}
+            className="rounded-lg border bg-card overflow-hidden"
+          >
             {/* Search process indicator */}
-            <div className="border-b px-3 py-2 bg-muted/30">
+            <div
+              {...testId("sources-header-process")}
+              className="border-b px-3 py-2 bg-muted/30"
+            >
               <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
                 <Search className="h-3 w-3" />
                 <span>{t("sources_searching")}</span>
@@ -100,7 +112,10 @@ export function SourcesHeader({ sources, className }: SourcesHeaderProps) {
             </div>
 
             {/* Source list */}
-            <div className="divide-y max-h-64 overflow-y-auto">
+            <div
+              {...testId("sources-header-list")}
+              className="divide-y max-h-64 overflow-y-auto"
+            >
               {uniqueSources.map((source, index) => {
                 const faviconUrl = getFaviconUrl(source.source);
                 const domain = getDomain(source.source);
@@ -109,6 +124,7 @@ export function SourcesHeader({ sources, className }: SourcesHeaderProps) {
 
                 return (
                   <button
+                    {...testId(`sources-header-item-${index}`)}
                     key={index}
                     type="button"
                     onClick={() => handleSourceClick(source)}
@@ -135,11 +151,17 @@ export function SourcesHeader({ sources, className }: SourcesHeaderProps) {
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-foreground truncate">
+                      <p
+                        {...testId(`sources-header-item-title-${index}`)}
+                        className="text-sm font-medium text-foreground truncate"
+                      >
                         {title}
                       </p>
                     </div>
-                    <span className="text-xs text-muted-foreground flex-shrink-0">
+                    <span
+                      {...testId(`sources-header-item-domain-${index}`)}
+                      className="text-xs text-muted-foreground flex-shrink-0"
+                    >
                       {domain}
                     </span>
                     {isClickable && (
@@ -151,7 +173,10 @@ export function SourcesHeader({ sources, className }: SourcesHeaderProps) {
             </div>
 
             {/* Finished indicator */}
-            <div className="px-3 py-2 bg-muted/30 border-t">
+            <div
+              {...testId("sources-header-finished")}
+              className="px-3 py-2 bg-muted/30 border-t"
+            >
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Check className="h-3 w-3 text-green-500" />
                 <span>{t("sources_finished")}</span>

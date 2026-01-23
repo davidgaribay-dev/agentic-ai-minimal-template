@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { SettingsCard } from "./settings-layout";
+import { testId } from "@/lib/test-id";
 
 const PROVIDER_OPTIONS = [
   { value: "anthropic", label: "Anthropic" },
@@ -169,7 +170,7 @@ export function UserLLMSettings({ orgId, teamId }: UserLLMSettingsProps) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" {...testId("user-llm-settings")}>
       <p className="text-sm text-muted-foreground">
         {t("llm_user_settings_desc")}
       </p>

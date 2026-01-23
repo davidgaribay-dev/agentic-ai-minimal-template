@@ -12,10 +12,11 @@ from fastapi import (
     status,
 )
 
-from backend.audit.schemas import AuditAction, Target
+from backend.audit.schemas import AuditAction, LogLevel, Target
 from backend.audit.service import audit_service
 from backend.auth.deps import CurrentUser, SessionDep
 from backend.auth.models import Message
+from backend.core.config import settings
 from backend.core.logging import get_logger
 from backend.core.storage import (
     FileTooLargeError,
@@ -24,6 +25,9 @@ from backend.core.storage import (
     delete_file,
     upload_file,
 )
+from backend.core.utils import generate_password_reset_token
+from backend.email import email_service
+from backend.email.schemas import PasswordResetData
 from backend.organizations import crud
 from backend.organizations.models import (
     OrganizationCreate,
@@ -686,3 +690,103 @@ async def update_sidebar_preferences(
     )
 
     return Message(message="Sidebar preferences updated successfully")
+
+
+@router.post(
+    "/{organization_id}/members/{member_id}/send-password-reset",
+    response_model=Message,
+    dependencies=[Depends(require_org_permission(OrgPermission.MEMBERS_UPDATE))],
+)
+async def send_admin_password_reset(
+    request: Request,
+    session: SessionDep,
+    org_context: OrgContextDep,
+    member_id: Annotated[uuid.UUID, Path(description="Member ID")],
+) -> Message:
+    """Send a password reset email to an organization member.
+
+    Requires members:update permission (admin or owner).
+    This allows admins to trigger password resets for users in their organization.
+    """
+    member = crud.get_org_member_by_id(session=session, member_id=member_id)
+    if not member or member.organization_id != org_context.org_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Member not found",
+        )
+
+    user = member.user
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot send password reset for inactive user",
+        )
+
+    # Generate password reset token
+    password_reset_token = generate_password_reset_token(
+        email=user.email, password_changed_at=user.password_changed_at
+    )
+
+    reset_link = f"{settings.FRONTEND_URL}/reset-password?token={password_reset_token}"
+    reset_data = PasswordResetData(
+        email=user.email,
+        token=password_reset_token,
+        reset_link=reset_link,
+        username=user.full_name,
+        locale=user.language,
+        is_admin_initiated=True,
+        admin_name=org_context.user.full_name,
+    )
+
+    result = await email_service.send_password_reset_email(
+        data=reset_data,
+        request=request,
+        actor=user,
+    )
+
+    if result.success:
+        logger.info(
+            "admin_password_reset_sent",
+            admin_email=org_context.user.email,
+            user_email=user.email,
+        )
+        await audit_service.log(
+            AuditAction.ADMIN_PASSWORD_RESET_SENT,
+            actor=org_context.user,
+            request=request,
+            organization_id=org_context.org_id,
+            targets=[Target(type="user", id=str(user.id), name=user.email)],
+            metadata={
+                "initiated_by": "admin",
+                "admin_user_id": str(org_context.user.id),
+                "admin_role": org_context.role.value if org_context.role else None,
+            },
+        )
+        return Message(message="Password reset email sent successfully")
+    logger.error(
+        "admin_password_reset_email_failed",
+        admin_email=org_context.user.email,
+        user_email=user.email,
+        error=result.error_message,
+    )
+    await audit_service.log(
+        AuditAction.EMAIL_FAILED,
+        actor=org_context.user,
+        request=request,
+        outcome="failure",
+        severity=LogLevel.ERROR,
+        organization_id=org_context.org_id,
+        targets=[Target(type="user", id=str(user.id), name=user.email)],
+        error_code="EMAIL_SEND_FAILED",
+        error_message=result.error_message,
+    )
+    raise HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail="Failed to send password reset email",
+    )

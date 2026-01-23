@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { PanelRight } from "lucide-react";
+import { testId } from "@/lib/test-id";
 import { useAuth } from "@/lib/auth";
 import { UserMenu } from "./user-menu";
 import { useSidePanel } from "./side-panel";
@@ -16,10 +17,17 @@ export function Navbar() {
   }
 
   return (
-    <header className="z-50 shrink-0 border-b bg-background">
+    <header
+      className="z-50 shrink-0 border-b bg-background"
+      {...testId("navbar-container")}
+    >
       <div className="flex h-12 items-center justify-between px-4">
         <div className="flex items-center gap-4">
-          <Link to="/" className="text-sm font-semibold">
+          <Link
+            to="/"
+            className="text-sm font-semibold"
+            {...testId("navbar-logo")}
+          >
             {t("app_name")}
           </Link>
           <WorkspaceSwitcher />
@@ -30,6 +38,7 @@ export function Navbar() {
             onClick={toggle}
             className="flex size-8 items-center justify-center rounded-md hover:bg-muted"
             aria-label={t("aria_toggle_panel")}
+            {...testId("navbar-panel-toggle")}
           >
             <PanelRight className="size-4" />
           </button>

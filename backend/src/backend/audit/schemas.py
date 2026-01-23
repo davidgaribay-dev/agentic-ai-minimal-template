@@ -118,6 +118,17 @@ class AuditAction(str, Enum):
     TOOL_APPROVAL_GRANTED = "tool.approval.granted"
     TOOL_APPROVAL_DENIED = "tool.approval.denied"
 
+    # Email events
+    EMAIL_SENT = "email.sent"
+    EMAIL_FAILED = "email.failed"
+    EMAIL_VERIFICATION_SENT = "email.verification.sent"
+    EMAIL_VERIFICATION_COMPLETED = "email.verification.completed"
+    EMAIL_VERIFICATION_FAILED = "email.verification.failed"
+    EMAIL_VERIFICATION_RESENT = "email.verification.resent"
+    EMAIL_INVITATION_SENT = "email.invitation.sent"
+    EMAIL_PASSWORD_RESET_SENT = "email.password_reset.sent"
+    ADMIN_PASSWORD_RESET_SENT = "admin.password_reset.sent"
+
 
 class Actor(BaseModel):
     id: UUID | None = None

@@ -222,6 +222,15 @@ Organization (tenant boundary)
 ├── setup-local.sh              # Local dev setup
 ├── docker-compose.yml          # Full stack containers
 ├── docker-compose-local.yml    # Infrastructure only
+├── tests/                      # Playwright E2E tests
+│   ├── tests/
+│   │   ├── api/                # API tests (no browser)
+│   │   ├── auth/               # Auth UI tests
+│   │   ├── teams/              # Team management tests
+│   │   └── invitations/        # Invitation flow tests
+│   ├── pages/                  # Page objects
+│   ├── utils/                  # Test utilities
+│   └── playwright.config.ts
 │
 ├── backend/
 │   ├── src/backend/
@@ -238,6 +247,7 @@ Organization (tenant boundary)
 │   │   ├── settings/           # Chat settings hierarchy
 │   │   ├── audit/              # PostgreSQL audit logging
 │   │   └── core/               # Config, DB, security, encrypted secrets
+│   ├── tests/                  # Unit + integration tests (pytest)
 │   ├── scripts/                # Setup automation
 │   └── alembic/                # Database migrations
 │
@@ -317,6 +327,13 @@ npm run dev                   # Dev server with HMR
 npm run build                 # Production build
 npm run lint                  # ESLint
 npx shadcn@latest add <name>  # Add UI component
+
+# E2E Tests (from tests/)
+npm run test                  # All E2E tests
+npm run test:api-only         # API tests only
+npm run test:ui-only          # UI tests only
+npm run test:headed           # Visible browser
+npm run report                # View HTML report
 ```
 
 ### Environment Variables

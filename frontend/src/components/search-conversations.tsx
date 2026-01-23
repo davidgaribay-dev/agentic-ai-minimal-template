@@ -34,6 +34,7 @@ import { useChatSelection } from "@/lib/chat-store";
 import { useSettings } from "@/lib/settings-context";
 import { formatRelativeTime } from "@/lib/utils";
 import { useSidePanel } from "@/components/side-panel";
+import { testId } from "@/lib/test-id";
 
 export function SearchConversations() {
   const { t } = useTranslation();
@@ -76,10 +77,11 @@ export function SearchConversations() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div {...testId("search-conversations")} className="flex flex-col gap-4">
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
+          {...testId("search-conversations-input")}
           type="text"
           placeholder={t("nav_search_conversations")}
           value={searchQuery}
@@ -152,6 +154,7 @@ export function SearchConversations() {
                 {conversations.map((conversation) => (
                   <TableRow
                     key={conversation.id}
+                    {...testId(`search-result-${conversation.id}`)}
                     className="cursor-pointer"
                     onClick={() => handleRowClick(conversation.id)}
                   >

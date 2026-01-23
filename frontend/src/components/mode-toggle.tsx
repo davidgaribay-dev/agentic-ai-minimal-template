@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Moon, Sun, Monitor } from "lucide-react";
+import { testId } from "@/lib/test-id";
 import { useTheme } from "@/components/theme-provider";
 import {
   DropdownMenuSub,
@@ -17,7 +18,7 @@ export function ModeToggle() {
 
   return (
     <DropdownMenuSub>
-      <DropdownMenuSubTrigger>
+      <DropdownMenuSubTrigger {...testId("mode-toggle")}>
         <Sun className="mr-2 size-4 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
         <Moon className="absolute mr-2 size-4 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
         {t("settings_theme")}
@@ -27,15 +28,18 @@ export function ModeToggle() {
           value={theme}
           onValueChange={(value) => setTheme(value as Theme)}
         >
-          <DropdownMenuRadioItem value="light">
+          <DropdownMenuRadioItem value="light" {...testId("mode-toggle-light")}>
             <Sun className="mr-2 size-4" />
             {t("theme_light")}
           </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="dark">
+          <DropdownMenuRadioItem value="dark" {...testId("mode-toggle-dark")}>
             <Moon className="mr-2 size-4" />
             {t("theme_dark")}
           </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="system">
+          <DropdownMenuRadioItem
+            value="system"
+            {...testId("mode-toggle-system")}
+          >
             <Monitor className="mr-2 size-4" />
             {t("theme_system")}
           </DropdownMenuRadioItem>

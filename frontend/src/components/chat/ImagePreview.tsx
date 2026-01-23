@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { X, Loader2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PendingUpload } from "@/hooks/useMediaUpload";
+import { testId } from "@/lib/test-id";
 
 interface ImagePreviewProps {
   upload: PendingUpload;
@@ -29,6 +30,7 @@ export const ImagePreview = memo(function ImagePreview({
 
   return (
     <div
+      {...testId("image-preview")}
       className={cn(
         "relative group size-16 rounded-lg overflow-hidden border border-border/50",
         isError && "border-destructive",
@@ -62,6 +64,7 @@ export const ImagePreview = memo(function ImagePreview({
       {/* Remove button */}
       {!disabled && (
         <button
+          {...testId("image-delete-button")}
           type="button"
           onClick={() => onRemove(upload.id)}
           className={cn(

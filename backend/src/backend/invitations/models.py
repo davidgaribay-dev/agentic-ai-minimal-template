@@ -152,7 +152,6 @@ class BulkInvitationResult(SQLModel):
     email: str
     success: bool
     invitation_id: uuid.UUID | None = None
-    token: str | None = None
     error: str | None = None
 
 
@@ -174,16 +173,6 @@ class InvitationPublic(InvitationBase):
     expires_at: datetime
     created_at: datetime
     accepted_at: datetime | None
-
-
-class InvitationCreatedResponse(InvitationPublic):
-    """Schema for invitation creation response - includes token for dev/self-serve flows.
-
-    In production with email service, this would not include the token.
-    For development and self-serve invite links, the token is returned once.
-    """
-
-    token: str
 
 
 # InvitationsPublic is now PaginatedResponse[InvitationPublic]

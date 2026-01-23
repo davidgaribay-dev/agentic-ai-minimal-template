@@ -85,8 +85,9 @@ export function ThemeProvider({
     root.classList.add(resolvedTheme);
 
     if (effectiveColors) {
-      // Cache theme colors in localStorage for immediate application on next page load
+      // Cache theme colors and mode in localStorage for immediate application on next page load
       localStorage.setItem("ui-theme-colors", JSON.stringify(effectiveColors));
+      localStorage.setItem("ui-theme-mode", resolvedTheme);
 
       Object.entries(effectiveColors).forEach(([key, value]) => {
         const cssVar = key.replace(/_/g, "-");

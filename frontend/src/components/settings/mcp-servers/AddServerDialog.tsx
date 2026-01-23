@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/select";
 import type { Scope } from "./types";
 import { getQueryKeyForScope } from "./hooks";
+import { testId } from "@/lib/test-id";
 
 const addServerSchema = z.object({
   name: z.string().min(1, "prompts_name_required"),
@@ -115,12 +116,19 @@ export function AddServerDialog({ scope }: AddServerDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(o) => (o ? setOpen(true) : resetForm())}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button
+          {...testId("mcp-add-server-button")}
+          variant="outline"
+          size="sm"
+        >
           <Plus className="size-4 mr-1.5" />
           {t("mcp_add_server")}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent
+        {...testId("mcp-add-server-dialog")}
+        className="sm:max-w-lg"
+      >
         <DialogHeader>
           <DialogTitle>{t("mcp_add_server_title")}</DialogTitle>
           <DialogDescription>{t("mcp_add_server_desc")}</DialogDescription>
@@ -132,6 +140,7 @@ export function AddServerDialog({ scope }: AddServerDialogProps) {
               <div className="space-y-2">
                 <Label htmlFor="name">{t("com_name")}</Label>
                 <Input
+                  {...testId("mcp-server-name-input")}
                   id="name"
                   {...form.register("name")}
                   placeholder={t("mcp_server_name_placeholder")}
@@ -174,6 +183,7 @@ export function AddServerDialog({ scope }: AddServerDialogProps) {
             <div className="space-y-2">
               <Label htmlFor="url">{t("mcp_url")}</Label>
               <Input
+                {...testId("mcp-server-url-input")}
                 id="url"
                 type="url"
                 {...form.register("url")}
@@ -286,6 +296,7 @@ export function AddServerDialog({ scope }: AddServerDialogProps) {
               {t("com_cancel")}
             </Button>
             <Button
+              {...testId("mcp-add-server-submit")}
               type="submit"
               disabled={!form.formState.isValid || createMutation.isPending}
             >

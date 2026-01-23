@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
+import { testId } from "@/lib/test-id";
 import i18n from "@/locales/i18n";
 
 interface ErrorBoundaryProps {
@@ -46,7 +47,10 @@ export class ErrorBoundary extends Component<
       }
 
       return (
-        <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-4">
+        <div
+          className="flex min-h-screen flex-col items-center justify-center gap-6 p-4"
+          {...testId("error-boundary")}
+        >
           <div className="text-center">
             <h1 className="text-4xl font-bold text-destructive">
               {i18n.t("error_something_wrong")}
@@ -78,12 +82,14 @@ export class ErrorBoundary extends Component<
             <button
               onClick={this.handleReset}
               className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              {...testId("error-reset-button")}
             >
               {i18n.t("error_try_again")}
             </button>
             <Link
               to="/"
               className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+              {...testId("error-home-link")}
             >
               {i18n.t("error_go_home")}
             </Link>
@@ -100,21 +106,30 @@ export class ErrorBoundary extends Component<
  * Simple fallback component for inline error boundaries
  */
 export function ErrorFallback({
-  error: _error,
+  error,
   resetErrorBoundary,
 }: {
   error: Error;
   resetErrorBoundary?: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-4 p-4 text-center">
+    <div
+      className="flex flex-col items-center justify-center gap-4 p-4 text-center"
+      {...testId("error-fallback")}
+    >
       <p className="text-sm text-destructive">
         {i18n.t("error_something_wrong")}
       </p>
+      {import.meta.env.DEV && error && (
+        <p className="text-xs text-muted-foreground max-w-md truncate">
+          {error.message}
+        </p>
+      )}
       {resetErrorBoundary && (
         <button
           onClick={resetErrorBoundary}
           className="text-sm text-primary underline hover:no-underline"
+          {...testId("error-fallback-reset")}
         >
           {i18n.t("error_try_again")}
         </button>

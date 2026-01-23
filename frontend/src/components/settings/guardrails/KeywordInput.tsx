@@ -9,6 +9,7 @@ import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { testId } from "@/lib/test-id";
 
 interface KeywordInputProps {
   keywords: string[];
@@ -56,6 +57,7 @@ export function KeywordInput({
     <div className="space-y-2">
       <div className="flex gap-2">
         <Input
+          {...testId("keyword-input")}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -64,6 +66,7 @@ export function KeywordInput({
           className="flex-1"
         />
         <Button
+          {...testId("keyword-add-button")}
           type="button"
           size="sm"
           variant="outline"
@@ -75,11 +78,17 @@ export function KeywordInput({
       </div>
       {keywords.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
-          {keywords.map((keyword) => (
-            <Badge key={keyword} variant="secondary" className="gap-1 pr-1">
+          {keywords.map((keyword, index) => (
+            <Badge
+              key={`${keyword}-${index}`}
+              variant="secondary"
+              className="gap-1 pr-1"
+              {...testId(`keyword-item-${index}`)}
+            >
               {keyword}
               {!disabled && (
                 <button
+                  {...testId(`keyword-remove-${index}`)}
                   type="button"
                   onClick={() => handleRemove(keyword)}
                   className="ml-0.5 hover:bg-muted rounded-sm p-0.5"

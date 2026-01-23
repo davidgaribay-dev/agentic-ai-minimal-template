@@ -232,10 +232,19 @@ fi
 print_step 5 "Initializing database"
 
 echo -e "${DIM}  Waiting for PostgreSQL to be ready...${NC}"
-sleep 10
 
-# Check if database is accessible
-if docker compose -f docker-compose-local.yml exec -T db pg_isready -U postgres >/dev/null 2>&1; then
+# Wait for PostgreSQL to be healthy (up to 30 seconds)
+MAX_RETRIES=30
+RETRY_COUNT=0
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+    if docker compose -f docker-compose-local.yml exec -T db pg_isready -U postgres >/dev/null 2>&1; then
+        break
+    fi
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    sleep 1
+done
+
+if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
     print_success "PostgreSQL is ready"
 else
     print_warning "PostgreSQL may still be starting - wait a moment before running migrations"

@@ -131,5 +131,6 @@
   "email_new_account_email_label": "E-mail :",
   "email_new_account_password_label": "Mot de passe :",
   "email_new_account_change_password": "Veuillez changer votre mot de passe après votre première connexion.",
-  "email_new_account_button": "Aller sur %{project_name}"
+  "email_new_account_button": "Aller sur %{project_name}",
+  "email_new_account_link_trouble": "Si le bouton ne fonctionne pas, copiez et collez ce lien dans votre navigateur :"
 }

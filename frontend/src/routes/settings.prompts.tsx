@@ -64,6 +64,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { testId } from "@/lib/test-id";
 
 export const Route = createFileRoute("/settings/prompts")({
   beforeLoad: ({ context }) => {
@@ -78,11 +79,17 @@ function UserPromptsPage() {
   const { t } = useTranslation();
 
   return (
-    <div className="bg-background">
+    <div className="bg-background" {...testId("user-prompts-page")}>
       <div className="mx-auto max-w-4xl px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <Button variant="ghost" size="sm" asChild className="mb-4 -ml-2">
+          <Button
+            {...testId("back-to-settings-button")}
+            variant="ghost"
+            size="sm"
+            asChild
+            className="mb-4 -ml-2"
+          >
             <Link to="/settings">
               <ArrowLeft className="mr-2 h-4 w-4" />
               {t("prompts_back_settings")}
@@ -148,9 +155,17 @@ function PromptsTabsSection() {
   }
 
   return (
-    <Tabs defaultValue="system" className="space-y-6">
+    <Tabs
+      defaultValue="system"
+      className="space-y-6"
+      {...testId("prompts-tabs")}
+    >
       <TabsList>
-        <TabsTrigger value="system" className="gap-2">
+        <TabsTrigger
+          {...testId("system-prompts-tab")}
+          value="system"
+          className="gap-2"
+        >
           <Sparkles className="h-4 w-4" />
           {t("prompts_system")}
           {systemPrompts.length > 0 && (
@@ -159,7 +174,11 @@ function PromptsTabsSection() {
             </Badge>
           )}
         </TabsTrigger>
-        <TabsTrigger value="templates" className="gap-2">
+        <TabsTrigger
+          {...testId("template-prompts-tab")}
+          value="templates"
+          className="gap-2"
+        >
           <MessageSquare className="h-4 w-4" />
           {t("prompts_templates")}
           {templatePrompts.length > 0 && (
@@ -233,7 +252,7 @@ function PromptCard({ prompt }: { prompt: Prompt }) {
   const isSystem = prompt.prompt_type === "system";
 
   return (
-    <Card>
+    <Card {...testId("prompt-card")}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
@@ -265,6 +284,7 @@ function PromptCard({ prompt }: { prompt: Prompt }) {
           <div className="flex items-center gap-2">
             {isSystem && !prompt.is_active && (
               <Button
+                {...testId("activate-prompt-button")}
                 variant="outline"
                 size="sm"
                 onClick={() => activateMutation.mutate()}
@@ -351,12 +371,15 @@ function CreatePromptDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button {...testId("create-prompt-button")}>
           <Plus className="mr-2 h-4 w-4" />
           {t("prompts_create")}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent
+        className="sm:max-w-lg"
+        {...testId("create-prompt-dialog")}
+      >
         <DialogHeader>
           <DialogTitle>{t("prompts_create_personal")}</DialogTitle>
           <DialogDescription>
@@ -371,7 +394,7 @@ function CreatePromptDialog() {
                 value={promptType}
                 onValueChange={(v) => setPromptType(v as PromptType)}
               >
-                <SelectTrigger>
+                <SelectTrigger {...testId("prompt-type-select")}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -398,6 +421,7 @@ function CreatePromptDialog() {
             <div className="space-y-2">
               <Label htmlFor="name">{t("com_name")}</Label>
               <Input
+                {...testId("prompt-name-input")}
                 id="name"
                 value={name}
                 onChange={(e) => {
@@ -412,6 +436,7 @@ function CreatePromptDialog() {
                 {t("prompts_description_optional")}
               </Label>
               <Input
+                {...testId("prompt-description-input")}
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -421,6 +446,7 @@ function CreatePromptDialog() {
             <div className="space-y-2">
               <Label htmlFor="content">{t("com_content")}</Label>
               <Textarea
+                {...testId("prompt-content-input")}
                 id="content"
                 value={content}
                 onChange={(e) => {
@@ -439,10 +465,19 @@ function CreatePromptDialog() {
             {error && <p className="text-sm text-destructive">{error}</p>}
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={resetForm}>
+            <Button
+              {...testId("create-prompt-cancel-button")}
+              type="button"
+              variant="outline"
+              onClick={resetForm}
+            >
               {t("com_cancel")}
             </Button>
-            <Button type="submit" disabled={createMutation.isPending}>
+            <Button
+              {...testId("create-prompt-submit-button")}
+              type="submit"
+              disabled={createMutation.isPending}
+            >
               {createMutation.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
@@ -508,11 +543,11 @@ function EditPromptDialog({ prompt }: { prompt: Prompt }) {
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon">
+        <Button {...testId("edit-prompt-button")} variant="ghost" size="icon">
           <Pencil className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg" {...testId("edit-prompt-dialog")}>
         <DialogHeader>
           <DialogTitle>{t("prompts_edit")}</DialogTitle>
           <DialogDescription>{t("prompts_edit_update_desc")}</DialogDescription>
@@ -522,6 +557,7 @@ function EditPromptDialog({ prompt }: { prompt: Prompt }) {
             <div className="space-y-2">
               <Label htmlFor="edit-name">{t("com_name")}</Label>
               <Input
+                {...testId("edit-prompt-name-input")}
                 id="edit-name"
                 value={name}
                 onChange={(e) => {
@@ -535,6 +571,7 @@ function EditPromptDialog({ prompt }: { prompt: Prompt }) {
                 {t("prompts_description_optional")}
               </Label>
               <Input
+                {...testId("edit-prompt-description-input")}
                 id="edit-description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -543,6 +580,7 @@ function EditPromptDialog({ prompt }: { prompt: Prompt }) {
             <div className="space-y-2">
               <Label htmlFor="edit-content">{t("com_content")}</Label>
               <Textarea
+                {...testId("edit-prompt-content-input")}
                 id="edit-content"
                 value={content}
                 onChange={(e) => {
@@ -557,13 +595,18 @@ function EditPromptDialog({ prompt }: { prompt: Prompt }) {
           </div>
           <DialogFooter>
             <Button
+              {...testId("edit-prompt-cancel-button")}
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
             >
               {t("com_cancel")}
             </Button>
-            <Button type="submit" disabled={updateMutation.isPending}>
+            <Button
+              {...testId("edit-prompt-submit-button")}
+              type="submit"
+              disabled={updateMutation.isPending}
+            >
               {updateMutation.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
@@ -591,6 +634,7 @@ function DeletePromptButton({ prompt }: { prompt: Prompt }) {
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button
+          {...testId("delete-prompt-button")}
           variant="ghost"
           size="icon"
           className="text-destructive hover:text-destructive"
@@ -598,7 +642,7 @@ function DeletePromptButton({ prompt }: { prompt: Prompt }) {
           <Trash2 className="h-4 w-4" />
         </Button>
       </AlertDialogTrigger>
-      <AlertDialogContent>
+      <AlertDialogContent {...testId("delete-prompt-dialog")}>
         <AlertDialogHeader>
           <AlertDialogTitle>{t("prompts_delete")}</AlertDialogTitle>
           <AlertDialogDescription>
@@ -606,8 +650,11 @@ function DeletePromptButton({ prompt }: { prompt: Prompt }) {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>{t("com_cancel")}</AlertDialogCancel>
+          <AlertDialogCancel {...testId("delete-prompt-cancel-button")}>
+            {t("com_cancel")}
+          </AlertDialogCancel>
           <AlertDialogAction
+            {...testId("delete-prompt-confirm-button")}
             onClick={() => deleteMutation.mutate()}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >

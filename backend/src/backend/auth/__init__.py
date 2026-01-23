@@ -12,12 +12,18 @@ from backend.auth.deps import (
     get_current_user,
 )
 from backend.auth.models import (
+    AdminPasswordResetRequest,
     Message,
     NewPassword,
+    PasswordResetRequest,
+    PasswordResetWithTokenRequest,
     RefreshTokenRequest,
+    ResendVerificationRequest,
+    SendVerificationCodeRequest,
     Token,
     TokenPayload,
     UpdatePassword,
+    UpdateSignupEmailRequest,
     User,
     UserCreate,
     UserPublic,
@@ -25,6 +31,8 @@ from backend.auth.models import (
     UsersPublic,
     UserUpdate,
     UserUpdateMe,
+    VerificationStatusResponse,
+    VerifyEmailRequest,
 )
 from backend.auth.token_revocation import (
     RevokedToken,
@@ -37,17 +45,24 @@ from backend.auth.token_revocation import (
 from backend.core.db import get_db
 
 __all__ = [
+    # Verification schemas
+    "AdminPasswordResetRequest",
     "CurrentUser",
     "Message",
     "NewPassword",
+    "PasswordResetRequest",
+    "PasswordResetWithTokenRequest",
     "RefreshTokenRequest",
+    "ResendVerificationRequest",
     "RevokedToken",
+    "SendVerificationCodeRequest",
     # Dependencies
     "SessionDep",
     "Token",
     "TokenDep",
     "TokenPayload",
     "UpdatePassword",
+    "UpdateSignupEmailRequest",
     # Models
     "User",
     "UserCreate",
@@ -56,6 +71,8 @@ __all__ = [
     "UserUpdate",
     "UserUpdateMe",
     "UsersPublic",
+    "VerificationStatusResponse",
+    "VerifyEmailRequest",
     # CRUD
     "authenticate",
     "cleanup_expired_tokens",

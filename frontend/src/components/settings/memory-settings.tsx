@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Info } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { testId } from "@/lib/test-id";
 import {
   Tooltip,
   TooltipContent,
@@ -47,7 +48,10 @@ export function MemorySettings({
   const tooltipMessage = getTooltipMessage();
 
   return (
-    <div className="flex items-center justify-between py-2">
+    <div
+      {...testId("memory-settings")}
+      className="flex items-center justify-between py-2"
+    >
       <div className="space-y-0.5 pr-4">
         <div className="flex items-center gap-2">
           <Label
@@ -74,6 +78,7 @@ export function MemorySettings({
         </p>
       </div>
       <Switch
+        {...testId("memory-enabled-switch")}
         id="memory-enabled"
         checked={isDisabledByHigherLevel ? false : memoryEnabled}
         onCheckedChange={onMemoryEnabledChange}

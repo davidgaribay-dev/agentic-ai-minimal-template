@@ -225,7 +225,7 @@ const { t } = useTranslation()
 {error && <ErrorAlert error={error} fallback={t("err_generic")} />}
 ```
 
-### Test IDs
+### Test IDs (CRITICAL for Playwright)
 
 ```typescript
 import { testId } from "@/lib/test-id"
@@ -234,14 +234,34 @@ import { testId } from "@/lib/test-id"
 <Button onClick={handleSubmit}>Save</Button>
 <Input type="email" {...form.register("email")} />
 
-// ✅ ALWAYS DO THIS - Add test IDs to interactive elements
-<Button {...testId("settings-save")} onClick={handleSubmit}>{t("com_save")}</Button>
-<Input {...testId("login-email")} type="email" {...form.register("email")} />
+// ✅ ALWAYS DO THIS - Add test IDs to ALL interactive elements
+<Button {...testId("settings-save-button")} onClick={handleSubmit}>{t("com_save")}</Button>
+<Input {...testId("login-email-input")} type="email" {...form.register("email")} />
+<DialogContent {...testId("create-team-dialog")}>...</DialogContent>
+<Switch {...testId("memory-enabled-switch")} checked={enabled} />
 ```
 
-**Test ID Naming:**
-- Format: `{feature}-{element}` (e.g., `login-submit`, `chat-input`, `settings-save`)
-- Add to: buttons, inputs, forms, dialogs, state-dependent containers
+**Naming Convention** (kebab-case): `{component}-{element}-{type}`
+
+| Type | Pattern | Examples |
+|------|---------|----------|
+| Buttons | `{action}-button` | `create-team-submit-button`, `delete-confirm-button` |
+| Inputs | `{field}-input` | `login-email-input`, `search-query-input` |
+| Dialogs | `{name}-dialog` | `edit-prompt-dialog`, `delete-org-alert-dialog` |
+| Switches | `{field}-switch` | `llm-allow-team-switch`, `guardrails-enabled-switch` |
+| Lists | `{name}-list` | `document-list`, `memory-list` |
+| List Items | `{name}-item-${id}` | `document-item-${doc.id}`, `team-item-${team.id}` |
+| Tables | `{name}-table` | `configured-models-table`, `api-keys-table` |
+| Triggers | `{component}-trigger` | `user-menu-trigger`, `picker-trigger` |
+
+**MUST add test IDs to:**
+- All buttons, inputs, textareas, selects, switches, checkboxes
+- Dialog/AlertDialog containers and their action buttons
+- List containers and individual items (use `${id}` for dynamic)
+- Table containers and rows
+- Dropdown triggers and menu items
+- Navigation items, tab triggers
+- Error, loading, and empty state containers
 
 **Key Naming Conventions:**
 - `com_*` - Common/shared strings
