@@ -221,7 +221,7 @@ export function ChatHistoryDropdown({
     if (teamId && teamId !== selectedTeamId) {
       setSelectedTeamId(teamId);
     }
-  }, [teamId]);
+  }, [teamId, selectedTeamId]);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [conversationToRename, setConversationToRename] =
     useState<Conversation | null>(null);
@@ -248,7 +248,7 @@ export function ChatHistoryDropdown({
     [onTeamChange],
   );
 
-  const conversations = data?.data ?? [];
+  const conversations = useMemo(() => data?.data ?? [], [data?.data]);
 
   const { starred, recent } = useMemo(() => {
     let filtered = conversations;

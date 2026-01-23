@@ -4,6 +4,7 @@ Provides endpoints for uploading, listing, retrieving, and deleting
 chat media (images) with multi-tenant scoping.
 """
 
+from datetime import UTC, datetime
 import uuid
 
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile, status
@@ -14,14 +15,17 @@ from sqlmodel import select
 
 from backend.auth import CurrentUser, SessionDep
 from backend.auth.models import TokenPayload, User
+from backend.auth.token_revocation import is_token_revoked
 from backend.core.config import settings
 from backend.core.logging import get_logger
 from backend.core.storage import (
     ALLOWED_CHAT_MEDIA_TYPES,
     ChatMediaTooLargeError,
+    FileMagicMismatchError,
     InvalidChatMediaTypeError,
     StorageError,
     get_chat_media_url,
+    validate_file_magic,
 )
 from backend.media.models import (
     ChatMediaCreate,
@@ -52,6 +56,9 @@ def _get_user_from_token(session: SessionDep, token: str) -> User:
 
     Used for endpoints that need to accept tokens via query parameter
     (e.g., for image embedding in img tags).
+
+    SECURITY NOTE: Tokens in URL query params appear in logs/history.
+    Mitigations: short expiry, revocation checks, owner-only access.
     """
     try:
         payload = jwt.decode(
@@ -70,6 +77,13 @@ def _get_user_from_token(session: SessionDep, token: str) -> User:
             detail="Invalid token type",
         )
 
+    # Check if token has been explicitly revoked
+    if is_token_revoked(session, token_data.jti):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has been revoked",
+        )
+
     user = session.get(User, token_data.sub)
     if not user:
         raise HTTPException(
@@ -81,6 +95,19 @@ def _get_user_from_token(session: SessionDep, token: str) -> User:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Inactive user",
         )
+
+    # Check if token was issued before password change (implicit revocation)
+    if token_data.jti and "iat" in payload:
+        token_issued_at = datetime.fromtimestamp(payload["iat"], tz=UTC)
+        password_changed_at = user.password_changed_at
+        if password_changed_at and password_changed_at.tzinfo is None:
+            password_changed_at = password_changed_at.replace(tzinfo=UTC)
+        if password_changed_at and token_issued_at < password_changed_at:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token invalidated by password change",
+            )
+
     return user
 
 
@@ -132,6 +159,15 @@ async def upload_media(
 
     # Read file content
     content = await file.read()
+
+    # Validate magic bytes match claimed content type
+    try:
+        validate_file_magic(content, content_type, file.filename)
+    except FileMagicMismatchError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File content validation failed: {e}",
+        ) from e
 
     # Validate size
     if len(content) > max_size_bytes:

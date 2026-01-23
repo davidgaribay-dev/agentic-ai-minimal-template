@@ -24,7 +24,9 @@ from backend.audit.service import AuditService
 from backend.auth.deps import CurrentUser, SessionDep
 from backend.core.logging import get_logger
 from backend.core.storage import (
+    FileMagicMismatchError,
     StorageError,
+    validate_file_magic,
 )
 from backend.core.storage import (
     get_document_content as storage_get_document_content,
@@ -289,6 +291,28 @@ async def upload_document(
     content = await file.read()
     await file.seek(0)  # Reset for potential re-reads
 
+    # Validate magic bytes match claimed content type
+    content_type = file.content_type or "application/octet-stream"
+    try:
+        validate_file_magic(content, content_type, file.filename)
+    except FileMagicMismatchError as e:
+        await audit_service.log(
+            "document.upload.validation_failed",
+            actor=current_user,
+            organization_id=organization_id,
+            team_id=team_id,
+            outcome="failure",
+            metadata={
+                "reason": "magic_byte_mismatch",
+                "filename": file.filename,
+                "claimed_type": content_type,
+            },
+        )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File content validation failed: {e}",
+        ) from e
+
     try:
         # Upload to S3 with hierarchical path based on scope
         s3_object_key = storage_upload_document(
@@ -489,14 +513,42 @@ async def get_document(
             detail="Document not found",
         )
 
-    # Check access permissions
-    # User must be the creator or have org/team access
-    if doc.user_id and doc.user_id != current_user.id:
-        # TODO: Check org/team membership for shared documents
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied",
+    # Check access permissions based on document scope:
+    # - User-scoped (user_id set): only owner can access
+    # - Team-scoped (team_id set, no user_id): team members can access
+    # - Org-scoped (org_id only): org members can access
+    if doc.user_id:
+        # User-scoped document - only the owner can access
+        if doc.user_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied",
+            )
+    else:
+        # Shared document (org or team scoped) - verify membership
+        org_stmt = select(OrganizationMember).where(
+            OrganizationMember.organization_id == doc.organization_id,
+            OrganizationMember.user_id == current_user.id,
         )
+        org_membership = session.exec(org_stmt).first()
+        if not org_membership:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied",
+            )
+
+        # If team-scoped, also verify team membership
+        if doc.team_id:
+            team_stmt = select(TeamMember).where(
+                TeamMember.team_id == doc.team_id,
+                TeamMember.org_member_id == org_membership.id,
+            )
+            team_membership = session.exec(team_stmt).first()
+            if not team_membership:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied",
+                )
 
     return DocumentPublic.model_validate(doc)
 

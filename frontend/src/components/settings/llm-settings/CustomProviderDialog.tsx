@@ -181,7 +181,7 @@ export function CustomProviderDialog({
                 {...testId("custom-provider-name-input")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Ollama, LiteLLM, etc."
+                placeholder={t("llm_provider_name_placeholder")}
                 disabled={isSubmitting}
               />
             </div>
@@ -192,7 +192,7 @@ export function CustomProviderDialog({
                 id="provider-url"
                 value={baseUrl}
                 onChange={(e) => setBaseUrl(e.target.value)}
-                placeholder="https://api.example.com/v1"
+                placeholder={t("llm_base_url_placeholder")}
                 disabled={isSubmitting}
               />
               <p className="text-xs text-muted-foreground">

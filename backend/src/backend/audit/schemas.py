@@ -118,6 +118,9 @@ class AuditAction(str, Enum):
     TOOL_APPROVAL_GRANTED = "tool.approval.granted"
     TOOL_APPROVAL_DENIED = "tool.approval.denied"
 
+    # Platform admin events (security-sensitive)
+    PLATFORM_ADMIN_RESOURCE_ACCESS = "platform_admin.resource.access"
+
     # Email events
     EMAIL_SENT = "email.sent"
     EMAIL_FAILED = "email.failed"

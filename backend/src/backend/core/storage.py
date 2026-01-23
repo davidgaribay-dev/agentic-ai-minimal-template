@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Any, BinaryIO
+from typing import Any, BinaryIO, ClassVar
 import uuid
 
 import boto3
@@ -10,6 +10,157 @@ from backend.core.config import settings
 from backend.core.logging import get_logger
 
 logger = get_logger(__name__)
+
+
+# =============================================================================
+# Magic Byte Validation
+# =============================================================================
+
+
+class FileMagicMismatchError(Exception):
+    """Raised when file content doesn't match claimed MIME type."""
+
+
+class MagicByteValidator:
+    """Validates file content against claimed MIME type using magic bytes.
+
+    Security feature to prevent extension spoofing attacks where a malicious
+    file is uploaded with a fake extension/content-type.
+    """
+
+    # WebP validation constants (RIFF header at 0, WEBP marker at offset 8-12)
+    WEBP_MIN_SIZE: ClassVar[int] = 12
+    WEBP_MARKER_START: ClassVar[int] = 8
+    WEBP_MARKER_END: ClassVar[int] = 12
+
+    # Magic byte signatures for common file types
+    # Format: mime_type -> (offset, bytes_to_check)
+    SIGNATURES: ClassVar[dict[str, list[tuple[int, bytes]]]] = {
+        # Images
+        "image/jpeg": [(0, b"\xff\xd8\xff")],
+        "image/png": [(0, b"\x89PNG\r\n\x1a\n")],
+        "image/gif": [(0, b"GIF87a"), (0, b"GIF89a")],
+        "image/webp": [(0, b"RIFF"), (8, b"WEBP")],  # RIFF....WEBP
+        # Documents
+        "application/pdf": [(0, b"%PDF")],
+        # Office formats (ZIP-based, same header)
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [
+            (0, b"PK\x03\x04")
+        ],
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+            (0, b"PK\x03\x04")
+        ],
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation": [
+            (0, b"PK\x03\x04")
+        ],
+        # Archives
+        "application/zip": [(0, b"PK\x03\x04")],
+        "application/gzip": [(0, b"\x1f\x8b")],
+    }
+
+    # MIME types that don't have magic bytes (text-based)
+    TEXT_TYPES: ClassVar[set[str]] = {
+        "text/plain",
+        "text/markdown",
+        "text/csv",
+        "text/html",
+        "text/css",
+        "text/javascript",
+        "application/json",
+        "application/xml",
+        "text/xml",
+    }
+
+    @classmethod
+    def validate(
+        cls, content: bytes, claimed_mime_type: str, filename: str | None = None
+    ) -> bool:
+        """Validate file content matches claimed MIME type.
+
+        Args:
+            content: File content bytes
+            claimed_mime_type: MIME type claimed by the upload
+            filename: Optional filename for logging
+
+        Returns:
+            True if validation passes
+
+        Raises:
+            FileMagicMismatchError: If content doesn't match claimed type
+        """
+        # Skip validation for text types (no reliable magic bytes)
+        if claimed_mime_type in cls.TEXT_TYPES:
+            return True
+
+        # Skip validation for types we don't have signatures for
+        if claimed_mime_type not in cls.SIGNATURES:
+            logger.debug(
+                "magic_byte_skip_unknown_type",
+                mime_type=claimed_mime_type,
+                filename=filename,
+            )
+            return True
+
+        signatures = cls.SIGNATURES[claimed_mime_type]
+
+        # WebP is special: needs both RIFF header AND WEBP at offset 8
+        if claimed_mime_type == "image/webp":
+            if len(content) < cls.WEBP_MIN_SIZE:
+                cls._log_and_raise(claimed_mime_type, filename, "file too small")
+            if not content.startswith(b"RIFF"):
+                cls._log_and_raise(claimed_mime_type, filename, "missing RIFF header")
+            if content[cls.WEBP_MARKER_START : cls.WEBP_MARKER_END] != b"WEBP":
+                cls._log_and_raise(claimed_mime_type, filename, "missing WEBP marker")
+            return True
+
+        # Check if any signature matches
+        for offset, magic_bytes in signatures:
+            if len(content) < offset + len(magic_bytes):
+                continue
+            if content[offset : offset + len(magic_bytes)] == magic_bytes:
+                return True
+
+        # No signature matched
+        cls._log_and_raise(claimed_mime_type, filename, "no matching signature")
+        return False  # Never reached, but satisfies type checker
+
+    @classmethod
+    def _log_and_raise(
+        cls, claimed_type: str, filename: str | None, reason: str
+    ) -> None:
+        """Log security event and raise exception."""
+        # Get actual magic bytes for logging (first 16 bytes hex)
+        logger.warning(
+            "magic_byte_mismatch",
+            claimed_type=claimed_type,
+            filename=filename,
+            reason=reason,
+        )
+        raise FileMagicMismatchError(
+            f"File content does not match claimed type '{claimed_type}': {reason}"
+        )
+
+
+def validate_file_magic(
+    content: bytes, claimed_mime_type: str, filename: str | None = None
+) -> bool:
+    """Validate file content matches claimed MIME type using magic bytes.
+
+    This is a security feature to prevent extension spoofing attacks.
+
+    Args:
+        content: File content bytes
+        claimed_mime_type: MIME type claimed by the upload
+        filename: Optional filename for logging
+
+    Returns:
+        True if validation passes
+
+    Raises:
+        FileMagicMismatchError: If content doesn't match claimed type
+    """
+    return MagicByteValidator.validate(content, claimed_mime_type, filename)
+
 
 ALLOWED_IMAGE_TYPES = {
     "image/jpeg": ".jpg",

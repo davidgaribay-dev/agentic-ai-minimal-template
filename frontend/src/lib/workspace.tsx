@@ -111,7 +111,8 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     ...queryDefaults.stable,
   });
 
-  const organizations = orgsData?.data ?? [];
+  // Memoize organizations to prevent new array reference on each render
+  const organizations = useMemo(() => orgsData?.data ?? [], [orgsData?.data]);
 
   useEffect(() => {
     if (!isLoadingOrgs && organizations.length > 0 && !currentOrgId) {
@@ -155,7 +156,8 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     ...queryDefaults.stable,
   });
 
-  const teams = teamsData?.data ?? [];
+  // Memoize teams to prevent new array reference on each render
+  const teams = useMemo(() => teamsData?.data ?? [], [teamsData?.data]);
 
   const { data: myMembership } = useQuery({
     queryKey: ["workspace", "my-membership", validatedOrgId],

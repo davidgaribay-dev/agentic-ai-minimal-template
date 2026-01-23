@@ -99,11 +99,29 @@ async def create_item_endpoint(
 
 
 @router.get("/{item_id}", response_model=ItemPublic)
-def read_item(item: VerifiedItem) -> Any:
+async def read_item(
+    request: Request,
+    current_user: CurrentUser,
+    item: VerifiedItem,
+) -> Any:
     """Get item by ID.
 
     Users can only access their own items unless they are platform admins.
     """
+    # Audit log platform admin bypass
+    if current_user.is_platform_admin and item.owner_id != current_user.id:
+        await audit_service.log(
+            AuditAction.PLATFORM_ADMIN_RESOURCE_ACCESS,
+            actor=current_user,
+            request=request,
+            targets=[Target(type="item", id=str(item.id), name=item.title)],
+            metadata={
+                "is_platform_admin_bypass": True,
+                "action": "read",
+                "resource_owner_id": str(item.owner_id),
+            },
+        )
+
     return item
 
 
@@ -119,6 +137,24 @@ async def update_item_endpoint(
 
     Users can only update their own items unless they are platform admins.
     """
+    is_admin_bypass = (
+        current_user.is_platform_admin and item.owner_id != current_user.id
+    )
+
+    # Audit log platform admin bypass
+    if is_admin_bypass:
+        await audit_service.log(
+            AuditAction.PLATFORM_ADMIN_RESOURCE_ACCESS,
+            actor=current_user,
+            request=request,
+            targets=[Target(type="item", id=str(item.id), name=item.title)],
+            metadata={
+                "is_platform_admin_bypass": True,
+                "action": "update",
+                "resource_owner_id": str(item.owner_id),
+            },
+        )
+
     # Track changes for audit log
     old_values = {}
     new_values = {}
@@ -140,7 +176,10 @@ async def update_item_endpoint(
                 Target(type="item", id=str(updated_item.id), name=updated_item.title)
             ],
             changes={"before": old_values, "after": new_values},
-            metadata={"fields_updated": list(new_values.keys())},
+            metadata={
+                "fields_updated": list(new_values.keys()),
+                "is_platform_admin_bypass": is_admin_bypass,
+            },
         )
 
     return updated_item
@@ -157,8 +196,26 @@ async def delete_item_endpoint(
 
     Users can only delete their own items unless they are platform admins.
     """
+    is_admin_bypass = (
+        current_user.is_platform_admin and item.owner_id != current_user.id
+    )
     item_id = str(item.id)
     item_title = item.title
+    resource_owner_id = str(item.owner_id)
+
+    # Audit log platform admin bypass
+    if is_admin_bypass:
+        await audit_service.log(
+            AuditAction.PLATFORM_ADMIN_RESOURCE_ACCESS,
+            actor=current_user,
+            request=request,
+            targets=[Target(type="item", id=item_id, name=item_title)],
+            metadata={
+                "is_platform_admin_bypass": True,
+                "action": "delete",
+                "resource_owner_id": resource_owner_id,
+            },
+        )
 
     delete_item(session=session, db_item=item)
 
@@ -167,7 +224,10 @@ async def delete_item_endpoint(
         actor=current_user,
         request=request,
         targets=[Target(type="item", id=item_id, name=item_title)],
-        metadata={"item_title": item_title},
+        metadata={
+            "item_title": item_title,
+            "is_platform_admin_bypass": is_admin_bypass,
+        },
     )
 
     return Message(message="Item deleted successfully")

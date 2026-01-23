@@ -187,7 +187,7 @@ function TestableSignupPage() {
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="Full name (optional)"
+              placeholder={t("auth_full_name_optional")}
             />
             <Button type="submit" className="mt-4 w-full">
               Continue <ArrowRight className="ml-2 h-4 w-4" />
@@ -210,7 +210,7 @@ function TestableSignupPage() {
               type="text"
               value={workspaceName}
               onChange={(e) => setWorkspaceName(e.target.value)}
-              placeholder="Workspace name"
+              placeholder={t("auth_workspace_name")}
             />
             <Button type="submit" className="mt-4 w-full">
               Continue <ArrowRight className="ml-2 h-4 w-4" />
@@ -233,7 +233,7 @@ function TestableSignupPage() {
               type="text"
               value={teamName}
               onChange={(e) => setTeamName(e.target.value)}
-              placeholder="Team name (optional)"
+              placeholder={t("auth_team_name")}
             />
             <Button
               {...testId("signup-submit-button")}

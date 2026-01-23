@@ -1,0 +1,55 @@
+# Dependencies (handled by npm ci in Dockerfile)
+node_modules/
+
+# Build artifacts (old builds)
+dist/
+build/
+
+# Development
+.next/
+.cache/
+.parcel-cache/
+
+# Environment (secrets should never be in image)
+.env
+.env.*
+!.env.example
+
+# IDE and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git and version control
+.git/
+.gitignore
+.gitattributes
+
+# OS files
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Test artifacts
+.playwright/
+playwright-report/
+test-results/
+coverage/
+.nyc_output/
+
+# Documentation (not needed in production image)
+*.md
+!README.md
+
+# Temp files
+*.tmp
+*.temp

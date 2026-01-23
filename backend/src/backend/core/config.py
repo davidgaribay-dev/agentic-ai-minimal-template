@@ -183,6 +183,27 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER_EMAIL: str = "admin@example.com"
     FIRST_SUPERUSER_PASSWORD: str = "changethis"
 
+    @field_validator("FIRST_SUPERUSER_PASSWORD", mode="after")
+    @classmethod
+    def validate_first_superuser_password(cls, v: str, info: ValidationInfo) -> str:
+        """Validate that FIRST_SUPERUSER_PASSWORD is changed in non-local environments."""
+        env = (
+            info.data.get("ENVIRONMENT")
+            if info.data
+            else os.getenv("ENVIRONMENT", "local")
+        )
+        if v == "changethis" and env == "production":
+            raise ValueError(
+                "FIRST_SUPERUSER_PASSWORD must be changed from default value in production. "
+                "Set a strong, unique password via the FIRST_SUPERUSER_PASSWORD environment variable."
+            )
+        if v == "changethis" and env == "staging":
+            raise ValueError(
+                "FIRST_SUPERUSER_PASSWORD must be changed from default value in staging. "
+                "Set a strong, unique password via the FIRST_SUPERUSER_PASSWORD environment variable."
+            )
+        return v
+
     # Default language for API responses (BCP 47 code)
     DEFAULT_LANGUAGE: str = "en"
 

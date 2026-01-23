@@ -164,7 +164,7 @@ export function ChatInput({
         }
       }
     },
-    [organizationId, teamId, t],
+    [organizationId, teamId],
   );
 
   // Handle paste events for files
